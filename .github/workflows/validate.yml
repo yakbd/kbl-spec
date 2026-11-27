@@ -1,0 +1,39 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "schema/**"
+      - "src/**"
+      - "examples/**"
+      - "testdata/**"
+      - "tools/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "SPEC.md"
+      - "targets/**"
+      - "coverage/**"
+      - ".github/workflows/validate.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check, check that schema/0.1/kbl.schema.json is what src/schema.ts generates, run the checker
+        run: npm test

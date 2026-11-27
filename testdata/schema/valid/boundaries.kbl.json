@@ -1,0 +1,256 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json",
+  "kbl": "0.1",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a",
+      "width": 0.01
+    },
+    "wide": {
+      "output": "w",
+      "width": 100
+    },
+    "g": {
+      "gap": true
+    },
+    "l": {
+      "layerId": "shift"
+    },
+    "f": {
+      "function": "enter"
+    },
+    "dk": {
+      "deadKey": "acute"
+    },
+    "m": {
+      "output": [
+        "x",
+        {
+          "marker": "m1"
+        },
+        {
+          "variable": "v_1"
+        }
+      ]
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": {
+            "utf16": [
+              "D83D",
+              "de00"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "deadKeys": {
+    "acute": {
+      "spacing": "´",
+      "entries": [
+        {
+          "base": "e",
+          "result": "é"
+        }
+      ]
+    }
+  },
+  "variables": [
+    {
+      "id": "v_1",
+      "type": "string",
+      "value": "x"
+    }
+  ],
+  "forms": {
+    "iso": {
+      "rows": [
+        [
+          "KeyA",
+          "KeyB"
+        ]
+      ]
+    }
+  },
+  "customModifiers": {
+    "Fn": {
+      "kind": "held",
+      "positions": [
+        "KeyB"
+      ]
+    }
+  },
+  "displays": {
+    "entries": [
+      {
+        "keyId": "a",
+        "display": "A"
+      },
+      {
+        "output": "w",
+        "display": "W"
+      }
+    ]
+  },
+  "transforms": {
+    "simple": [
+      {
+        "reorders": [
+          {
+            "from": "a",
+            "order": [
+              -128,
+              127
+            ],
+            "tertiaryBase": true
+          }
+        ]
+      },
+      {
+        "transforms": [
+          {
+            "from": "a",
+            "to": "b"
+          }
+        ]
+      }
+    ]
+  },
+  "tests": [
+    {
+      "info": {
+        "name": "t"
+      },
+      "suites": [
+        {
+          "name": "s",
+          "tests": [
+            {
+              "name": "t",
+              "steps": [
+                {
+                  "keystroke": {
+                    "key": "a",
+                    "tapCount": 2
+                  }
+                },
+                {
+                  "keystroke": {
+                    "key": "a"
+                  }
+                },
+                {
+                  "keystroke": {
+                    "position": "KeyA",
+                    "modifiers": [
+                      "shift"
+                    ],
+                    "locks": [
+                      "caps"
+                    ]
+                  }
+                },
+                {
+                  "emit": "x"
+                },
+                {
+                  "backspace": true
+                },
+                {
+                  "check": "a"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "targets": {
+    "windows": {
+      "builds": [
+        "x64",
+        "x86"
+      ],
+      "modifiers": {
+        "bits": [
+          {
+            "vk": "VK_SHIFT",
+            "bit": 1,
+            "component": "shift"
+          },
+          {
+            "vk": "0x11",
+            "bit": 128,
+            "component": "ctrl"
+          }
+        ]
+      },
+      "extraRows": [
+        {
+          "vk": "GAMEPAD_RIGHT_THUMBSTICK_BUTTON",
+          "cells": [
+            "a",
+            {
+              "utf16": [
+                "0041"
+              ]
+            },
+            {
+              "deadKey": "acute"
+            },
+            null
+          ]
+        }
+      ],
+      "strings": {
+        "layoutName": {
+          "0409": "Case",
+          "040c": "Cas"
+        }
+      },
+      "versionInfo": {
+        "fileVersion": "1.0.65535.0"
+      }
+    }
+  },
+  "onLoss": {
+    "default": "warning",
+    "kinds": {
+      "general.*": "accept",
+      "windows.vkMissing": "error",
+      "windowsDefault.vk": "accept"
+    }
+  },
+  "extensions": {
+    "org.example.tool": {
+      "any": [
+        1,
+        2
+      ]
+    },
+    "urn:example:x": true
+  }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Using the yakbd tool
+    url: https://github.com/yakbd/yakbd-cli/issues
+    about: Questions and bugs about converting or building layouts go to the tool's repository.
+  - name: How to contribute
+    url: https://github.com/yakbd/.github/blob/main/CONTRIBUTING.md
+    about: The organisation's contributing guide, with the clean-room rule every contribution follows.

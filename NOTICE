@@ -1,0 +1,111 @@
+kbl-spec: the .kbl.json keyboard-layout format (YAKBD)
+Copyright 2026 The YAKBD contributors. Licensed under MIT-0 (MIT No Attribution, see LICENSE),
+except the third-party material listed below, which keeps its own licence.
+
+Not affiliated with or endorsed by Microsoft or by the Unicode Consortium. Microsoft and
+Windows are trademarks of the Microsoft group of companies. Unicode and CLDR are
+trademarks of Unicode, Inc.
+
+Third-party material
+--------------------
+
+1. Windows names and values (windows-sys)
+
+   The names and values of the Windows keyboard-layout structures, fields and constants used
+   in this repository (KBDTABLES, VK_TO_WCHAR_TABLE, DEADKEY, LIGATURE, KLLF_ALTGR,
+   KLLF_SHIFTLOCK, KLLF_LRM_RLM, KBDSHIFT, KBDCTRL, KBDALT, KBDKANA, KBDROYA, KBDLOYA,
+   KBDGRPSELTAP, CAPLOK, SGCAPS, CAPLOKALTGR, KANALOK, GRPSELTAP, WCH_NONE, WCH_DEAD, WCH_LGTR,
+   DKF_DEAD, SHFT_INVALID, KBD_VERSION, the KBDNLS_* and NLSKBD_* constants, the VK_* virtual-key
+   names and others) are taken from the `windows-sys` crate, version 0.61.2, module
+   Win32::UI::Input::KeyboardAndMouse:
+
+       https://crates.io/crates/windows-sys/0.61.2
+       https://github.com/microsoft/windows-rs
+
+   windows-sys is licensed under MIT OR Apache-2.0. Its copyright line:
+
+       Copyright (c) Microsoft Corporation.
+
+   They reach this repository through the clean YAKBD specification set, revision 10, which
+   records the same source in its NOTICE. Only names and values are used.
+
+   The YAKBD specification set itself (revision 10) was relicensed by its owner to MIT-0 for use
+   in the yakbd repositories (2026-11-22); text taken from it is cited by section.
+
+   targets/windows-vk-names.tsv is a copy of the reference specification's
+   spec/klc-format/tables/vk-names.tsv (revision 10), generated there from the VK_* constants of
+   windows-sys 0.61.2; only names and values.
+
+2. Scan-code flag names (FreeRDP)
+
+   Eight scan-code flag names (KBDEXT, KBDMULTIVK, KBDSPECIAL, KBDNUMPAD, KBDUNICODE,
+   KBDINJECTEDVK, KBDMAPPEDVK, KBDBREAK) and their values (0x0100 to 0x8000) are taken from
+   FreeRDP's WinPR header winpr/include/winpr/input.h, lines 30 to 37 at commit
+   eb104c8689fec09bf94c6baac46fb585c3aa906f:
+
+       https://github.com/FreeRDP/FreeRDP/blob/eb104c8689fec09bf94c6baac46fb585c3aa906f/winpr/include/winpr/input.h#L30-L37
+
+   FreeRDP is licensed under the Apache License, Version 2.0. The copyright line of that file:
+
+       Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+
+   Only the eight names and their values are used; no other text of that file.
+
+3. Unicode CLDR data (Unicode License v3)
+
+   testdata/third_party/cldr-release-49/ holds unmodified copies of CLDR keyboard files from the
+   CLDR release tag `release-49` (https://github.com/unicode-org/cldr/tree/release-49/keyboards),
+   with the licence text in testdata/third_party/cldr-release-49/LICENSE.
+
+   examples/cldr-pt-abnt2.kbl.json is a hand conversion of CLDR's keyboards/3.0/pt-t-k0-abnt2.xml
+   with the imported files keys-Zyyy-punctuation.xml and keys-Zyyy-currency.xml inlined, and of
+   the test file keyboards/test/pt-t-k0-abnt2-test.xml. Its layout data is therefore under the
+   Unicode License v3 (SPDX: Unicode-3.0), as its `metadata.license` field says.
+
+       Copyright © 1991-2026 Unicode, Inc.
+       SPDX-License-Identifier: Unicode-3.0
+
+   The prose of this repository describes CLDR (UTS #35 Part 7) in its own words and links to
+   it; no text of the LDML specification is copied.
+
+4. Scan codes (Microsoft documentation)
+
+   The informative position table in SPEC.md, Appendix A, lists for each position the "Scan 1
+   Make" code given in the public page "About Keyboard Input"
+   (https://learn.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input, section
+   "Scan codes"), the same page the reference specification cites for the Pause sequence.
+   Only the code values are used. targets/windows-default-vk.tsv joins that table by key with the
+   public page "Virtual-Key Codes"
+   (https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) for the virtual key
+   of each key: facts only (key, scan code, VK), no text of either page. Position names are the `code` values of the W3C
+   specification "UI Events KeyboardEvent code Values" (https://www.w3.org/TR/uievents-code/).
+
+5. Development dependencies (src/, tools/)
+
+   The zod source of the schema (src/schema.ts), its generator (tools/gen-schema.ts) and the
+   repository checker (tools/check) use these npm packages, pinned exactly in package.json and
+   package-lock.json. They are not part of the format; npm fetches them and nothing of them is
+   copied into this repository:
+
+       zod 4.6.7 (MIT, Copyright (c) 2025 Colin McDonnell), https://github.com/colinhacks/zod
+       ajv 8.20.0 (MIT), https://github.com/ajv-validator/ajv
+       tsx 4.23.15 (MIT), https://github.com/privatenumber/tsx
+       typescript 7.0.2 (Apache-2.0), https://github.com/microsoft/typescript
+       @types/node 22.20.5 (MIT), https://github.com/DefinitelyTyped/DefinitelyTyped
+
+   and, through them, esbuild, fast-deep-equal, json-schema-traverse, require-from-string,
+   undici-types (MIT) and fast-uri (BSD-3-Clause), at the versions package-lock.json records.
+
+6. Zod agent skill (.claude/skills/zod/)
+
+   .claude/skills/zod/ holds unmodified copies of SKILL.md, LICENSE, rules/ and references/ of the
+   zod agent skill by Anivar Aravind, at commit 619b0fbd142f83eeee0c0a54efbd4352672aa51f:
+
+       https://github.com/anivar/zod-skill/tree/619b0fbd142f83eeee0c0a54efbd4352672aa51f
+
+   It is licensed under the MIT License (text in .claude/skills/zod/LICENSE). Its copyright line:
+
+       Copyright (c) 2026 Anivar Aravind
+
+   Its evals/, v3/ (Zod 3 forms), AGENTS.md (a compiled copy of the rules) and .github/ folders
+   are not copied.

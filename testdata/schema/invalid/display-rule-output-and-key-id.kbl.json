@@ -1,0 +1,45 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json",
+  "kbl": "0.1",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "displays": {
+    "entries": [
+      {
+        "output": "a",
+        "keyId": "a",
+        "display": "A"
+      }
+    ]
+  }
+}

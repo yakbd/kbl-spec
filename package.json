@@ -1,0 +1,26 @@
+{
+  "name": "kbl-spec",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The .kbl.json format: zod source of the JSON Schema, its generator and the repository checker.",
+  "license": "MIT-0",
+  "type": "module",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "gen": "tsx tools/gen-schema.ts",
+    "check": "tsx tools/check/main.ts",
+    "typecheck": "tsc",
+    "test": "npm run typecheck && tsx tools/gen-schema.ts --check && npm run check"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "ajv": "8.20.0",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}

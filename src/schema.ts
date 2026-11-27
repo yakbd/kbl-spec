@@ -1,0 +1,1259 @@
+// The .kbl.json schema, version 0.1, in zod 4. This file is the source of schema/0.1/kbl.schema.json
+// (`npm run gen` writes it; CI checks that the committed file is fresh). Normative text: SPEC.md.
+//
+// Every object is a strictObject (JSON Schema `additionalProperties: false`), every exclusive choice a z.xor
+// (`oneOf`), and every schema carries a description. A schema with a metadata `id` becomes an entry of `$defs`.
+//
+// zod does not generate four JSON Schema forms the format needs: `uniqueItems`, a `not` on a property name, and
+// `required` combinations under `anyOf`/`oneOf`/`not`. Each is written into the JSON Schema with .meta() and
+// enforced in zod by a .refine() that checks the same thing (helpers below), so zod and the JSON Schema accept the
+// same files. The cross-reference rules of SPEC §19 are not schema rules; tools/check checks them (a subset).
+
+import * as z from "zod";
+
+/** True when no two items are equal (JSON Schema `uniqueItems`; the items here are strings). */
+const allDifferent = (items: readonly unknown[]) => new Set(items.map((i) => JSON.stringify(i))).size === items.length;
+
+/** An array whose items are all different: `uniqueItems: true` in the JSON Schema, a refinement in zod. */
+function unique<T extends z.ZodArray<z.ZodType>>(schema: T) {
+  return schema.refine(allDifferent, { error: "items must be unique" }).meta({ uniqueItems: true });
+}
+
+/** Whether a JSON object has the member `key` (JSON Schema `required: [key]`). */
+const has = (o: object, key: string) => Object.hasOwn(o, key);
+
+/** The CLDR <special> elements kept verbatim for one parent element (SPEC §18). */
+const cldrSpecial = (parent: string) =>
+  z.array(z.string().meta({ description: "The XML text of one <special> element." })).meta({
+    description: `Complete XML text of each CLDR <special> element whose parent corresponds to ${parent}, in document order (SPEC §18).`,
+  });
+
+export const Text = z
+  .string()
+  .meta({ id: "Text", description: "Text (SPEC §2.1): a JSON string of Unicode scalar values; no lone surrogates." });
+
+export const CodeUnits = z
+  .strictObject({
+    utf16: z
+      .array(
+        z
+          .string()
+          .regex(/^[0-9A-Fa-f]{4}$/u)
+          .meta({ description: "One UTF-16 code unit." }),
+      )
+      .min(1)
+      .meta({ description: "The UTF-16 code units, each four hex digits." }),
+  })
+  .meta({
+    id: "CodeUnits",
+    description: "CodeUnits (SPEC §2.2): exact UTF-16 code units, for values a Text cannot hold (Windows).",
+  });
+
+export const TextOrUnits = z
+  .xor([Text, CodeUnits])
+  .meta({ id: "TextOrUnits", description: "A Text or a CodeUnits value." });
+
+export const Id = z
+  .string()
+  .regex(/^[^\s,]{1,64}$/u)
+  .meta({ id: "Id", description: "A KeyId, FlickId, LayerId, DeadKeyId, MarkerId or FormId (SPEC §2.5)." });
+
+export const VariableId = z
+  .string()
+  .regex(/^[0-9A-Za-z_]{1,32}$/u)
+  .meta({ id: "VariableId", description: "A variable id (SPEC §13.1)." });
+
+export const MarkedText = z
+  .xor([
+    Text,
+    z
+      .array(
+        z
+          .xor([
+            Text,
+            z
+              .strictObject({
+                marker: Id.meta({ description: "The marker id." }),
+              })
+              .meta({ description: "A CLDR marker (SPEC §13.3)." }),
+            z
+              .strictObject({
+                variable: VariableId.meta({ description: "The variable id." }),
+              })
+              .meta({ description: "The value of a string variable (SPEC §13.1)." }),
+          ])
+          .meta({ description: "One item." }),
+      )
+      .min(1)
+      .meta({ description: "Items concatenated in order." }),
+  ])
+  .meta({
+    id: "MarkedText",
+    description: "MarkedText (SPEC §2.3): a Text, or an array of Texts, markers and string variables.",
+  });
+
+export const Pattern = z.string().meta({
+  id: "Pattern",
+  description: "A CLDR transform/reorder pattern or variable value, verbatim in CLDR syntax (SPEC §2.4).",
+});
+
+export const PositionId = z
+  .string()
+  .regex(/^[A-Za-z][A-Za-z0-9_]{0,63}$/u)
+  .meta({
+    id: "PositionId",
+    description: "A position id (SPEC §2.5, §6.1); W3C UI Events code values are recommended.",
+  });
+
+/** A modifier component; not a $defs entry because the old schema inlined it. */
+const ModifierComponent = z
+  .string()
+  .regex(/^[A-Za-z][A-Za-z0-9]{0,31}$/u)
+  .meta({
+    description:
+      "A modifier component: shift, ctrl, ctrlL, ctrlR, alt, altL, altR, caps, other, or a name declared in customModifiers (SPEC §7).",
+  });
+
+export const ModifierSet = unique(z.array(ModifierComponent)).meta({
+  id: "ModifierSet",
+  description:
+    'A modifier set (SPEC §7.1): components active together; [] means none, ["other"] means no other layer matches.',
+});
+
+export const Modifiers = z.array(ModifierSet).min(1).meta({
+  id: "Modifiers",
+  description: "The modifier sets a layer serves (CLDR's comma-separated layer/@modifiers).",
+});
+
+export const Binding = z
+  .xor([
+    z.string().min(1).meta({ description: "Shorthand: the key emits this Text." }),
+    z
+      .strictObject({
+        output: MarkedText.meta({ description: "The emitted text." }),
+      })
+      .meta({ description: "The key emits this MarkedText." }),
+    z
+      .strictObject({
+        key: Id.meta({ description: "The KeyId." }),
+      })
+      .meta({ description: "The key behaves as this Key of `keys` (or an implied key)." }),
+    z
+      .strictObject({
+        deadKey: Id.meta({ description: "The DeadKeyId." }),
+      })
+      .meta({ description: "The key is this dead key." }),
+    CodeUnits,
+  ])
+  .meta({ id: "Binding", description: "What a position does in a layer (SPEC §9.2)." });
+
+export const DeadKeyRef = z
+  .strictObject({
+    deadKey: Id.meta({ description: "The DeadKeyId." }),
+  })
+  .meta({ id: "DeadKeyRef", description: "Another dead key." });
+
+export const Policy = z.enum(["error", "warning", "accept"]).meta({
+  id: "Policy",
+  description: "error: the build or conversion fails; warning: reported; accept: reported as accepted.",
+});
+
+export const OnLoss = z
+  .strictObject({
+    default: Policy.meta({ description: "Policy for kinds not listed in `kinds`." }).optional(),
+    kinds: z
+      .partialRecord(
+        z
+          .enum([
+            "cldr.*",
+            "cldr.capsFallbackExpanded",
+            "cldr.customForm",
+            "cldr.customModifierDropped",
+            "cldr.keyIdGenerated",
+            "cldr.positionNotInForm",
+            "cldr.windowsOnlyDropped",
+            "dll.*",
+            "dll.architectureUnsupported",
+            "dll.capsCellUnexpressed",
+            "dll.containerIgnored",
+            "dll.dispatcherNotRead",
+            "dll.duplicateRow",
+            "dll.keyboardTypeNotTrusted",
+            "dll.ligatureMismatch",
+            "dll.malformed",
+            "dll.modifierDropped",
+            "dll.nlsUnreadable",
+            "dll.registrationMissing",
+            "dll.resourceDropped",
+            "dll.unknownFlags",
+            "dll.unreachableColumn",
+            "dll.unreachableData",
+            "dll.unusualShape",
+            "general.*",
+            "general.displayDropped",
+            "general.duplicateDeadKeyEntry",
+            "general.extensionDropped",
+            "general.importInlined",
+            "general.layerOverlap",
+            "general.metadataDropped",
+            "general.noLayers",
+            "general.normalizationNotApplied",
+            "general.outputNormalized",
+            "general.bindingOnModifier",
+            "general.codeUnitsAreText",
+            "general.duplicateScanCode",
+            "general.duplicateVariableId",
+            "general.longPressDefaultInvalid",
+            "general.modifierSetInvalid",
+            "general.multiTapSelf",
+            "general.touchBaseMissing",
+            "general.testsDropped",
+            "general.touchDropped",
+            "general.unresolvedReference",
+            "klc.*",
+            "klc.editorDropped",
+            "klc.impliedRows",
+            "klc.nameTooLong",
+            "klc.notRepresentable",
+            "windows.*",
+            "windows.altGrConflict",
+            "windows.altOnlyLayer",
+            "windows.architectureUnsupported",
+            "windows.bidiMarksConflict",
+            "windows.capsNotExpressible",
+            "windows.capsUnmatched",
+            "windows.ctrlLetterFallback",
+            "windows.deadCharacterCollision",
+            "windows.deadCharacterInvalid",
+            "windows.deadKeyBaseUnencodable",
+            "windows.deadKeyFirstUnitComposes",
+            "windows.deadKeyNoMatchExpanded",
+            "windows.deadKeyNoMatchNotExpressible",
+            "windows.deadKeyResultUnencodable",
+            "windows.dispatcherNotCompiled",
+            "windows.frameKeyWithoutText",
+            "windows.installerMachinesMissing",
+            "windows.kanaLockNotExpressible",
+            "windows.langIdMissing",
+            "windows.ligatureTooLong",
+            "windows.ligatureTruncatedTyped",
+            "windows.lockUnmapped",
+            "windows.markerNotCompiled",
+            "windows.modifierUnmapped",
+            "windows.nlsNotCompiled",
+            "windows.noHardwareLayers",
+            "windows.numpadShiftUnreachable",
+            "windows.outputUnencodable",
+            "windows.pinOverridesModel",
+            "windows.registrationInvalid",
+            "windows.scanCodeMissing",
+            "windows.scanCodeUnsupported",
+            "windows.sgcapsDeadKey",
+            "windows.sgcapsLigature",
+            "windows.sharedVkRowConflict",
+            "windows.sideModifierWidened",
+            "windows.sizeLimit",
+            "windows.stringLanguageUnmapped",
+            "windows.tooManyColumns",
+            "windows.transformNotCompiled",
+            "windows.unreachableState",
+            "windows.versionUnrepresentable",
+            "windows.vkDuplicate",
+            "windows.vkMissing",
+            "windows.wow64Missing",
+            "windowsDefault.*",
+            "windowsDefault.altGr",
+            "windowsDefault.attributes",
+            "windowsDefault.builds",
+            "windowsDefault.deadCharacter",
+            "windowsDefault.dllName",
+            "windowsDefault.enableForSignInAndNewUsers",
+            "windowsDefault.enableForUser",
+            "windowsDefault.kbdVersion",
+            "windowsDefault.keyboardType",
+            "windowsDefault.lrmRlm",
+            "windowsDefault.modNumber",
+            "windowsDefault.modifierBits",
+            "windowsDefault.productCode",
+            "windowsDefault.registration",
+            "windowsDefault.scanCodeFlags",
+            "windowsDefault.scanCodeTableSize",
+            "windowsDefault.shiftLock",
+            "windowsDefault.strings",
+            "windowsDefault.tables",
+            "windowsDefault.uninstallEntry",
+            "windowsDefault.versionInfo",
+            "windowsDefault.vk",
+          ])
+          .meta({ description: "A loss kind of SPEC §17.3, a prefix wildcard, or windowsDefault.<rule>." }),
+        Policy,
+      )
+      .meta({
+        description: "Policy per loss kind, per `<prefix>.*`, or per defaulted-choice kind `windowsDefault.<rule>`.",
+      })
+      .optional(),
+  })
+  .meta({ id: "OnLoss", description: "Loss policy (SPEC §17.2)." });
+
+export const Version4 = z
+  .string()
+  .regex(/^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$/u)
+  .meta({ id: "Version4", description: "A Windows four-part version a.b.c.d (each 0–65535)." });
+
+export const LangIdText = z
+  .record(
+    z
+      .string()
+      .regex(/^[0-9A-Fa-f]{4}$/u)
+      .meta({ description: "A LANGID." }),
+    Text,
+  )
+  .meta({ id: "LangIdText", description: "Text per Windows LANGID (four hex digits)." });
+
+export const WinCell = z.xor([Text, CodeUnits, DeadKeyRef, z.null().meta({ description: "No character." })]).meta({
+  id: "WinCell",
+  description: "A Windows table cell of an extra row: Text, CodeUnits, a dead key, or null (WCH_NONE).",
+});
+
+const MetadataProvenance = z
+  .strictObject({
+    source: z.string().meta({ description: "Source file name or description." }).optional(),
+    format: z
+      .enum(["cldr", "klc", "windowsDll", "kbl", "other"])
+      .meta({ description: "Format of the source." })
+      .optional(),
+    cldrConformsTo: z.int().min(45).meta({ description: "conformsTo of the CLDR source." }).optional(),
+    cldrImports: z
+      .array(z.string().meta({ description: "One import path." }))
+      .meta({ description: "CLDR import paths that were inlined (cldr: prefix for base=cldr)." })
+      .optional(),
+    notes: Text.meta({ description: "Free text." }).optional(),
+  })
+  .meta({ description: "Informative record of where the data came from; never changes behaviour." });
+
+const Metadata = z
+  .strictObject({
+    id: z.string().min(1).meta({
+      description: "BCP 47 tag identifying this keyboard (CLDR keyboard3/@locale); its language is the primary locale.",
+    }),
+    locales: z
+      .array(z.string().min(1).meta({ description: "A BCP 47 tag." }))
+      .meta({ description: "Further BCP 47 tags of supported languages, in order (CLDR locales)." })
+      .optional(),
+    name: Text.meta({ description: "The keyboard's name (CLDR info/@name)." }),
+    localizedNames: z
+      .record(z.string(), Text)
+      .meta({ description: "The name in further languages, per BCP 47 tag." })
+      .optional(),
+    description: Text.meta({ description: "Free text." }).optional(),
+    authors: z
+      .array(
+        z
+          .strictObject({
+            name: Text.meta({ description: "Name." }),
+            email: z.string().meta({ description: "E-mail address." }).optional(),
+            url: z.string().meta({ description: "Web address." }).optional(),
+          })
+          .meta({ description: "An author." }),
+      )
+      .meta({ description: "Authors of the layout." })
+      .optional(),
+    attribution: Text.meta({ description: "Originating entity of the design (CLDR info/@attribution)." }).optional(),
+    layoutPattern: z.string().meta({ description: "Layout pattern such as QWERTY (CLDR info/@layout)." }).optional(),
+    indicator: z.string().meta({ description: "Short switcher label (CLDR info/@indicator)." }).optional(),
+    version: z
+      .string()
+      .meta({ description: "Version of the layout data; Semantic Versioning recommended (CLDR version/@number)." })
+      .optional(),
+    license: z.string().meta({ description: "SPDX licence expression for the layout data." }).optional(),
+    copyright: Text.meta({ description: "Copyright statement (.klc COPYRIGHT)." }).optional(),
+    organization: Text.meta({ description: "Publishing organisation (.klc COMPANY)." }).optional(),
+    draft: z
+      .enum(["approved", "contributed", "provisional", "unconfirmed"])
+      .meta({ description: "CLDR approval status (keyboard3/@draft)." })
+      .optional(),
+    provenance: MetadataProvenance.optional(),
+  })
+  .meta({ description: "Descriptive data (SPEC §4)." });
+
+const Settings = z
+  .strictObject({
+    normalization: z
+      .enum(["enabled", "disabled"])
+      .meta({ description: "CLDR normalisation: enabled (default) or disabled." })
+      .optional(),
+    capsLockFallback: z
+      .boolean()
+      .meta({
+        description:
+          "With Caps Lock on and no binding in the matched layer, resolve again without Caps Lock (default true).",
+      })
+      .optional(),
+    capsLockOffBy: z
+      .enum(["capsLock", "shift"])
+      .meta({ description: "What turns Caps Lock off: capsLock (default) or shift (Shift Lock)." })
+      .optional(),
+    bidiMarksOnShiftBackspace: z
+      .boolean()
+      .meta({ description: "Left/right Shift + Backspace type LRM/RLM (default false)." })
+      .optional(),
+  })
+  .meta({ description: "Behaviour settings (SPEC §5)." });
+
+const PositionsEntry = z
+  .strictObject({
+    scanCode: z
+      .string()
+      .regex(/^([0-9A-Fa-f]{2}|[Ee][01][0-9A-Fa-f]{2})$/u)
+      .meta({ description: "Set-1 scan code: 2 hex digits, or E0xx / E1xx." })
+      .optional(),
+    name: Text.meta({ description: "The key's display name (Windows key names, .klc KEYNAME)." }).optional(),
+    numLock: z
+      .boolean()
+      .meta({ description: "The key is a number-pad key subject to Num Lock (SPEC §14.1)." })
+      .optional(),
+    description: Text.meta({ description: "Free text." }).optional(),
+  })
+  .meta({ description: "A physical key (SPEC §6.1)." });
+
+const Positions = z
+  .record(PositionId, PositionsEntry)
+  .meta({ description: "Physical keys by PositionId (SPEC §6.1)." });
+
+const FormsEntry = z
+  .strictObject({
+    rows: z
+      .array(z.array(PositionId).meta({ description: "One row." }))
+      .min(1)
+      .meta({ description: "Rows top to bottom, each a list of positions left to right." }),
+    cldrSpecial: cldrSpecial("this form").optional(),
+  })
+  .meta({ description: "A hardware form (SPEC §6.2)." });
+
+const Forms = z
+  .record(Id.meta({ not: { const: "touch" } }), FormsEntry)
+  .refine((forms) => !has(forms, "touch"), { error: 'a FormId must not be "touch"' })
+  .meta({ description: "Hardware forms by FormId (SPEC §6.2)." });
+
+const CustomModifiersEntry = z
+  .strictObject({
+    kind: z.enum(["held", "lock"]).meta({ description: "held: active while held; lock: toggled." }),
+    positions: unique(z.array(PositionId).min(1)).meta({ description: "The positions that operate it." }),
+    fallback: z
+      .boolean()
+      .meta({
+        description:
+          "lock only: with the lock on and no binding in the matched layer, resolve again without it (SPEC §9.3). Default true.",
+      })
+      .optional(),
+    description: Text.meta({ description: "Free text." }).optional(),
+  })
+  .meta({ description: "A custom modifier component (SPEC §7.2)." });
+
+/** Names a custom modifier component cannot take (SPEC §7.2). */
+const reservedComponents = ["none", "other", "shift", "ctrl", "ctrlL", "ctrlR", "alt", "altL", "altR", "caps"];
+
+const CustomModifiers = z
+  .record(
+    ModifierComponent.refine((name) => !reservedComponents.includes(name), {
+      error: "a built-in component name cannot be redefined",
+    }).meta({ not: { enum: reservedComponents } }),
+    CustomModifiersEntry,
+  )
+  .meta({ description: "Custom modifier components (SPEC §7.2)." });
+
+const KeysEntry = z
+  .strictObject({
+    output: MarkedText.meta({ description: "Emitted text (CLDR key/@output)." }).optional(),
+    deadKey: Id.meta({ description: "The key is this dead key." }).optional(),
+    gap: z.literal(true).meta({ description: "The key is empty space (CLDR key/@gap)." }).optional(),
+    width: z
+      .number()
+      .min(0.01)
+      .max(100)
+      .meta({ description: "Width in key units, default 1 (CLDR key/@width)." })
+      .optional(),
+    stretch: z.literal(true).meta({ description: "May be stretched in a touch row (CLDR key/@stretch)." }).optional(),
+    layerId: Id.meta({ description: "Switches the touch layout to this layer (CLDR key/@layerId)." }).optional(),
+    flickId: Id.meta({ description: "The key's flicks (CLDR key/@flickId)." }).optional(),
+    longPressKeyIds: z.array(Id).min(1).meta({ description: "Long-press choices in order." }).optional(),
+    longPressDefaultKeyId: Id.meta({ description: "Default long-press choice." }).optional(),
+    multiTapKeyIds: z.array(Id).min(1).meta({ description: "Keys for 2, 3, … taps." }).optional(),
+    function: z
+      .enum(["backspace", "enter", "tab", "escape", "shift", "capsLock", "space"])
+      .meta({ description: "Informative identity of a touch key." })
+      .optional(),
+  })
+  .refine((key) => ["output", "deadKey", "gap", "layerId", "function"].some((k) => has(key, k)), {
+    error: "a key needs output, deadKey, gap, layerId or function",
+  })
+  .refine((key) => !(has(key, "output") && has(key, "deadKey")), {
+    error: "a key has output or deadKey, not both",
+    path: ["deadKey"],
+  })
+  .meta({
+    description: "A CLDR key: an output with gestures (SPEC §8).",
+    anyOf: [
+      { required: ["output"] },
+      { required: ["deadKey"] },
+      { required: ["gap"] },
+      { required: ["layerId"] },
+      { required: ["function"] },
+    ],
+    not: { required: ["output", "deadKey"] },
+  });
+
+const Keys = z.record(Id, KeysEntry).meta({ description: "CLDR's bag of keys by KeyId (SPEC §8)." });
+
+const HardwareLayers = z
+  .strictObject({
+    id: Id.meta({ description: "Layer id (CLDR layer/@id)." }).optional(),
+    modifiers: Modifiers.meta({ description: "The modifier sets this layer serves." }),
+    bindings: z
+      .record(PositionId, Binding)
+      .meta({ description: "Binding per position; an absent position does nothing in this layer." }),
+    cldrSpecial: cldrSpecial("this layer").optional(),
+  })
+  .meta({ description: "A hardware layer (SPEC §9.1)." });
+
+const Hardware = z
+  .strictObject({
+    formId: Id.meta({ description: "The form the layout was designed on (CLDR layers/@formId)." }).optional(),
+    minDeviceWidth: z
+      .int()
+      .min(1)
+      .max(999)
+      .meta({ description: "CLDR layers/@minDeviceWidth, millimetres." })
+      .optional(),
+    layers: z.array(HardwareLayers).min(1).meta({ description: "The layers." }),
+    cldrSpecial: cldrSpecial("the hardware layers element").optional(),
+  })
+  .meta({ description: "The physical keyboard's layers (SPEC §9.1)." });
+
+const TouchLayers = z
+  .strictObject({
+    id: Id.meta({ description: "Layer id; one layer of a set is base." }),
+    modifiers: Modifiers.meta({ description: "Optional modifier sets." }).optional(),
+    rows: z
+      .array(z.array(Id).meta({ description: "One row." }))
+      .min(1)
+      .meta({ description: "Rows of KeyIds." }),
+    cldrSpecial: cldrSpecial("this layer").optional(),
+  })
+  .meta({ description: "A touch layer (SPEC §9.4)." });
+
+const Touch = z
+  .strictObject({
+    minDeviceWidth: z.int().min(1).max(999).meta({ description: "Minimum device width in millimetres." }).optional(),
+    layers: z.array(TouchLayers).min(1).meta({ description: "The layers." }),
+    cldrSpecial: cldrSpecial("this layers element").optional(),
+  })
+  .meta({ description: "A touch layer set." });
+
+const DeadKeysEntry = z
+  .strictObject({
+    spacing: TextOrUnits.meta({
+      description: "Text the dead key stands for when it does not combine; default Windows dead character.",
+    }),
+    name: Text.meta({ description: "Name of the dead key (.klc KEYNAME_DEAD)." }).optional(),
+    entries: z
+      .array(
+        z
+          .strictObject({
+            base: z
+              .xor([Text, DeadKeyRef, CodeUnits])
+              .meta({ description: "The input that composes: text, another dead key, or code units." }),
+            result: z
+              .xor([Text, DeadKeyRef, CodeUnits])
+              .meta({ description: "The result: text, a chained dead key, or code units." }),
+          })
+          .meta({ description: "A dead-key table entry (SPEC §10)." }),
+      )
+      .meta({ description: "Composition table in order; first match wins." }),
+    noMatch: z
+      .enum(["emitBoth", "emitText", "emitSpacing", "emitNothing"])
+      .meta({ description: "Behaviour when the next input has no entry (default emitBoth)." })
+      .optional(),
+    display: MarkedText.meta({ description: "Key-cap text if different from spacing." }).optional(),
+  })
+  .meta({ description: "A dead key (SPEC §10)." });
+
+const DeadKeys = z.record(Id, DeadKeysEntry).meta({ description: "Dead keys by DeadKeyId (SPEC §10)." });
+
+const FlicksEntry = z
+  .strictObject({
+    segments: z
+      .array(
+        z
+          .strictObject({
+            directions: z
+              .array(z.enum(["n", "e", "s", "w", "ne", "nw", "se", "sw"]).meta({ description: "A direction." }))
+              .min(1)
+              .meta({ description: "Path of directions." }),
+            keyId: Id.meta({ description: "The resulting key." }),
+          })
+          .meta({ description: "One flick segment." }),
+      )
+      .min(1)
+      .meta({ description: "Flick paths and their results." }),
+    cldrSpecial: cldrSpecial("this flick").optional(),
+  })
+  .meta({ description: "A flick set (SPEC §11.1)." });
+
+const Flicks = z.record(Id, FlicksEntry).meta({ description: "Flicks by FlickId (SPEC §11.1)." });
+
+const Displays = z
+  .strictObject({
+    entries: z
+      .array(
+        z
+          .strictObject({
+            output: MarkedText.meta({ description: "Output whose keys get this cap." }).optional(),
+            keyId: Id.meta({ description: "The key that gets this cap." }).optional(),
+            display: MarkedText.meta({ description: "Text to show." }),
+          })
+          .refine((rule) => has(rule, "output") !== has(rule, "keyId"), { error: "a rule has output or keyId" })
+          .meta({
+            description: "One rule: for keys with this output, or for the key keyId.",
+            oneOf: [{ required: ["output"] }, { required: ["keyId"] }],
+          }),
+      )
+      .meta({ description: "Display rules." })
+      .optional(),
+    baseCharacter: Text.meta({ description: "Base for combining marks instead of U+25CC." }).optional(),
+    cldrSpecial: cldrSpecial("displays").optional(),
+  })
+  .meta({ description: "Key-cap display data (SPEC §12)." });
+
+const TransformGroup = z
+  .strictObject({
+    transforms: z
+      .array(
+        z
+          .strictObject({
+            from: Pattern.meta({ description: "Match pattern." }),
+            to: Pattern.meta({ description: "Replacement; absent deletes." }).optional(),
+          })
+          .meta({ description: "A transform." }),
+      )
+      .min(1)
+      .meta({ description: "Rules in order; the first match applies." }),
+    cldrSpecial: cldrSpecial("this transformGroup").optional(),
+  })
+  .meta({ description: "A group of transforms." });
+
+const Reorder = z
+  .strictObject({
+    from: Pattern.meta({ description: "Characters matched." }),
+    before: Pattern.meta({ description: "Required preceding context." }).optional(),
+    order: z
+      .xor([
+        z.int().min(-128).max(127).meta({ description: "One value for all." }),
+        z
+          .array(z.int().min(-128).max(127).meta({ description: "A weight." }))
+          .min(1)
+          .meta({ description: "One value per element; the last repeats." }),
+      ])
+      .meta({ description: "Primary weights." })
+      .optional(),
+    tertiary: z
+      .xor([
+        z.int().min(-128).max(127).meta({ description: "One value for all." }),
+        z
+          .array(z.int().min(-128).max(127).meta({ description: "A weight." }))
+          .min(1)
+          .meta({ description: "One value per element; the last repeats." }),
+      ])
+      .meta({ description: "Tertiary weights." })
+      .optional(),
+    tertiaryBase: z
+      .xor([
+        z.boolean().meta({ description: "One value for all." }),
+        z
+          .array(z.boolean().meta({ description: "A value." }))
+          .min(1)
+          .meta({ description: "One value per element; the last repeats." }),
+      ])
+      .meta({ description: "May carry tertiary characters." })
+      .optional(),
+    preBase: z
+      .xor([
+        z.boolean().meta({ description: "One value for all." }),
+        z
+          .array(z.boolean().meta({ description: "A value." }))
+          .min(1)
+          .meta({ description: "One value per element; the last repeats." }),
+      ])
+      .meta({ description: "Typed before the base." })
+      .optional(),
+  })
+  .meta({ description: "A reorder rule." });
+
+const ReorderGroup = z
+  .strictObject({
+    reorders: z.array(Reorder).min(1).meta({ description: "Reorder rules." }),
+    cldrSpecial: cldrSpecial("this transformGroup").optional(),
+  })
+  .meta({ description: "A group of reorders." });
+
+const TransformsSpecial = z
+  .strictObject({
+    simple: cldrSpecial("transforms type=simple").optional(),
+    backspace: cldrSpecial("transforms type=backspace").optional(),
+  })
+  .meta({ description: "special children of the transforms elements." });
+
+const Transforms = z
+  .strictObject({
+    simple: z
+      .array(
+        z
+          .xor([TransformGroup, ReorderGroup])
+          .meta({ description: "A transform group: transforms or reorders, never both (SPEC §13.2)." }),
+      )
+      .meta({ description: "Groups applied after each input." })
+      .optional(),
+    backspace: z
+      .array(
+        z
+          .xor([TransformGroup, ReorderGroup])
+          .meta({ description: "A transform group: transforms or reorders, never both (SPEC §13.2)." }),
+      )
+      .meta({ description: "Groups applied on the backspace action." })
+      .optional(),
+    cldrSpecial: TransformsSpecial.optional(),
+  })
+  .meta({ description: "CLDR transforms (SPEC §13.2)." });
+
+const KeyPress = z
+  .strictObject({
+    key: Id.meta({ description: "KeyId." }),
+    flick: z
+      .array(z.enum(["n", "e", "s", "w", "ne", "nw", "se", "sw"]).meta({ description: "A direction." }))
+      .min(1)
+      .meta({ description: "Flick path." })
+      .optional(),
+    longPress: z.int().min(0).meta({ description: "Long-press choice; 0 = default." }).optional(),
+    tapCount: z.int().min(2).meta({ description: "Number of taps, at least 2." }).optional(),
+  })
+  .refine((press) => ["flick", "longPress", "tapCount"].filter((k) => has(press, k)).length <= 1, {
+    error: "at most one of flick, longPress, tapCount",
+  })
+  .meta({
+    description: "Press a Key.",
+    not: {
+      anyOf: [
+        { required: ["flick", "longPress"] },
+        { required: ["flick", "tapCount"] },
+        { required: ["longPress", "tapCount"] },
+      ],
+    },
+  });
+
+const PositionPress = z
+  .strictObject({
+    position: PositionId.meta({ description: "The position." }),
+    modifiers: unique(z.array(ModifierComponent))
+      .meta({
+        description:
+          "Held modifiers, by side: shiftL, shiftR, ctrlL, ctrlR, altL, altR (shift, ctrl, alt = left), custom held components.",
+      })
+      .optional(),
+    locks: unique(z.array(ModifierComponent))
+      .meta({ description: "Locks on: caps, custom lock components." })
+      .optional(),
+  })
+  .meta({ description: "Press a hardware position." });
+
+const KeystrokeStep = z
+  .strictObject({
+    keystroke: z
+      .xor([KeyPress, PositionPress])
+      .meta({ description: "A CLDR key press with optional gesture, or a hardware position press." }),
+  })
+  .meta({ description: "A keystroke." });
+
+const Test = z
+  .strictObject({
+    name: z.string().meta({ description: "Name." }),
+    startContext: Text.meta({ description: "Text before the insertion point." }).optional(),
+    steps: z
+      .array(
+        z
+          .xor([
+            KeystrokeStep,
+            z
+              .strictObject({
+                emit: Text.meta({ description: "The text." }),
+              })
+              .meta({ description: "Input text directly." }),
+            z
+              .strictObject({
+                backspace: z.literal(true).meta({ description: "Always true." }),
+              })
+              .meta({ description: "The backspace action." }),
+            z
+              .strictObject({
+                check: Text.meta({ description: "Expected text before the insertion point." }),
+              })
+              .meta({ description: "Check the context." }),
+          ])
+          .meta({ description: "One test step (SPEC §15)." }),
+      )
+      .meta({ description: "Steps in order." }),
+    cldrSpecial: cldrSpecial("this test").optional(),
+  })
+  .meta({ description: "A test." });
+
+const TestSuite = z
+  .strictObject({
+    name: z.string().meta({ description: "Name." }),
+    tests: z.array(Test).min(1).meta({ description: "Tests." }),
+    cldrSpecial: cldrSpecial("this suite").optional(),
+  })
+  .meta({ description: "A suite." });
+
+const Tests = z
+  .strictObject({
+    info: z
+      .strictObject({
+        name: z.string().meta({ description: "Name." }),
+        author: Text.meta({ description: "Author." }).optional(),
+        keyboard: z.string().meta({ description: "File name of the tested keyboard." }).optional(),
+      })
+      .meta({ description: "Test file information." }),
+    repertoires: z
+      .array(
+        z
+          .strictObject({
+            name: z.string().meta({ description: "Name." }),
+            chars: z.string().meta({ description: "UnicodeSet in CLDR test syntax." }),
+            type: z
+              .enum(["default", "simple", "gesture", "flick", "longPress", "multiTap", "hardware"])
+              .meta({ description: "How the characters must be typeable." })
+              .optional(),
+          })
+          .meta({ description: "A repertoire test." }),
+      )
+      .meta({ description: "Repertoire tests." })
+      .optional(),
+    suites: z.array(TestSuite).meta({ description: "Test suites." }).optional(),
+    cldrSpecial: cldrSpecial("this test file").optional(),
+  })
+  .meta({ description: "A test file (SPEC §15)." });
+
+const TargetsWindowsModifiers = z
+  .strictObject({
+    bits: z
+      .array(
+        z
+          .strictObject({
+            vk: z
+              .string()
+              .regex(/^([A-Za-z0-9_]{1,32}|0[xX][0-9A-Fa-f]{2})$/u)
+              .meta({ description: "The modifier VK." }),
+            bit: z
+              .literal([1, 2, 4, 8, 16, 32, 64, 128])
+              .meta({ description: "Its modifier bit (1, 2, 4, 8, 16, 32, 64, 128)." }),
+            component: z
+              .string()
+              .regex(/^[A-Za-z][A-Za-z0-9]{0,31}$/u)
+              .meta({ description: "The kbl component it stands for." }),
+          })
+          .meta({ description: "One entry." }),
+      )
+      .min(1)
+      .meta({ description: "VK_TO_BIT entries in order." })
+      .optional(),
+    modNumber: z
+      .array(
+        z
+          .xor([
+            z.int().min(0).max(14).meta({ description: "Column." }),
+            z.null().meta({ description: "SHFT_INVALID." }),
+          ])
+          .meta({ description: "Column index or null." }),
+      )
+      .min(1)
+      .max(256)
+      .meta({ description: "ModNumber: column per bit combination (index), null = SHFT_INVALID." })
+      .optional(),
+    kanaLockComponent: z
+      .string()
+      .regex(/^[A-Za-z][A-Za-z0-9]{0,31}$/u)
+      .meta({ description: "The custom lock that is Windows' Kana lock (KANALOK)." })
+      .optional(),
+  })
+  .meta({ description: "MODIFIERS (rules modifierBits, modNumber)." });
+
+const TargetsWindowsKeysEntry = z
+  .strictObject({
+    vk: z
+      .string()
+      .regex(/^([A-Za-z0-9_]{1,32}|0[xX][0-9A-Fa-f]{2})$/u)
+      .meta({ description: "Virtual key of the position (rule vk)." })
+      .optional(),
+    scanCodeFlags: unique(
+      z.array(
+        z.enum(["ext", "multiVk", "special", "numpad", "unicode", "injectedVk", "mappedVk", "break"]).meta({
+          description: "KBDEXT, KBDMULTIVK, KBDSPECIAL, KBDNUMPAD, KBDUNICODE, KBDINJECTEDVK, KBDMAPPEDVK, KBDBREAK.",
+        }),
+      ),
+    )
+      .meta({ description: "Scan-code flags (rule scanCodeFlags)." })
+      .optional(),
+    attributes: unique(
+      z.array(
+        z.enum(["CAPLOK", "SGCAPS", "CAPLOKALTGR", "KANALOK", "GRPSELTAP"]).meta({ description: "One attribute." }),
+      ),
+    )
+      .meta({ description: "Row attributes (rule attributes)." })
+      .optional(),
+  })
+  .meta({ description: "Windows data of one position." });
+
+const TargetsWindowsKeys = z
+  .record(PositionId, TargetsWindowsKeysEntry)
+  .meta({ description: "Windows data per position." });
+
+const TargetsWindowsTables = z
+  .strictObject({
+    width: z.int().min(1).max(15).meta({ description: "Number of columns of the table." }),
+    rows: z
+      .array(
+        z
+          .xor([
+            PositionId,
+            z
+              .strictObject({
+                vk: z
+                  .string()
+                  .regex(/^([A-Za-z0-9_]{1,32}|0[xX][0-9A-Fa-f]{2})$/u)
+                  .meta({ description: "The VK." }),
+              })
+              .meta({ description: "A VK of extraRows." }),
+          ])
+          .meta({ description: "A row." }),
+      )
+      .meta({ description: "Rows in order: a position, or a VK of extraRows." }),
+  })
+  .meta({ description: "One table." });
+
+const TargetsWindowsExtraRows = z
+  .strictObject({
+    vk: z
+      .string()
+      .regex(/^([A-Za-z0-9_]{1,32}|0[xX][0-9A-Fa-f]{2})$/u)
+      .meta({ description: "The row's VK." }),
+    attributes: unique(
+      z.array(
+        z.enum(["CAPLOK", "SGCAPS", "CAPLOKALTGR", "KANALOK", "GRPSELTAP"]).meta({ description: "One attribute." }),
+      ),
+    )
+      .meta({ description: "Row attributes." })
+      .optional(),
+    cells: z.array(WinCell).min(1).max(15).meta({ description: "Cells per column." }),
+  })
+  .meta({ description: "One row." });
+
+const TargetsWindowsRegistration = z
+  .strictObject({
+    klid: z
+      .string()
+      .regex(/^[0-9A-Fa-f]{8}$/u)
+      .meta({ description: "KLID, 8 hex digits." })
+      .optional(),
+    langId: z
+      .string()
+      .regex(/^[0-9A-Fa-f]{4}$/u)
+      .meta({ description: "LANGID, 4 hex digits (no default)." })
+      .optional(),
+    layoutId: z
+      .string()
+      .regex(/^[0-9A-Fa-f]{4}$/u)
+      .meta({ description: "Layout Id, 4 hex digits." })
+      .optional(),
+    layoutText: Text.meta({ description: "Layout Text." }).optional(),
+    localeName: z.string().meta({ description: "Layout Locale Name (custom locales)." }).optional(),
+    customLanguageName: Text.meta({ description: "Custom Language Name." }).optional(),
+    productCode: z
+      .string()
+      .regex(/^\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}$/u)
+      .meta({
+        description:
+          "Product GUID, {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}: ownership marker, uninstall-entry key, upgrade identity (rule productCode, targets/windows-install.md §2).",
+      })
+      .optional(),
+  })
+  .meta({ description: "Registry data for the installer (rule registration)." });
+
+const TargetsWindowsInstall = z
+  .strictObject({
+    enableForUser: z
+      .boolean()
+      .meta({ description: "Add the layout to the installing user's input list (rule enableForUser, default true)." })
+      .optional(),
+    enableForSignInAndNewUsers: z
+      .boolean()
+      .meta({
+        description:
+          "Also add the layout to the sign-in screen and to accounts created later (rule enableForSignInAndNewUsers, default false; targets/windows-install.md §7.1).",
+      })
+      .optional(),
+    productName: Text.meta({ description: "Display name of the uninstall entry (rule uninstallEntry)." }).optional(),
+    productVersion: z
+      .string()
+      .min(1)
+      .meta({ description: "Version shown in the uninstall entry, free text (rule uninstallEntry)." })
+      .optional(),
+    publisher: Text.meta({ description: "Publisher of the uninstall entry (rule uninstallEntry)." }).optional(),
+  })
+  .meta({ description: "Installer choices (targets/windows-install.md)." });
+
+const TargetsWindowsNlsVkToF = z
+  .strictObject({
+    vk: z
+      .string()
+      .regex(/^([A-Za-z0-9_]{1,32}|0[xX][0-9A-Fa-f]{2})$/u)
+      .meta({ description: "Vk." }),
+    procType: z.int().min(0).max(2).meta({ description: "NLSFEProcType 0–2." }),
+    procCurrent: z.int().min(0).max(255).meta({ description: "NLSFEProcCurrent." }),
+    procSwitch: z.int().min(0).max(255).meta({ description: "NLSFEProcSwitch." }),
+    proc: z
+      .array(
+        z
+          .strictObject({
+            index: z.int().min(0).max(15).meta({ description: "NLSFEProcIndex, 0–15." }),
+            param: z.int().min(0).max(4294967295).meta({ description: "NLSFEProcParam." }),
+          })
+          .meta({ description: "A VK_FPARAM entry." }),
+      )
+      .min(8)
+      .max(8)
+      .meta({ description: "NLSFEProc[8]." }),
+    procAlt: z
+      .array(
+        z
+          .strictObject({
+            index: z.int().min(0).max(15).meta({ description: "NLSFEProcIndex, 0–15." }),
+            param: z.int().min(0).max(4294967295).meta({ description: "NLSFEProcParam." }),
+          })
+          .meta({ description: "A VK_FPARAM entry." }),
+      )
+      .min(8)
+      .max(8)
+      .meta({ description: "NLSFEProcAlt[8]." }),
+  })
+  .meta({ description: "One VK_F entry." });
+
+const TargetsWindowsNls = z
+  .strictObject({
+    oemIdentifier: z.int().min(0).max(65535).meta({ description: "OEMIdentifier." }).optional(),
+    layoutInformation: z.int().min(0).max(65535).meta({ description: "LayoutInformation." }).optional(),
+    vkToF: z.array(TargetsWindowsNlsVkToF).meta({ description: "VK_F entries." }).optional(),
+    mouseVKeys: z
+      .array(
+        z
+          .strictObject({
+            vk: z
+              .string()
+              .regex(/^([A-Za-z0-9_]{1,32}|0[xX][0-9A-Fa-f]{2})$/u)
+              .meta({ description: "Vk." }),
+            flags: unique(z.array(z.enum(["ext", "multiVk", "special", "numpad"]).meta({ description: "A flag." })))
+              .meta({ description: "Flags." })
+              .optional(),
+          })
+          .meta({ description: "One entry." }),
+      )
+      .meta({ description: "pusMouseVKey entries." })
+      .optional(),
+  })
+  .meta({ description: "KbdNlsLayerDescriptor table: carried, not compiled." });
+
+const TargetsWindowsDispatcher = z
+  .strictObject({
+    tables: z
+      .array(
+        z
+          .strictObject({
+            dllName: z.string().meta({ description: "Layout DLL file name." }),
+            type: z.int().min(0).meta({ description: "dwType." }),
+            subType: z.int().min(0).meta({ description: "dwSubType." }),
+          })
+          .meta({ description: "One entry." }),
+      )
+      .max(8)
+      .meta({ description: "KBDTABLE_DESC entries (at most 8)." })
+      .optional(),
+    realDllFile: z.string().meta({ description: "File name returned by KbdLayerRealDllFile." }).optional(),
+  })
+  .meta({ description: "Multi-table dispatcher data: carried, not compiled." });
+
+const TargetsWindows = z
+  .strictObject({
+    dllName: z
+      .string()
+      .regex(/^[A-Za-z][A-Za-z0-9_]{0,7}$/u)
+      .meta({ description: "DLL file name without .dll (rule dllName)." })
+      .optional(),
+    builds: unique(z.array(z.enum(["x86", "x64", "wow64", "arm64x"]).meta({ description: "One build." })).min(1))
+      .meta({ description: "DLL builds to make (rule builds)." })
+      .optional(),
+    useTableA: z
+      .boolean()
+      .meta({
+        description:
+          "false: rule vk uses no Table A at all, the file's VKs are exactly its pins (default true; targets/windows.md §5).",
+      })
+      .optional(),
+    localeFlags: z
+      .strictObject({
+        altGr: z.boolean().meta({ description: "KLLF_ALTGR (rule altGr)." }).optional(),
+        shiftLock: z.boolean().meta({ description: "KLLF_SHIFTLOCK (rule shiftLock)." }).optional(),
+        lrmRlm: z.boolean().meta({ description: "KLLF_LRM_RLM (rule lrmRlm)." }).optional(),
+      })
+      .meta({ description: "fLocaleFlags low word." })
+      .optional(),
+    kbdVersion: z
+      .int()
+      .min(0)
+      .max(65535)
+      .meta({ description: "High word of fLocaleFlags (rule kbdVersion)." })
+      .optional(),
+    keyboardType: z
+      .strictObject({
+        type: z.int().min(0).max(4294967295).meta({ description: "dwType." }),
+        subType: z.int().min(0).max(4294967295).meta({ description: "dwSubType." }),
+      })
+      .meta({ description: "dwType and dwSubType (rule keyboardType)." })
+      .optional(),
+    modifiers: TargetsWindowsModifiers.optional(),
+    keys: TargetsWindowsKeys.optional(),
+    scanCodeTableSize: z
+      .int()
+      .min(1)
+      .max(255)
+      .meta({ description: "bMaxVSCtoVK (rule scanCodeTableSize)." })
+      .optional(),
+    tables: z.array(TargetsWindowsTables).meta({ description: "Character tables in order (rule tables)." }).optional(),
+    extraRows: z.array(TargetsWindowsExtraRows).meta({ description: "Rows for VKs no position produces." }).optional(),
+    deadKeys: z
+      .record(
+        z.string(),
+        z
+          .strictObject({
+            character: TextOrUnits.meta({
+              description: "The dead character, one unit (rule deadCharacter).",
+            }).optional(),
+          })
+          .meta({ description: "Windows data of one dead key." }),
+      )
+      .meta({ description: "Windows data per dead key." })
+      .optional(),
+    strings: z
+      .strictObject({
+        layoutName: LangIdText.meta({ description: "String 1000 per LANGID." }).optional(),
+        languageName: LangIdText.meta({ description: "String 1100 per LANGID." }).optional(),
+        localeName: z.string().meta({ description: "String 1200, a locale name." }).optional(),
+      })
+      .meta({ description: "DLL strings (rule strings)." })
+      .optional(),
+    versionInfo: z
+      .strictObject({
+        fileVersion: Version4.meta({ description: "FileVersion." }).optional(),
+        productVersion: Version4.meta({ description: "ProductVersion." }).optional(),
+        companyName: Text.meta({ description: "CompanyName." }).optional(),
+        legalCopyright: Text.meta({ description: "LegalCopyright." }).optional(),
+        fileDescription: Text.meta({ description: "FileDescription." }).optional(),
+      })
+      .meta({ description: "Version resource (rule versionInfo)." })
+      .optional(),
+    registration: TargetsWindowsRegistration.optional(),
+    install: TargetsWindowsInstall.optional(),
+    nls: TargetsWindowsNls.optional(),
+    dispatcher: TargetsWindowsDispatcher.optional(),
+    onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+  })
+  .meta({ description: "Windows build choices (SPEC §16.1, targets/windows.md)." });
+
+const Targets = z
+  .strictObject({
+    windows: TargetsWindows.optional(),
+    klc: z
+      .strictObject({
+        msklcEditorCompatible: z
+          .boolean()
+          .meta({ description: "Write only what the MSKLC editor keeps (default false)." })
+          .optional(),
+        versionLine: z.string().meta({ description: "Text of the VERSION line." }).optional(),
+        onLoss: OnLoss.meta({ description: "Loss policy for .klc conversion." }).optional(),
+      })
+      .meta({ description: ".klc conversion choices (SPEC §16.2)." })
+      .optional(),
+    cldr: z
+      .strictObject({
+        conformsTo: z.int().min(45).meta({ description: "keyboard3/@conformsTo to write." }).optional(),
+        locale: z.string().meta({ description: "keyboard3/@locale if different from metadata.id." }).optional(),
+        carryInSpecial: z
+          .boolean()
+          .meta({ description: "Carry kbl-only data in a <special> element (default true)." })
+          .optional(),
+        onLoss: OnLoss.meta({ description: "Loss policy for CLDR conversion." }).optional(),
+      })
+      .meta({ description: "CLDR conversion choices (SPEC §16.3)." })
+      .optional(),
+  })
+  .meta({ description: "Per-target choices (SPEC §16)." });
+
+export const KblFile = z
+  .strictObject({
+    $schema: z.string().meta({ description: "Schema URL; informative." }).optional(),
+    kbl: z.literal("0.1").meta({ description: "Format version." }),
+    metadata: Metadata,
+    settings: Settings.optional(),
+    positions: Positions.optional(),
+    forms: Forms.optional(),
+    customModifiers: CustomModifiers.optional(),
+    keys: Keys.optional(),
+    hardware: Hardware.optional(),
+    touch: z.array(Touch).meta({ description: "Touch layouts (SPEC §9.4)." }).optional(),
+    deadKeys: DeadKeys.optional(),
+    flicks: Flicks.optional(),
+    displays: Displays.optional(),
+    variables: z
+      .array(
+        z
+          .strictObject({
+            id: VariableId.meta({ description: "Unique id." }),
+            type: z.enum(["string", "set", "uset"]).meta({ description: "string, set or uset." }),
+            value: Pattern.meta({ description: "Value in CLDR syntax." }),
+          })
+          .meta({ description: "A CLDR variable (SPEC §13.1)." }),
+      )
+      .meta({ description: "CLDR variables in order (SPEC §13.1)." })
+      .optional(),
+    transforms: Transforms.optional(),
+    tests: z.array(Tests).meta({ description: "Test files (SPEC §15)." }).optional(),
+    targets: Targets.optional(),
+    onLoss: OnLoss.meta({ description: "Loss policy for every target (SPEC §17.2)." }).optional(),
+    extensions: z
+      .record(
+        z
+          .string()
+          .regex(/^([a-z][a-z0-9+.-]*:.+|[a-z0-9-]+(\.[a-z0-9-]+)+)$/u)
+          .meta({ description: "An absolute URI or reverse-DNS name." }),
+        z.unknown(),
+      )
+      .meta({ description: "Data of other tools, by URI or reverse-DNS name (SPEC §18)." })
+      .optional(),
+    cldrSpecial: cldrSpecial("keyboard3 (and keys, flicks, variables with a kbl:parent comment)").optional(),
+  })
+  .meta({
+    $id: "https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json",
+    title: ".kbl.json keyboard layout, version 0.1 (draft)",
+    description:
+      "A YAKBD keyboard-layout file. Normative text: SPEC.md; this schema checks structure only (SPEC §19 lists further rules).",
+  });
+
+/** A parsed .kbl.json file. */
+export type KblFile = z.infer<typeof KblFile>;
