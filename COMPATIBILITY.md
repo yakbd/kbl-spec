@@ -21,6 +21,10 @@ not frozen. This page says what you can rely on before 1.0.
   where there is no other way, change or remove something. Each minor version has its own `kbl` value (`"0.2"`)
   and its own schema path (`schema/0.2/kbl.schema.json`). Earlier schema paths stay published and unchanged, so a
   file keeps validating against the version it names.
+- **`schema/latest/kbl.schema.json` moves.** The published site also serves
+  `https://yakbd.github.io/kbl-spec/schema/latest/kbl.schema.json`, a byte-identical copy of the newest version's
+  schema, made when the site is published (its `$id` is the versioned address). It moves to each new minor
+  version, so a file's `$schema`, and anything that needs stability, names the versioned path (D106).
 - A reader for one version rejects a file of a later one: files have no unknown properties (`SPEC.md` §1), and the
   `kbl` value differs. A tool that supports several versions says so.
 - Additions are preferred to changes. When a minor version has to change something, the changelog says what, and

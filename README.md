@@ -92,7 +92,11 @@ features including installation, and the file the tool writes when it reads an e
 
 The JSON Schema (draft 2020-12) is [`schema/0.1/kbl.schema.json`](schema/0.1/kbl.schema.json). Its `$id`,
 `https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json`, is the address where it is published; you can as well
-validate against the file in this repository. Any draft 2020-12 validator works, for example:
+validate against the file in this repository.
+`https://yakbd.github.io/kbl-spec/schema/latest/kbl.schema.json` serves the schema of the newest version, byte for
+byte the same file; its `$id` stays the versioned address, because it is that schema. `latest` moves to each new
+minor version, so name the versioned address in a file's `$schema` and wherever you need it to stay the same
+(`COMPATIBILITY.md`, D106). Any draft 2020-12 validator works, for example:
 
     npx ajv-cli@5.0.0 validate --spec=draft2020 -s schema/0.1/kbl.schema.json -d my-layout.kbl.json
 

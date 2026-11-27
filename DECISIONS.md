@@ -709,3 +709,13 @@ importers (until then `other`). Known losses, not model gaps: `.keylayout` range
 is one layout, so an XKB keymap with several groups imports as several files; a layer for the right Shift key only
 (`rightShift`) needs a custom component, since `shift` does not distinguish sides (§7.1). Because a 0.1 reader
 rejects unknown properties (D3), these fields come with a minor version (0.2 or later, own schema path, D101).
+
+**D106 (owner, 2026-11-27). The repository's site serves only the schema, plus a moving `latest`.** GitHub Pages
+for this repository publishes only `schema/`, through `.github/workflows/pages.yml`; the other files are no longer
+rendered as web pages (the documentation is read in the repository and on https://yakbd.github.io/). The workflow
+also writes `schema/latest/kbl.schema.json`, a byte-identical copy of the newest `schema/<version>/` folder's
+schema (by version order), at deploy time rather than as a second committed copy. Its `$id` stays the versioned
+URL, because it is that schema (D100). `latest` moves to each new minor version: files and tools that need
+stability name the versioned path (`COMPATIBILITY.md`). Reason: the `$id` must keep resolving byte for byte while
+the README and specification stop appearing as unstyled pages next to the website, and a convenience address for
+"the current schema" must not drift from the file it copies.

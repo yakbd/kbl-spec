@@ -46,8 +46,9 @@ workflow); a push that touches none of them (root docs only) starts no run. Star
 - Changed the shape of the format (schema, `targets.windows`, loss kinds, default rules) -> add a line to the
   changelog at the end of `STATUS.md` naming the commit; the tool repository follows that changelog.
 - New example in `examples/` -> it must pass zod, the JSON Schema and the checker's §19 subset; list it in `STATUS.md`.
-- The schema `$id` (`https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json`) serves the last published copy.
-  Validate against the local file. Keep the `$id` as it is (D100).
+- The schema `$id` (`https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json`) serves the copy that
+  `.github/workflows/pages.yml` last published; it publishes only `schema/` plus a generated `schema/latest/` (D106),
+  so never commit `schema/latest/`. Validate against the local file. Keep the `$id` as it is (D100).
 - A change that would make a valid 0.1 file invalid or change its meaning is not a 0.1 change: it waits for a new
   minor version with its own schema path (`COMPATIBILITY.md`). This includes the default rules and Table A.
   Bug fixes (a schema that follows SPEC, a rule that follows its text) are the exception.

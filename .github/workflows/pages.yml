@@ -1,0 +1,50 @@
+name: pages
+
+# Publishes only schema/ at https://yakbd.github.io/kbl-spec/ (D106): every schema/<version>/ folder as committed,
+# plus schema/latest/kbl.schema.json, a byte-identical copy of the newest version's schema made here.
+# The repository's other files are not published.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "schema/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.repository == 'yakbd/kbl-spec'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Site = schema/ plus schema/latest/
+        run: |
+          set -eu
+          test ! -e schema/latest || { echo "schema/latest is made here and must not be committed"; exit 1; }
+          newest=$(find schema -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | grep -E '^[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          test -n "$newest"
+          mkdir -p _site/schema/latest
+          cp -R schema/. _site/schema/
+          cp "schema/$newest/kbl.schema.json" _site/schema/latest/kbl.schema.json
+          cmp "schema/$newest/kbl.schema.json" _site/schema/latest/kbl.schema.json
+          echo "latest = $newest"
+          find _site -type f | sort
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v5
