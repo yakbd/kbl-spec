@@ -1,27 +1,37 @@
 # kbl-spec: the `.kbl.json` keyboard-layout format
 
-`.kbl.json` is a JSON file format for keyboard layouts. One file holds everything needed to build one layout: what
-each key types with each combination of modifier keys, the dead keys (accent keys that change the next key
-pressed), and the exact choices a build for an operating system needs. It is part of YAKBD ("Yet Another KeyBoard
-layout Designer", https://github.com/yakbd), together with the `yakbd` tool, which converts these files and builds
-installable layouts from them.
+`.kbl.json` is an open JSON file format for keyboard layouts. One file holds everything needed to build one
+layout: what each key types with each combination of modifier keys, the dead keys (accent keys that change the next
+key pressed), and the exact choices a build for each target needs. It is the open format of YAKBD ("Yet Another
+KeyBoard layout Designer", https://github.com/yakbd), an open-source keyboard layout designer. People design a
+layout once, in this format, and YAKBD turns it into native, installable layouts for each operating system and
+keyboard tool, and converts existing layouts from their formats. Its aim is that a custom or minority-language
+layout can be made, shared and kept up to date by anyone, on every platform, without depending on a single vendor's
+tool.
 
 ## Why it exists
 
-On Windows, a keyboard layout is a small DLL, and custom layouts have long been made with Microsoft's Keyboard
-Layout Creator (MSKLC). MSKLC is no longer developed, runs only on Windows, and its `.klc` source files cannot
-express everything a layout DLL can do.
+Every operating system has its own format for keyboard layouts: on Windows a layout is a small DLL, usually made
+from a `.klc` file with Microsoft's Keyboard Layout Creator (MSKLC); macOS uses `.keylayout` files; Linux uses XKB.
+Keyboard tools such as Keyman have formats of their own. Each can express things the others cannot, and a layout
+made for one is hard to move to another.
 
 The Unicode Common Locale Data Repository (CLDR) has a good keyboard format, CLDR Keyboard 3.0 ([LDML Part
 7][ldml]). But a CLDR keyboard describes the layout of a language in a platform-neutral way. It does not say how
-to build that layout for Windows: which Windows key codes to use, what the DLL is called, how Caps Lock behaves on
-each key.
+to build that layout for a given system: on Windows, which key codes to use, what the DLL is called, how Caps Lock
+behaves on each key.
 
-A `.kbl.json` file describes one concrete build of a layout. Its main part is platform-neutral, like CLDR's, and
-can hold every piece of data a CLDR 3.0 keyboard holds. Next to it, a section per target platform can hold every
-choice a Windows layout DLL or a `.klc` file can express. Where that section is silent, a small set of documented
-default rules decides, so a program that reads the file needs only the file and this specification, not someone
-else's code.
+A `.kbl.json` file describes one concrete layout. Its main part is platform-neutral, like CLDR's, and can hold
+every piece of data a CLDR 3.0 keyboard holds: the format is a superset of CLDR Keyboard 3.0. Next to it, a section
+per target (`targets.*`) holds the choices only that target's build needs. Where that section is silent, a small
+set of documented default rules decides, so a program that reads the file needs only the file and this
+specification, not someone else's code.
+
+Windows is the first target, and its section can hold every choice a Windows layout DLL or a `.klc` file can
+express. That matters most for MSKLC users: MSKLC is no longer developed, runs only on Windows, and its `.klc` files
+cannot express everything a layout DLL can do. Sections for the official formats of other operating systems (macOS,
+Linux XKB and others) are planned next, and later third-party formats such as Keyman ([`DECISIONS.md`](DECISIONS.md)
+D107). D105 checks on paper that macOS and XKB sections fit this format without a breaking change.
 
 Some other choices:
 
@@ -112,8 +122,8 @@ README explains how to build it and its commands, for example `yakbd compile lay
 
 This is the **0.1 preview** of the format. It is complete enough to implement and to write layouts in, but not
 frozen: [`COMPATIBILITY.md`](COMPATIBILITY.md) says what stays stable in 0.x, how changes are announced, and when
-1.0 comes. Windows is the only build target so far; other operating systems may follow, chosen by what users ask
-for. Layouts built from these files have been tested on Windows 10 and Windows 11 virtual machines (x64, x86, and
+1.0 comes. Windows is the only build target so far. The official formats of other operating systems are planned
+next, then third-party formats such as Keyman (D107); each new target comes with a new minor version. Layouts built from these files have been tested on Windows 10 and Windows 11 virtual machines (x64, x86, and
 ARM64 in an emulated guest): they load, type as expected, and install and uninstall cleanly. A physical ARM64 PC has
 not been tested. Details and the changelog are in [`STATUS.md`](STATUS.md).
 

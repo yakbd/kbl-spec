@@ -9,8 +9,10 @@ Format version: **0.1 preview**. Last update: 2026-11-27.
   each other; `npm test` checks that.
 - **What you can rely on**: within 0.1 a valid file stays valid and keeps its meaning. New minor versions get their
   own schema path. The rules, and when 1.0 comes, are in [`COMPATIBILITY.md`](COMPATIBILITY.md).
-- **Targets**: Windows only (layout DLLs for x86, x64, WOW64 and ARM64X, and their installation). Conversions to and
-  from `.klc` and CLDR Keyboard 3.0 are specified. Other operating systems may follow, chosen by demand.
+- **Targets**: today Windows only (layout DLLs for x86, x64, WOW64 and ARM64X, and their installation). Conversions
+  to and from `.klc` and CLDR Keyboard 3.0 are specified. YAKBD aims at every layout format: the official formats
+  of other operating systems (macOS, Linux XKB and others) are planned next, then third-party formats such as
+  Keyman (D107). They are not specified yet; D105 checks on paper that macOS and XKB fit 0.x.
 - **Tested**: layouts built from these files load, type and install correctly on Windows 10 and Windows 11 virtual
   machines (x64, x86, ARM64 in an emulated guest); see "Verified on Windows" below. Not tested: a physical ARM64 PC.
 - **Implementation**: the `yakbd` tool ([`yakbd/yakbd-cli`](https://github.com/yakbd/yakbd-cli)) implements this
@@ -31,7 +33,7 @@ numbers refer to `targets/windows-vm-tests.md`, the D numbers to `DECISIONS.md`)
 | `schema/0.1/kbl.schema.json` | stable (see above); closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
 | `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes); all validate |
 | `coverage/cldr-keyboard3.md`, `coverage/windows.md` | complete first drafts; `coverage/windows.md` §11 (DLL import conventions, D53–D55) |
-| `DECISIONS.md` D1–D105, `OPEN-QUESTIONS.md` Q1–Q15 closed | current |
+| `DECISIONS.md` D1–D107, `OPEN-QUESTIONS.md` Q1–Q15 closed | current |
 | CI | `.github/workflows/validate.yml`: push to `main` (paths filter) and manual runs only; Node 22, `npm ci`, `npm test` |
 
 **Verified on Windows** (yakbd VM runs 1 to 5, `targets/windows-vm-tests.md`; disposable guests: Windows 11 25H2
@@ -86,7 +88,7 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 ## Changelog
 
-- 2026-11-27: 0.1 preview. No change to the format's shape. `COMPATIBILITY.md` (0.x policy; `SPEC.md` wins over the schema, Q13 closed, D101); owner decisions D100 (public repository `yakbd/kbl-spec`, `$id` unchanged), D102 (no catalogue), D103 (other operating systems later), D104 (the tool's own setup program signed, layout installers unsigned); D105 (macOS and XKB targets fit 0.x, on paper); contributing guide with the clean-room clause (organisation-wide, in `yakbd/.github`), issue templates.
+- 2026-11-27: 0.1 preview. No change to the format's shape. `COMPATIBILITY.md` (0.x policy; `SPEC.md` wins over the schema, Q13 closed, D101); owner decisions D100 (public repository `yakbd/kbl-spec`, `$id` unchanged), D102 (no catalogue), D103 (other operating systems later), D104 (the tool's own setup program signed, layout installers unsigned); D105 (macOS and XKB targets fit 0.x, on paper); D107 (all layout formats: other operating systems' official formats next, then third-party formats such as Keyman; supersedes D103's "by demand"); contributing guide with the clean-room clause (organisation-wide, in `yakbd/.github`), issue templates.
 
 - 2026-11-26 (round 5, S5, end): VM-27 (D98 LocalSystem route, 7/7); D99. Round 5 in sum: field `install.enableForSignInAndNewUsers` with rule and `SIGNIN` (D87, D94, D97, D98), loss kind `windows.noHardwareLayers` (D89), CLDR marker dead keys over sets (D88, D95), test files on hardware targets (D92, D95), VK names up to 32 characters (D96); VM-18 to VM-27.
 

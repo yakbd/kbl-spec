@@ -6,6 +6,13 @@ rules are numbered in `DECISIONS.md` ("D7" = decision 7); questions put to the o
 ("Q3"). The JSON Schema `schema/0.1/kbl.schema.json` checks the structure; this document also states the rules a
 schema cannot check (§17). When this document and the schema accept different files, this document wins (D101).
 
+A `.kbl.json` file holds one keyboard layout: a platform-neutral part that can hold every piece of data a CLDR
+Keyboard 3.0 keyboard holds, and one section per target in `targets` (§16) with the choices only that target's
+build needs. This version defines one build target, Windows (`targets.windows`, `targets/windows.md`), plus the
+conversion sections `klc` and `cldr`. Sections for the official formats of other operating systems, and later for
+third-party formats such as Keyman, are planned (D107); they come with a later minor version, and D105 checks on
+paper that macOS and XKB fit this model.
+
 Contents: 1 File · 2 Text values · 3 Top level · 4 `metadata` · 5 `settings` · 6 `positions` and `forms` ·
 7 Modifiers · 8 `keys` · 9 Layers and bindings · 10 `deadKeys` · 11 Gestures · 12 `displays` · 13 `variables` and
 `transforms` · 14 Event processing · 15 `tests` · 16 `targets` · 17 Losses · 18 Extensions · 19 Validation rules ·

@@ -662,7 +662,7 @@ layout that is not in CLDR can live in its author's own repository. Reason (the 
 shared home for keyboard layouts (its keyboard working group's repository on LDML Part 7); a second registry would
 compete with it and need moderating for good, which one owner cannot carry.
 
-**D103 (owner, 2026-11-27). Other operating systems later, by demand.** Windows stays the only build target of 0.1.
+**D103 (owner, 2026-11-27). Other operating systems later, by demand (superseded in part by D107: other operating systems are planned, not chosen by demand).** Windows stays the only build target of 0.1.
 macOS and Linux (XKB) targets are chosen after the public release from what users ask for; D105 checks on paper
 that they would fit 0.x. Reason (the review): free tools already serve macOS and Linux authors (Ukelele, kalamine,
 Keyman), while for Windows a free tool that builds native layout DLLs for current Windows does not exist; depth
@@ -719,3 +719,16 @@ URL, because it is that schema (D100). `latest` moves to each new minor version:
 stability name the versioned path (`COMPATIBILITY.md`). Reason: the `$id` must keep resolving byte for byte while
 the README and specification stop appearing as unstyled pages next to the website, and a convenience address for
 "the current schema" must not drift from the file it copies.
+
+**D107 (owner, 2026-11-27; supersedes the "by demand" part of D103). YAKBD is for every keyboard-layout format;
+operating systems' official formats first, third-party formats later.** `.kbl.json` is the one open format, and the
+tool converts it to and from the layout formats of operating systems and keyboard tools and builds native,
+installable layouts. The order: Windows first (today: `.klc`, CLDR XML, DLL import, native DLL builds and
+installers); next the official formats of other operating systems (macOS `.keylayout`, Linux XKB, and others such
+as ChromeOS or Android where they have one); later third-party formats such as Keyman. MSKLC migration stays a main
+use case, as one way in, not as the project's definition. This replaces D103's "chosen after the public release
+from what users ask for": other operating systems are planned, not waiting for demand. D103's other facts stand:
+Windows is the only build target of 0.1. D105's paper check stands unchanged and is the starting point for the
+macOS and XKB sections; as D105 says, they come with a minor version (0.2 or later, own schema path, D101).
+Reason (the owner): YAKBD's aim is that a custom or minority-language layout can be made, shared and kept up to date
+by anyone, on every platform, without depending on a single vendor's tool.
