@@ -795,7 +795,8 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `cldr.customForm` | warning | the form is not one of CLDR's implied forms (CLDR's repository refuses such files) |
 | `cldr.keyIdGenerated` | accept | key ids were invented for bindings that had none |
 | `macos.noHardwareLayers` | error | the file has no hardware layers (a touch-only keyboard): the layout would hold only the standard keys (0.2) |
-| `macos.keyCodeMissing` | error | a position with bindings has no key code (no pin, no row of `targets/macos-default-keycode.tsv`) |
+| `macos.keyCodeMissing` | error | a position with bindings has no key code (no pin, no row of `targets/macos-default-keycode.tsv`) and is not a position of another target's table (`macos.positionWithoutKey`) |
+| `macos.positionWithoutKey` | warning | a position with bindings that the position table of another target has (`Break`, `SysRq`, `PrintScreen`, media keys) and this target's table has not: the macOS build has no key for it, and its bindings are left out (`targets/macos.md` §2) |
 | `macos.keyCodeDuplicate` | error | two positions get the same key code (rules `keyCode`, `isoKeys`) |
 | `macos.sideModifierWidened` | warning | a layer for `ctrlL`, `ctrlR`, `altL` or `altR` is built for either side (`anyControl`, `anyOption`); where two layers then serve the same state, the earlier layer wins (`targets/macos.md` §3) |
 | `macos.modifierUnmapped` | error | a layer needs a custom `held` component that is not `modifiers.command`; macOS key maps select by Shift, Option, Control, Command and Caps Lock only |
@@ -816,7 +817,8 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `macos.rangeActionDropped` | warning | a `when` with `through` or `multiplier` (range actions, for example hex input) has no counterpart in `deadKeys`; dropped |
 | `macos.stateNotExpressible` | warning | an imported state-machine shape the dead-key model cannot say, imported as close as it can: a `when` with both `output` and `next`, a dead key pressed in a state without its own `when` (macOS emits the terminator and starts the new dead key), an action without a `none` state, keys whose actions differ for the same base text (`coverage/macos.md` §4); the shapes in `detail` |
 | `xkb.noHardwareLayers` | error | the file has no hardware layers (a touch-only keyboard): there is nothing to build (0.2) |
-| `xkb.keyNameMissing` | error | a position with bindings has no XKB key name (no pin, no row of `targets/xkb-default-keyname.tsv`) |
+| `xkb.keyNameMissing` | error | a position with bindings has no XKB key name (no pin, no row of `targets/xkb-default-keyname.tsv`) and is not a position of another target's table (`xkb.positionWithoutKey`) |
+| `xkb.positionWithoutKey` | warning | a position with bindings that the position table of another target has (`Break`, `SysRq`) and this target's table has not: XKB gives it no key of its own, and its bindings are left out (`targets/xkb.md` §2) |
 | `xkb.keyNameDuplicate` | error | two positions get the same key name (rule `keyName`) |
 | `xkb.modifierUnmapped` | error | a layer needs a custom `held` component that is neither `modifiers.levelThree` nor `modifiers.levelFive`; XKB levels are selected by Shift, Caps Lock and the two level shifts only |
 | `xkb.lockUnmapped` | error | a layer needs a custom `lock` component; Caps Lock is the only lock an XKB build uses |
@@ -825,7 +827,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `xkb.customKeyType` | warning | the build wrote a yakbd key type (`customTypes`, or a pin): it works with libxkbcommon 1.13 and later, and on X11 when the types are named when loading the layout; older libxkbcommon and `xkbcomp` without the types fall back to another type (`targets/xkb.md` §5) |
 | `xkb.keyTypeNotExact` | warning | a pinned key type does not give some state of the key its output; each level gets the output of the first state that selects it |
 | `xkb.tooManyLevels` | error | a yakbd key type would need more than 8 levels, the most that X11 and libxkbcommon before 1.11 accept |
-| `xkb.multiCharacterOutput` | warning | a level types several characters (several keysyms): libxkbcommon and Qt type them, X11 (`xkbcomp`) gives no symbol and GTK 4 types nothing (measured, `targets/xkb.md` §8), and the level cannot be the base of a Compose sequence |
+| `xkb.multiCharacterOutput` | warning | a level types several characters (several keysyms): libxkbcommon and Qt type them and GTK 4 types nothing (measured), an X11 server refuses the whole layout (measured: Xvfb 21.1), so the build adds the X11 section, in which those levels are empty (`targets/xkb.md` §3, §5); the level cannot be the base of a Compose sequence |
 | `xkb.outputUnencodable` | error | an output no keysym carries: U+0000, a control character other than Backspace, Tab, Line Feed, Vertical Tab, Return, Escape and Delete, or CodeUnits that are not well-formed UTF-16 |
 | `xkb.utf8Characters` | warning | the file pins `characters` `utf8`: libxkbcommon before 1.9 and `xkbcomp` (X11) reject the symbols file (measured) |
 | `xkb.numLockKeyReduced` | warning | a `numLock` position is built with XKB's `KEYPAD` type: its navigation keysym and, with Num Lock on, its base binding; its other layers are left out, and Shift does not turn the key into a navigation key |

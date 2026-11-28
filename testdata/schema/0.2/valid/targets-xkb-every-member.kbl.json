@@ -104,6 +104,7 @@
         "default": "warning",
         "kinds": {
           "xkb.customKeyType": "accept",
+          "xkb.positionWithoutKey": "error",
           "xkbDefault.keyType": "error"
         }
       }

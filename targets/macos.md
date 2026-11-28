@@ -56,7 +56,12 @@ The default table from position names to the target's key codes: `targets/macos-
 the standard output of the keys that have one (rule `standardKeys`, §3).
 
 - **`keyCode`**: a position's key code is `keys.<p>.keyCode`; otherwise the table's code for the position's name;
-  otherwise it has none. A position that has a binding and no key code reports `macos.keyCodeMissing`. Two positions with the same key code report `macos.keyCodeDuplicate`. Positions
+  otherwise it has none. A position that has a binding and no key code is left out: when another target's position
+  table (SPEC §16) has a row for it (`Break`, `SysRq`, `PrintScreen`, `ScrollLock`, `Pause`, `F21`–`F24`, the media,
+  browser, mail and sleep keys, `Convert`, `NonConvert`, `KanaMode`), it is a key this table does not have,
+  `macos.positionWithoutKey` (a warning; a file converted from a `.klc` file binds `Break`, the row MSKLC adds to
+  every layout, D145); otherwise `macos.keyCodeMissing` (an error). A file that wants such a binding built pins a
+  key code. Two positions with the same key code report `macos.keyCodeDuplicate`. Positions
   that operate Shift, Option, Control, Caps Lock or Command need no key element: macOS reads those keys itself.
 - **`isoKeys`**: macOS delivers the key left of `1` and the key right of the left Shift with swapped codes from ISO
   keyboards: the key left of `1` (`Backquote`) as 10, the key next to the left Shift (`IntlBackslash`) as 50, while

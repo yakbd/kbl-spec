@@ -107,6 +107,7 @@
       },
       "onLoss": {
         "kinds": {
+          "macos.positionWithoutKey": "error",
           "macos.sideModifierWidened": "error",
           "macosDefault.keyCode": "warning"
         }

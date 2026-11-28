@@ -117,3 +117,11 @@ No Apple layout was opened. The decisions D120 to D127 and the macOS pages (`tar
 
 No layout of a distribution was copied. The decisions D135 to D142 and the Linux pages (`targets/xkb.md`,
 `coverage/xkb.md`, the position table) were written from these sources in our own words.
+
+### Linux (XKB) and macOS follow-ups (D143 to D145)
+
+| source | read for | licence |
+|---|---|---|
+| libxkbcommon, the same commit `15b2b4e`, read 2026-11-28: `src/registry.c` (`parse_layout`, `parse_variant`) | that the registry merges `layout` elements of one name and adds their variants once each, so install blocks may each hold a whole `layout` element (`targets/xkb.md` §5, D144) | MIT; facts only |
+| `yakbd/yakbd-cli` `tools/xkb-check/` README "Results" (MIT-0, this project) | Xvfb 21.1 refuses a keymap with a level of several keysyms (D143) | MIT-0, this project |
+| This repository's position tables (`targets/*-default-*.tsv`) | which positions a target has no row for (D145) | MIT-0, this project |

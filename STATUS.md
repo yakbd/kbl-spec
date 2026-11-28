@@ -9,12 +9,17 @@ Format version: **0.1 preview**; 0.2 (macOS, Linux XKB) in draft on the branch `
   each other; `npm test` checks that.
 - **What you can rely on**: within 0.1 a valid file stays valid and keeps its meaning. New minor versions get their
   own schema path. The rules, and when 1.0 comes, are in [`COMPATIBILITY.md`](COMPATIBILITY.md).
-- **Targets**: today Windows only (layout DLLs for x86, x64, WOW64 and ARM64X, and their installation). Conversions
-  to and from `.klc` and CLDR Keyboard 3.0 are specified. YAKBD aims at every layout format: the official formats
-  of other operating systems (macOS, Linux XKB and others) are planned next, then third-party formats such as
-  Keyman (D107). They are not specified yet; D105 checks on paper that macOS and XKB fit 0.x.
+- **Targets**: in 0.1, Windows (layout DLLs for x86, x64, WOW64 and ARM64X, and their installation). In the 0.2
+  draft also macOS (`targets/macos.md`: a `.keylayout` file in a layout bundle) and Linux XKB (`targets/xkb.md`: a
+  symbols file, its registry entry and a Compose file, installed per user). Conversions to and from `.klc`, CLDR
+  Keyboard 3.0 and, in 0.2, `.keylayout` and XKB symbols files are specified. Third-party formats such as Keyman
+  come later (D107).
 - **Tested**: layouts built from these files load, type and install correctly on Windows 10 and Windows 11 virtual
   machines (x64, x86, ARM64 in an emulated guest); see "Verified on Windows" below. Not tested: a physical ARM64 PC.
+  0.2 draft: macOS layout bundles built by `yakbd` were installed, selected and typed on GitHub's macOS 15 and 26
+  runners (Apple silicon); the Linux behaviour the XKB target relies on was measured with test layouts in containers
+  (Debian 13, Ubuntu 26.04, Fedora 45, Arch Linux; X11, weston, sway, KWin, mutter). Not tested: an Intel Mac, the
+  steps in System Settings, a full GNOME Shell session, real keyboards (`targets/xkb.md` §8).
 - **Implementation**: the `yakbd` tool ([`yakbd/yakbd-cli`](https://github.com/yakbd/yakbd-cli)) implements this
   specification.
 - **Changes**: every change to the shape of the format (schema, `targets.windows`, loss kinds, default rules) is
@@ -34,7 +39,7 @@ numbers refer to `targets/windows-vm-tests.md`, the D numbers to `DECISIONS.md`)
 | `schema/0.1/kbl.schema.json` | stable (see above); frozen, its hash pinned by `npm test`; closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
 | `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes), (f) `macos-option-deadkeys` (0.2: Option layer, per-key Caps Lock, chained dead keys, ISO key, `targets.macos` pins), (g) `xkb-caps-deadkeys` (0.2: Caps Lock that leaves an AltGr letter alone through a yakbd key type, a dead key, `targets.xkb` pins); all validate |
 | `coverage/cldr-keyboard3.md`, `coverage/windows.md` | complete first drafts; `coverage/windows.md` §11 (DLL import conventions, D53–D55) |
-| `DECISIONS.md` D1–D107, `OPEN-QUESTIONS.md` Q1–Q15 closed | current |
+| `DECISIONS.md` D1–D111, D120–D127, D135–D145; `OPEN-QUESTIONS.md` Q1–Q19 | current |
 | CI | `.github/workflows/validate.yml`: push to `main` (paths filter) and manual runs only; Node 22, `npm ci`, `npm test` |
 
 **Verified on Windows** (yakbd VM runs 1 to 5, `targets/windows-vm-tests.md`; disposable guests: Windows 11 25H2
@@ -89,7 +94,9 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 ## Changelog
 
-- 2026-11-28 (branch `spec-0.2`, draft, XKB target, commits after the fields): `targets/xkb.md` and `coverage/xkb.md` written, D135 to D142, Linux sources in `CLEAN-ROOM.md` and `NOTICE`, example (g) `xkb-caps-deadkeys`; `variant` defaults to `basic` (the file's default section); rule `characters` names xorgproto 2026.1; §19 item 1 checks `targets.xkb` references (ab9b0f2); yakbd type digits for unused modifiers, the `KEYPAD` type of xkeyboard-config 2.49, Compose install targets per toolkit, `key.type` defaults on import, Q19 (this commit).
+- 2026-11-28 (branch `spec-0.2`, draft, macOS and XKB follow-ups): new loss kinds `macos.positionWithoutKey` and `xkb.positionWithoutKey` (warning): a bound position that another target's position table has and this one has not (`Break` of every `.klc` import) is left out instead of failing the build (D145); `xkb.multiCharacterOutput` says what X11 does (the server refuses the whole keymap) and such builds add an X11 section with those levels empty (D143); install blocks are named per layout and variant, `N(V)`, and the symbols file is installed as blocks so variants of one layout live side by side (D144); `targets/xkb.md` §8 items 11 and 12 (this commit).
+
+- 2026-11-28 (branch `spec-0.2`, draft, XKB target, commits after the fields): `targets/xkb.md` and `coverage/xkb.md` written, D135 to D142, Linux sources in `CLEAN-ROOM.md` and `NOTICE`, example (g) `xkb-caps-deadkeys`; `variant` defaults to `basic` (the file's default section); rule `characters` names xorgproto 2026.1; §19 item 1 checks `targets.xkb` references (ab9b0f2); yakbd type digits for unused modifiers, the `KEYPAD` type of xkeyboard-config 2.49, Compose install targets per toolkit, `key.type` defaults on import, Q19 (65d772b).
 
 - 2026-11-28 (branch `spec-0.2`, draft, XKB target): `targets.xkb` fields (SPEC §16.5: `symbolsName`, `variant`, `description`, `shortDescription`, `languages`, `characters`, `keys.<p>.keyName`, `keys.<p>.type`, `customTypes`, `modifiers.levelThree`, `modifiers.levelFive`, `deadKeys.<id>.keysym`, `compose.write`, `compose.includeLocale`), 35 loss kinds `xkb.*` and 10 default rules `xkbDefault.*` (`targets/xkb.md` §1), position table `targets/xkb-default-keyname.tsv` (142 rows); 0.2 schema cases for them (6972db4). No change to 0.1.
 

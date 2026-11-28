@@ -908,3 +908,24 @@ where the type leaves Lock unconsumed; Caps Lock layers only where they differ (
 shifts on other keys than `<RALT>` become custom components; dead keys named after their keysym, longer Compose
 sequences become chained dead keys, `noMatch` `emitNothing`; `normalization: "disabled"`; the importer pins the
 rule-decided values (`coverage/xkb.md` §6).
+
+**D143 (2026-11-28; measured). Levels of several characters: an X11 section.** An X11 server
+refuses the whole keymap when one level has several keysyms (Xvfb 21.1, `XkbSetMap` fails); the text said such a
+level just became empty. Making the loss an error would fail every layout with a ligature key, although Wayland,
+libxkbcommon and Qt type it. So a build with such levels writes the symbols file as before and adds a second section,
+`<variant>-x11`, the same with those levels `NoSymbol`; the X11 instructions load that section. `xkb.multiCharacterOutput`
+stays a warning and says so. Whether X11 loads the section is a harness case (`targets/xkb.md` §8 item 11).
+
+**D144 (2026-11-28; changes D140). Install blocks per layout and variant; the symbols file in blocks.** The variants of
+one layout share the symbols file and the registry `layout` of that name, so blocks named by the layout alone let one
+variant's install or uninstall remove another's. Every marked block is named N for the default section and `N(V)` for
+a variant (names cannot hold `(`), and the symbols file itself is assembled from blocks: each build adds its
+section(s) to `~/.config/xkb/symbols/N` between markers, and uninstall removes the file only when no block is left.
+Registry blocks are self-contained `layout` elements; libxkbcommon's registry merges elements of one name.
+
+**D145 (2026-11-28). Positions a target has no key for are left out with a warning.** Every `.kbl.json` converted from a
+`.klc` file binds `Break` (the Control+Break row MSKLC adds to every layout, D36), which neither the macOS nor the XKB
+table has; `keyCodeMissing` / `keyNameMissing` made every such layout fail. The rule stays mechanical: a bound position
+without a code that has a row in another target's position table (SPEC §16) is a key the target does not have, reported
+as `macos.positionWithoutKey` / `xkb.positionWithoutKey` (warning) and left out; a position no table names still needs a
+pin (`keyCodeMissing` / `keyNameMissing`, error).

@@ -31,7 +31,7 @@ importer reads; the build direction is `targets/xkb.md`. Sources are cited as th
 | `key.type = "…"`, `key.type[GroupN] = "…"` (a default for the keys after it in the section) | the type of each later key without one of its own (§3) | other `key.…` defaults (`key.repeat`, …) `xkb.actionsDropped` |
 | a keysym name (`a`, `udiaeresis`, `oe`), `U` + hex, a hex number `0x…` | a character of a text binding, by xorgproto's `keysymdef.h` and the Unicode keysym range **[LXC]** (`keysym-encoding.md`) | an unknown name is `NoSymbol` (libxkbcommon does the same) |
 | a UTF-8 string (`"æ"`, libxkbcommon 1.9 and later) | the text | |
-| `{ k1, k2 }` (several keysyms on one level) | a text of several characters | |
+| `{ k1, k2 }` (several keysyms on one level) | a text of several characters | a build writes it back, and empty in its X11 section (`targets/xkb.md` §3) |
 | `NoSymbol`, `{}` | nothing at that level | |
 | a `dead_*` keysym | `{"deadKey": <id>}` (§4) | |
 | `ISO_Level3_Shift`, `ISO_Level5_Shift` | the level-shift components (§3) | |

@@ -55,10 +55,13 @@ same key (`AC12` for `BKSL`, `LatQ` for `AD01`): an importer reads them (`covera
 them. The column `keypad` holds the navigation keysym of the number-pad keys (§3, `numLock` positions).
 
 - **`keyName`**: a position's key name is `keys.<p>.keyName`; otherwise the table's name for the position's name;
-  otherwise it has none. A position with a binding and no key name reports `xkb.keyNameMissing`; two positions with
-  one key name report `xkb.keyNameDuplicate`.
+  otherwise it has none. A position with a binding and no key name is left out: when another target's position
+  table (SPEC §16) has a row for it, it is a key this target does not have, `xkb.positionWithoutKey` (a warning);
+  otherwise `xkb.keyNameMissing` (an error). Two positions with one key name report `xkb.keyNameDuplicate`.
 - `SysRq` and `Break` have no row: XKB gives them no key of their own (they are levels of `<PRSC>` and `<PAUS>` in
-  xkeyboard-config's `symbols/pc` **[XKC]**). A file that binds them pins a key name.
+  xkeyboard-config's `symbols/pc` **[XKC]**). A file converted from a `.klc` file binds `Break` (the row MSKLC adds
+  to every layout, `coverage/windows.md` §10 item 6); the build leaves it out with `xkb.positionWithoutKey` (D145).
+  A file that wants such a binding built pins a key name.
 - Positions that operate Shift, Caps Lock or a component that is not a level shift (§3) need no key: the
   system's `symbols/pc`, which the rules always put before the layout, gives them their keysyms **[XKC]**
   (`rules/`, `symbols/pc`).
@@ -140,8 +143,9 @@ build listing the positions). A `numLock` position without a `keypad`
 keysym is built like any other key.
 
 **Keysyms** (rule `characters`). Every level is a list of keysyms: none (`NoSymbol`), one, or several for a text of
-several characters (`{ a, b }`), which libxkbcommon and Qt type but X11's `xkbcomp` turns into `NoSymbol` and GTK 4
-types nothing for **[LNX]** (`xkb.multiCharacterOutput`, one entry per build listing the levels). A dead key is its
+several characters (`{ a, b }`), which libxkbcommon and Qt type and GTK 4 types nothing for **[LNX]**; an X11 server
+refuses the whole keymap when one level has several keysyms (Xvfb 21.1, `XkbSetMap` fails **[LNX]**), so such a
+build also writes the **X11 section** (below) (`xkb.multiCharacterOutput`, one entry per build listing the levels). A dead key is its
 `dead_*` keysym (§4). A character c is written, in the symbols file and in the Compose file alike, as:
 
 1. U+0008 `BackSpace`, U+0009 `Tab`, U+000A `Linefeed`, U+000B `Clear`, U+000D `Return`, U+001B `Escape`, U+007F
@@ -185,6 +189,13 @@ includes no other symbols, so a position the file does not bind types nothing, a
 **[XKC]**. Keys are written in the order of the position table, then the other positions in ascending order of
 their names; a key is written when some state gives it an output, with as many levels as its type has (trailing
 `NoSymbol` levels may be left out). The text of `description` is a string literal with `"` and `\` escaped by `\`.
+
+**The X11 section** (D143). When some level has several keysyms, the symbols file gets a second section after the
+first, named V + `-x11` (`basic-x11` for the default), never `default`, the same as the first except that each level
+of several keysyms is `NoSymbol`. Wayland sessions select the first section and type everything; X11 sessions load
+the X11 section (§5) and type nothing on those levels instead of refusing the layout. The registry does not list the
+X11 section. Whether X11 loads it is **unmeasured** (§8; the same layout with one keysym on those levels loads
+**[LNX]**).
 
 ## 4. Dead keys
 
@@ -262,7 +273,7 @@ include "%L"
 **The build** writes, for symbols name N and variant V:
 
 ```
-xkb/symbols/N                 the symbols file (§3)
+xkb/symbols/N                 the symbols file (§3; with its X11 section when a level has several keysyms)
 xkb/rules/evdev.xml           the registry with this one layout
 xkb/types/N-types             only with yakbd types (V not basic: N-V-types)
 xkb/rules/evdev.post          only with yakbd types
@@ -288,13 +299,19 @@ compose/N.XCompose            only with a Compose file (§4)
 first path libxkbcommon searches **[LXC]** (`doc/custom-configuration.md`, "XKB data locations"); the layout loads
 from it in every stack **[LNX]** measured (libxkbcommon 1.7 and 1.13, sway, weston, KWin, mutter). The settings apps
 list a layout only through `rules/evdev.xml` **[LXC]**. Several layouts share the user's `rules/evdev.xml`,
-`rules/evdev.post` and Compose file, so an **install script** (written by the build tool, run by the user) MUST:
+`rules/evdev.post` and Compose file, and the variants of one layout N share the symbols file N, so an **install
+script** (written by the build tool, run by the user) MUST work with **marked blocks**, each named B: N for the
+default section `basic`, `N(V)` for a variant V (D144; neither name can hold `(`, so two builds never share a block):
 
-1. copy `symbols/N` (and `types/N-types`) into `~/.config/xkb/`, replacing only those files;
-2. add the layout's `layout` element (or, for a variant, its `variant` element under the `layout` of N) to
-   `~/.config/xkb/rules/evdev.xml` between the lines `<!-- yakbd N begin -->` and `<!-- yakbd N end -->`, creating
-   the file with an empty registry first when it does not exist, and replacing an earlier block of the same name;
-   likewise the rule set in `~/.config/xkb/rules/evdev.post` between `// yakbd N begin` and `// yakbd N end`;
+1. add the build's symbols file to `~/.config/xkb/symbols/N` between the lines `// yakbd B begin` and
+   `// yakbd B end`, creating the file when it does not exist, and copy `types/<types>` into `~/.config/xkb/types/`,
+   replacing only that file;
+2. add the layout's `layout` element (or, for a variant, a `layout` element of N holding its `variant` element) to
+   `~/.config/xkb/rules/evdev.xml` between the lines `<!-- yakbd B begin -->` and `<!-- yakbd B end -->`, creating
+   the file with an empty registry first when it does not exist; libxkbcommon's registry merges `layout` elements of
+   one name and their variants **[LXC]** (`src/registry.c`); likewise the rule set in
+   `~/.config/xkb/rules/evdev.post` between `// yakbd B begin` and `// yakbd B end`. Every step replaces an earlier
+   block of the same name and never changes other lines;
 3. put the Compose sequences where every program finds them, given which files win **[LNX]**: libxkbcommon and Qt
    read the first of `$XCOMPOSEFILE`, `~/.config/XCompose`, `~/.XCompose`; GTK 4 reads `~/.config/gtk-4.0/Compose`
    first; a user file replaces the system's file, so it keeps the system sequences only with `include "%L"`.
@@ -303,10 +320,11 @@ list a layout only through `rules/evdev.xml` **[LXC]**. Several layouts share th
    else the same file as libxkbcommon).
    - A target that has no file: install the build's Compose file as `~/.XCompose` (with its `include "%L"`), which
      both libxkbcommon and GTK read when it is the only one **[LNX]**.
-   - A target that has a file: append the sequences (without the include line) between `# yakbd N begin` and
-     `# yakbd N end`, after keeping a copy of the file; never change other lines, and never add `include "%L"` to
+   - A target that has a file: append the sequences (without the include line) between `# yakbd B begin` and
+     `# yakbd B end`, after keeping a copy of the file; never change other lines, and never add `include "%L"` to
      the user's own file. Whether GTK reads `~/.config/XCompose` when it is the only file is **unmeasured** (§8);
-4. on uninstall, remove exactly those files and blocks;
+4. on uninstall, remove exactly its own blocks and the types file, and a symbols file or a Compose file the script
+   created once no block is left in it; the other builds' blocks stay;
 5. say how to select the layout (below) and that a session restart may be needed for the settings apps to list it.
 
 Selecting the layout: GNOME Settings › Keyboard › Input Sources, or `gsettings set org.gnome.desktop.input-sources
@@ -317,8 +335,9 @@ sway `input type:keyboard xkb_layout N` (and `xkb_variant V`) **[LNX]**.
 **X11 sessions** do not read the user path: the X server's tools have fixed paths **[LXC]**. The layout is loaded
 for the running session with `setxkbmap -I$HOME/.config/xkb -layout N [-variant V] -print | xkbcomp
 -I$HOME/.config/xkb - $DISPLAY` **[LNX]**, adding `-types complete+N-types` with yakbd types **[LAB]** (compiled
-only, no display); a session start script repeats it. `xkbcomp` rejects UTF-8 strings and drops levels of several
-keysyms **[LNX]**. X11 programs read `~/.XCompose`.
+only, no display); a session start script repeats it. `xkbcomp` rejects UTF-8 strings, and the X server refuses a
+keymap with a level of several keysyms **[LNX]**: a build with such levels loads its X11 section instead
+(`-variant basic-x11`, `-variant V-x11`; §3). X11 programs read `~/.XCompose`.
 
 **System-wide** (later packages, informative): since libxkbcommon 1.13 a package installs its files into
 `/usr/share/xkeyboard-config.d/<package>/` (`symbols/`, `types/`, `rules/evdev.xml`, `rules/evdev.post`) and touches
@@ -368,5 +387,8 @@ layouts, with yakbd types (`layout[any]`); (5) a variant of a system layout from
 settings apps; (6) GNOME Shell with IBus: selection through Settings or `gsettings`, dead keys through IBus's own
 Compose handling; fcitx5; (7) Compose blocks appended to an existing `~/.config/XCompose` and
 `~/.config/gtk-4.0/Compose`, and GTK 4 with only `~/.config/XCompose`; (8) an empty result `""`; (9) every row of rule `characters` against
-`xkb_utf32_to_keysym`; (10) the `KEYPAD` type with Shift and Num Lock, and in xkeyboard-config 2.42 (Debian 13). A measured result is recorded here with its run and, where it changes a rule, in
+`xkb_utf32_to_keysym`; (10) the `KEYPAD` type with Shift and Num Lock, and in xkeyboard-config 2.42 (Debian 13);
+(11) the X11 section of a build with levels of several keysyms, loaded on X11 (expected: it loads, those levels type
+nothing); (12) two variants of one layout installed side by side and one of them removed: both listed by the
+settings apps, the other still selectable. A measured result is recorded here with its run and, where it changes a rule, in
 `DECISIONS.md`.
