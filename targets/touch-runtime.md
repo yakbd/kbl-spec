@@ -170,9 +170,11 @@ character) and `$[1:set variable]` (the member of that set at the index of the c
 Every combination becomes one rule, in the order of the class members, the transform's rules in the order of the
 transforms, at most 1024 rules per transform. Anything else (quantifiers, `.`, alternation, negated classes,
 anchors, several groups, a `reorders` group) is left out and reported as `<target>.transformNotCompiled`. With
-`settings.normalization` `enabled` every text of the file (outputs, dead-key values, `from`, `to`) is put in NFC when
+`settings.normalization` `enabled` the texts the runtime emits (outputs, dead-key values, `to`) are put in NFC when
 compiled (`general.outputNormalized` where that changes it) and the build reports `general.normalizationNotApplied`
-(D73): text that several key presses make together is not normalised.
+(D73): text that several key presses make together is not normalised. A `from` is written as the file gives it,
+never normalised (D209): it is matched against the runtime's context, which holds the key presses as typed, so
+`from` "a\u{301}" matches the presses a and U+0301.
 
 ## 6. The physical-key map (`androidime`)
 

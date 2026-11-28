@@ -1165,6 +1165,12 @@ tap becomes the caps-lock multi-tap of D155. Reason: the touch layout is a view 
 the rules; importing it alone is still useful for layouts that use `U_` ids, and the report says exactly which keys
 lost their output.
 
+**D209 (2026-11-28). A transform's `from` is kept as written in the touch runtime file.** With normalisation
+enabled the compiler puts outputs, dead-key values and `to` in NFC, but never a `from` (`targets/touch-runtime.md`
+§5). Reason: the runtime matches `from` against its own context, which holds what the key presses emitted, and
+is not normalised at run time (D202); a normalised `from` such as "á" for "a\u{301}" would never match the presses
+a and U+0301. ChromeOS keeps `from` as written for the same reason (D182).
+
 **D180 (2026-11-28). ChromeOS: a fixed runtime and the layout as data, deciding by position.** A ChromeOS build is one
 Manifest V3 input-method extension for one layout (D150): a runtime service worker that is the same for every layout
 of a tool version, and the layout compiled into data beside it (`targets/chromeos.md` §5). The runtime finds the
