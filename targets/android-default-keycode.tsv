@@ -1,0 +1,147 @@
+# The position table of targets/android.md (rules keyCode, mapKey; also the physical-key mode of androidime): the
+# default Android key code per position name, the Linux input scan code of that position, the key code Android's
+# generic key layout gives that scan code, and whether the build writes the key or leaves it to the system.
+# Sources (read 2026-11-28; names and values only, see CLEAN-ROOM.md "Android"):
+#   chromium = Chromium ui/events/keycodes/dom/dom_code_data.inc (BSD-3-Clause), its XKB column (Linux evdev scan
+#              code + 8) joined by the W3C code value (the position name), as in targets/xkb-default-keyname.tsv
+#   generic  = the key code of that scan code in AOSP frameworks/base data/keyboards/Generic.kl at the tag
+#              android-15.0.0_r1 (Apache-2.0), the key layout of every keyboard without a vendor file
+#   aosp     = the AOSP keyboard layouts of frameworks/base packages/InputDevices/res/raw (commit 1cdfff555f4a,
+#              Apache-2.0): 36 of the 50 give scan code 86 the key code PLUS (`map key 86 PLUS`), because the
+#              generic key layout gives 86 and 43 the same key code BACKSLASH
+# Columns: position, keyCode (KEYCODE_ name), scanCode (Linux, decimal), generic (the generic key code of scanCode),
+# class (character: the build writes the key's block; system: the system keeps the key: modifiers, Enter,
+# Backspace, Tab, Escape, navigation, function, media and language keys), source. Positions of
+# targets/xkb-default-keyname.tsv without a row: F13 to F24 (Android 15's generic key layout has no key code for
+# their scan codes 183 to 194) and BrowserStop (scan code 128, which the generic key layout gives MEDIA_STOP, the key
+# code of MediaStop). A row's keyCode differs from generic only for IntlBackslash.
+position	keyCode	scanCode	generic	class	source
+Escape	KEYCODE_ESCAPE	1	KEYCODE_ESCAPE	system	chromium, generic
+Digit1	KEYCODE_1	2	KEYCODE_1	character	chromium, generic
+Digit2	KEYCODE_2	3	KEYCODE_2	character	chromium, generic
+Digit3	KEYCODE_3	4	KEYCODE_3	character	chromium, generic
+Digit4	KEYCODE_4	5	KEYCODE_4	character	chromium, generic
+Digit5	KEYCODE_5	6	KEYCODE_5	character	chromium, generic
+Digit6	KEYCODE_6	7	KEYCODE_6	character	chromium, generic
+Digit7	KEYCODE_7	8	KEYCODE_7	character	chromium, generic
+Digit8	KEYCODE_8	9	KEYCODE_8	character	chromium, generic
+Digit9	KEYCODE_9	10	KEYCODE_9	character	chromium, generic
+Digit0	KEYCODE_0	11	KEYCODE_0	character	chromium, generic
+Minus	KEYCODE_MINUS	12	KEYCODE_MINUS	character	chromium, generic
+Equal	KEYCODE_EQUALS	13	KEYCODE_EQUALS	character	chromium, generic
+Backspace	KEYCODE_DEL	14	KEYCODE_DEL	system	chromium, generic
+Tab	KEYCODE_TAB	15	KEYCODE_TAB	system	chromium, generic
+KeyQ	KEYCODE_Q	16	KEYCODE_Q	character	chromium, generic
+KeyW	KEYCODE_W	17	KEYCODE_W	character	chromium, generic
+KeyE	KEYCODE_E	18	KEYCODE_E	character	chromium, generic
+KeyR	KEYCODE_R	19	KEYCODE_R	character	chromium, generic
+KeyT	KEYCODE_T	20	KEYCODE_T	character	chromium, generic
+KeyY	KEYCODE_Y	21	KEYCODE_Y	character	chromium, generic
+KeyU	KEYCODE_U	22	KEYCODE_U	character	chromium, generic
+KeyI	KEYCODE_I	23	KEYCODE_I	character	chromium, generic
+KeyO	KEYCODE_O	24	KEYCODE_O	character	chromium, generic
+KeyP	KEYCODE_P	25	KEYCODE_P	character	chromium, generic
+BracketLeft	KEYCODE_LEFT_BRACKET	26	KEYCODE_LEFT_BRACKET	character	chromium, generic
+BracketRight	KEYCODE_RIGHT_BRACKET	27	KEYCODE_RIGHT_BRACKET	character	chromium, generic
+Enter	KEYCODE_ENTER	28	KEYCODE_ENTER	system	chromium, generic
+ControlLeft	KEYCODE_CTRL_LEFT	29	KEYCODE_CTRL_LEFT	system	chromium, generic
+KeyA	KEYCODE_A	30	KEYCODE_A	character	chromium, generic
+KeyS	KEYCODE_S	31	KEYCODE_S	character	chromium, generic
+KeyD	KEYCODE_D	32	KEYCODE_D	character	chromium, generic
+KeyF	KEYCODE_F	33	KEYCODE_F	character	chromium, generic
+KeyG	KEYCODE_G	34	KEYCODE_G	character	chromium, generic
+KeyH	KEYCODE_H	35	KEYCODE_H	character	chromium, generic
+KeyJ	KEYCODE_J	36	KEYCODE_J	character	chromium, generic
+KeyK	KEYCODE_K	37	KEYCODE_K	character	chromium, generic
+KeyL	KEYCODE_L	38	KEYCODE_L	character	chromium, generic
+Semicolon	KEYCODE_SEMICOLON	39	KEYCODE_SEMICOLON	character	chromium, generic
+Quote	KEYCODE_APOSTROPHE	40	KEYCODE_APOSTROPHE	character	chromium, generic
+Backquote	KEYCODE_GRAVE	41	KEYCODE_GRAVE	character	chromium, generic
+ShiftLeft	KEYCODE_SHIFT_LEFT	42	KEYCODE_SHIFT_LEFT	system	chromium, generic
+Backslash	KEYCODE_BACKSLASH	43	KEYCODE_BACKSLASH	character	chromium, generic
+KeyZ	KEYCODE_Z	44	KEYCODE_Z	character	chromium, generic
+KeyX	KEYCODE_X	45	KEYCODE_X	character	chromium, generic
+KeyC	KEYCODE_C	46	KEYCODE_C	character	chromium, generic
+KeyV	KEYCODE_V	47	KEYCODE_V	character	chromium, generic
+KeyB	KEYCODE_B	48	KEYCODE_B	character	chromium, generic
+KeyN	KEYCODE_N	49	KEYCODE_N	character	chromium, generic
+KeyM	KEYCODE_M	50	KEYCODE_M	character	chromium, generic
+Comma	KEYCODE_COMMA	51	KEYCODE_COMMA	character	chromium, generic
+Period	KEYCODE_PERIOD	52	KEYCODE_PERIOD	character	chromium, generic
+Slash	KEYCODE_SLASH	53	KEYCODE_SLASH	character	chromium, generic
+ShiftRight	KEYCODE_SHIFT_RIGHT	54	KEYCODE_SHIFT_RIGHT	system	chromium, generic
+NumpadMultiply	KEYCODE_NUMPAD_MULTIPLY	55	KEYCODE_NUMPAD_MULTIPLY	character	chromium, generic
+AltLeft	KEYCODE_ALT_LEFT	56	KEYCODE_ALT_LEFT	system	chromium, generic
+Space	KEYCODE_SPACE	57	KEYCODE_SPACE	character	chromium, generic
+CapsLock	KEYCODE_CAPS_LOCK	58	KEYCODE_CAPS_LOCK	system	chromium, generic
+F1	KEYCODE_F1	59	KEYCODE_F1	system	chromium, generic
+F2	KEYCODE_F2	60	KEYCODE_F2	system	chromium, generic
+F3	KEYCODE_F3	61	KEYCODE_F3	system	chromium, generic
+F4	KEYCODE_F4	62	KEYCODE_F4	system	chromium, generic
+F5	KEYCODE_F5	63	KEYCODE_F5	system	chromium, generic
+F6	KEYCODE_F6	64	KEYCODE_F6	system	chromium, generic
+F7	KEYCODE_F7	65	KEYCODE_F7	system	chromium, generic
+F8	KEYCODE_F8	66	KEYCODE_F8	system	chromium, generic
+F9	KEYCODE_F9	67	KEYCODE_F9	system	chromium, generic
+F10	KEYCODE_F10	68	KEYCODE_F10	system	chromium, generic
+NumLock	KEYCODE_NUM_LOCK	69	KEYCODE_NUM_LOCK	system	chromium, generic
+ScrollLock	KEYCODE_SCROLL_LOCK	70	KEYCODE_SCROLL_LOCK	system	chromium, generic
+Numpad7	KEYCODE_NUMPAD_7	71	KEYCODE_NUMPAD_7	character	chromium, generic
+Numpad8	KEYCODE_NUMPAD_8	72	KEYCODE_NUMPAD_8	character	chromium, generic
+Numpad9	KEYCODE_NUMPAD_9	73	KEYCODE_NUMPAD_9	character	chromium, generic
+NumpadSubtract	KEYCODE_NUMPAD_SUBTRACT	74	KEYCODE_NUMPAD_SUBTRACT	character	chromium, generic
+Numpad4	KEYCODE_NUMPAD_4	75	KEYCODE_NUMPAD_4	character	chromium, generic
+Numpad5	KEYCODE_NUMPAD_5	76	KEYCODE_NUMPAD_5	character	chromium, generic
+Numpad6	KEYCODE_NUMPAD_6	77	KEYCODE_NUMPAD_6	character	chromium, generic
+NumpadAdd	KEYCODE_NUMPAD_ADD	78	KEYCODE_NUMPAD_ADD	character	chromium, generic
+Numpad1	KEYCODE_NUMPAD_1	79	KEYCODE_NUMPAD_1	character	chromium, generic
+Numpad2	KEYCODE_NUMPAD_2	80	KEYCODE_NUMPAD_2	character	chromium, generic
+Numpad3	KEYCODE_NUMPAD_3	81	KEYCODE_NUMPAD_3	character	chromium, generic
+Numpad0	KEYCODE_NUMPAD_0	82	KEYCODE_NUMPAD_0	character	chromium, generic
+NumpadDecimal	KEYCODE_NUMPAD_DOT	83	KEYCODE_NUMPAD_DOT	character	chromium, generic
+IntlBackslash	KEYCODE_PLUS	86	KEYCODE_BACKSLASH	character	chromium, generic, aosp
+F11	KEYCODE_F11	87	KEYCODE_F11	system	chromium, generic
+F12	KEYCODE_F12	88	KEYCODE_F12	system	chromium, generic
+MediaTrackPrevious	KEYCODE_MEDIA_PREVIOUS	165	KEYCODE_MEDIA_PREVIOUS	system	chromium, generic
+MediaTrackNext	KEYCODE_MEDIA_NEXT	163	KEYCODE_MEDIA_NEXT	system	chromium, generic
+NumpadEnter	KEYCODE_NUMPAD_ENTER	96	KEYCODE_NUMPAD_ENTER	system	chromium, generic
+ControlRight	KEYCODE_CTRL_RIGHT	97	KEYCODE_CTRL_RIGHT	system	chromium, generic
+AudioVolumeMute	KEYCODE_VOLUME_MUTE	113	KEYCODE_VOLUME_MUTE	system	chromium, generic
+MediaPlayPause	KEYCODE_MEDIA_PLAY_PAUSE	164	KEYCODE_MEDIA_PLAY_PAUSE	system	chromium, generic
+MediaStop	KEYCODE_MEDIA_STOP	166	KEYCODE_MEDIA_STOP	system	chromium, generic
+AudioVolumeDown	KEYCODE_VOLUME_DOWN	114	KEYCODE_VOLUME_DOWN	system	chromium, generic
+AudioVolumeUp	KEYCODE_VOLUME_UP	115	KEYCODE_VOLUME_UP	system	chromium, generic
+BrowserHome	KEYCODE_HOME	172	KEYCODE_HOME	system	chromium, generic
+NumpadDivide	KEYCODE_NUMPAD_DIVIDE	98	KEYCODE_NUMPAD_DIVIDE	character	chromium, generic
+PrintScreen	KEYCODE_SYSRQ	99	KEYCODE_SYSRQ	system	chromium, generic
+AltRight	KEYCODE_ALT_RIGHT	100	KEYCODE_ALT_RIGHT	system	chromium, generic
+Home	KEYCODE_MOVE_HOME	102	KEYCODE_MOVE_HOME	system	chromium, generic
+ArrowUp	KEYCODE_DPAD_UP	103	KEYCODE_DPAD_UP	system	chromium, generic
+PageUp	KEYCODE_PAGE_UP	104	KEYCODE_PAGE_UP	system	chromium, generic
+ArrowLeft	KEYCODE_DPAD_LEFT	105	KEYCODE_DPAD_LEFT	system	chromium, generic
+ArrowRight	KEYCODE_DPAD_RIGHT	106	KEYCODE_DPAD_RIGHT	system	chromium, generic
+End	KEYCODE_MOVE_END	107	KEYCODE_MOVE_END	system	chromium, generic
+ArrowDown	KEYCODE_DPAD_DOWN	108	KEYCODE_DPAD_DOWN	system	chromium, generic
+PageDown	KEYCODE_PAGE_DOWN	109	KEYCODE_PAGE_DOWN	system	chromium, generic
+Insert	KEYCODE_INSERT	110	KEYCODE_INSERT	system	chromium, generic
+Delete	KEYCODE_FORWARD_DEL	111	KEYCODE_FORWARD_DEL	system	chromium, generic
+MetaLeft	KEYCODE_META_LEFT	125	KEYCODE_META_LEFT	system	chromium, generic
+MetaRight	KEYCODE_META_RIGHT	126	KEYCODE_META_RIGHT	system	chromium, generic
+ContextMenu	KEYCODE_MENU	127	KEYCODE_MENU	system	chromium, generic
+Sleep	KEYCODE_SLEEP	142	KEYCODE_SLEEP	system	chromium, generic
+BrowserSearch	KEYCODE_SEARCH	217	KEYCODE_SEARCH	system	chromium, generic
+BrowserFavorites	KEYCODE_BOOKMARK	156	KEYCODE_BOOKMARK	system	chromium, generic
+BrowserRefresh	KEYCODE_REFRESH	173	KEYCODE_REFRESH	system	chromium, generic
+BrowserForward	KEYCODE_FORWARD	159	KEYCODE_FORWARD	system	chromium, generic
+BrowserBack	KEYCODE_BACK	158	KEYCODE_BACK	system	chromium, generic
+LaunchMail	KEYCODE_ENVELOPE	155	KEYCODE_ENVELOPE	system	chromium, generic
+Pause	KEYCODE_BREAK	119	KEYCODE_BREAK	system	chromium, generic
+NumpadEqual	KEYCODE_NUMPAD_EQUALS	117	KEYCODE_NUMPAD_EQUALS	character	chromium, generic
+KanaMode	KEYCODE_KATAKANA_HIRAGANA	93	KEYCODE_KATAKANA_HIRAGANA	system	chromium, generic
+IntlRo	KEYCODE_RO	89	KEYCODE_RO	character	chromium, generic
+Convert	KEYCODE_HENKAN	92	KEYCODE_HENKAN	system	chromium, generic
+NonConvert	KEYCODE_MUHENKAN	94	KEYCODE_MUHENKAN	system	chromium, generic
+IntlYen	KEYCODE_YEN	124	KEYCODE_YEN	character	chromium, generic
+NumpadComma	KEYCODE_NUMPAD_COMMA	121	KEYCODE_NUMPAD_COMMA	character	chromium, generic
+Lang1	KEYCODE_KANA	122	KEYCODE_KANA	system	chromium, generic
+Lang2	KEYCODE_EISU	123	KEYCODE_EISU	system	chromium, generic

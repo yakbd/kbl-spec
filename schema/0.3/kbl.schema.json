@@ -2566,6 +2566,101 @@
         "android": {
           "type": "object",
           "properties": {
+            "packageName": {
+              "type": "string",
+              "maxLength": 255,
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$",
+              "description": "The APK's package name, the application id a builder registers (rule packageName)."
+            },
+            "label": {
+              "description": "The layout's name in the physical-keyboard settings, also the app's label (rule label).",
+              "$ref": "#/$defs/Text"
+            },
+            "layoutName": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,99}$",
+              "description": "The keyboard-layout name and the raw resource res/raw/<layoutName>.kcm (rule layoutName)."
+            },
+            "keyboardLocale": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
+                "description": "A BCP 47 tag."
+              },
+              "description": "android:keyboardLocale, the languages the layout is for (rule keyboardLocale)."
+            },
+            "keyboardLayoutType": {
+              "type": "string",
+              "enum": [
+                "qwerty",
+                "qwertz",
+                "azerty",
+                "dvorak",
+                "colemak",
+                "workman",
+                "turkish_q",
+                "turkish_f",
+                "extended"
+              ],
+              "description": "android:keyboardLayoutType (no default: not written)."
+            },
+            "versionCode": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2100000000,
+              "description": "android:versionCode; a newer build of the same package needs a higher one (rule versionCode)."
+            },
+            "versionName": {
+              "type": "string",
+              "pattern": "^[^\\x00-\\x1f\\x7f]{1,64}$",
+              "description": "android:versionName, shown to users (rule versionName)."
+            },
+            "keys": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PositionId"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "keyCode": {
+                    "type": "string",
+                    "pattern": "^KEYCODE_[A-Z0-9_]{1,40}$",
+                    "description": "The Android key code, a KEYCODE_ name (rule keyCode)."
+                  },
+                  "scanCode": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1023,
+                    "description": "The Linux input scan code of the key, for a map key line (rule scanCode)."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Android data of one position."
+              },
+              "description": "Android data per position."
+            },
+            "deadKeys": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/Id"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "accent": {
+                    "type": "string",
+                    "pattern": "^[̀-̵̀-̓]$",
+                    "description": "The combining character Android composes this dead key with (rule deadKeyAccent)."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Android data of one dead key."
+              },
+              "description": "Android data per dead key."
+            },
             "onLoss": {
               "description": "Loss policy for this target.",
               "$ref": "#/$defs/OnLoss"
@@ -3384,7 +3479,38 @@
               "general.deviceClassDerived",
               "general.rowHeightsMismatch",
               "android.*",
+              "android.combiningIsDeadKey",
+              "android.deadKeyEntryDiffers",
+              "android.deadKeyNoAccent",
+              "android.kcmFallbackDropped",
+              "android.kcmLabelDropped",
+              "android.kcmModifierDropped",
+              "android.kcmNotOverlay",
+              "android.kcmUsageMapDropped",
+              "android.keyCodeDuplicate",
+              "android.keyCodeMissing",
+              "android.keyCodeUnknown",
+              "android.modifierUnmapped",
+              "android.nameInvalid",
+              "android.noHardwareLayers",
+              "android.numLockKeyReduced",
+              "android.outputMultiCharacter",
+              "android.outputOutsideBmp",
+              "android.outputUnencodable",
+              "android.scanCodeDuplicate",
+              "android.settingNotCompiled",
+              "android.systemKeyKept",
+              "android.transformNotCompiled",
               "androidDefault.*",
+              "androidDefault.deadKeyAccent",
+              "androidDefault.keyCode",
+              "androidDefault.keyboardLocale",
+              "androidDefault.label",
+              "androidDefault.layoutName",
+              "androidDefault.packageName",
+              "androidDefault.scanCode",
+              "androidDefault.versionCode",
+              "androidDefault.versionName",
               "androidime.*",
               "androidime.flickPathDropped",
               "androidime.keyCodeMissing",

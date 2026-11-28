@@ -1245,3 +1245,46 @@ starting with a digit, which `kmc` asks of package names and which are file name
 (`keyman.kmcVersionUntested`), and a `kmc` failure is fatal (`keyman.compilerRejected`). Reason: as for macOS and
 ChromeOS, a prefix keeps a built keyboard clear of the ids of Keyman's own repository; `kmc` changes what it accepts
 between versions, so a build must say when it ran with an untested one.
+
+**D165 (2026-11-28). Android physical keyboards: one code-free APK with one `.kcm`, names from the layout file.**
+`targets.android` holds `packageName`, `label`, `layoutName`, `keyboardLocale`, `keyboardLayoutType`, `versionCode`,
+`versionName`, `keys` (key code and scan code per position) and `deadKeys` (the accent per dead key), each with a
+one-line default (`targets/android.md` §1) except `keyboardLayoutType`. The package default is
+`org.yakbd.keyboard.<slug>.kcm`, the slug and version rules those of `androidime`, so both APKs of one layout install
+side by side. The APK has `android:hasCode="false"` and a receiver whose class does not exist. Reason: the system only
+reads the receiver's meta-data (measured: such an APK installs and its layout is listed; without the attribute it is
+refused); the same slug and version rules as the input method keep one layout's two Android builds alike.
+
+**D166 (2026-11-28). The `.kcm` build is checked against Android's own lookup over 64 states.** The build states are
+Shift, Caps Lock and both sides of Control and Alt (64 combinations); each key block is written so that a Go copy of
+the platform's lookup (last behaviour first, subset match, Control/Alt/Meta exact) gives SPEC §9.3's character in
+every state, and the build checks it. As in `androidime`, the `["other"]` layer does not apply with Control or left
+Alt held. A block replaces the generic map's whole key, so the build adds back the generic fallbacks of `SPACE` and
+of the number pad. Reason: a `.kcm` property list is not a table of states; writing behaviours against the lookup
+makes Caps Lock, sides and explicit nothing exact without rules of their own.
+
+**D167 (2026-11-28). The Android position table: key code, scan code, generic key code, class.** One row per
+position: the `KEYCODE_` name, the Linux scan code (Chromium's table), the key code Android 15's `Generic.kl` gives
+that scan code, and `character` or `system`. A `map key` line is written exactly where a position's key code is not
+the generic one of its scan code. `IntlBackslash` (scan code 86, generic `BACKSLASH` like `Backslash`) gets `PLUS`, as
+36 of AOSP's 50 layouts map it, because the table's codes must be unique; F13–F24 and `BrowserStop` have no row.
+System keys are never written. The same table serves `androidime`'s physical-key mode (D151). Reason: one source
+for both Android targets; remaps (Dvorak keeping shortcuts on letters, Caps Lock as Escape) are pins, not rules.
+
+**D168 (2026-11-28). Dead keys follow the platform source, not the five accents of the documentation.** AOSP's
+documentation names five combining accents; `KeyCharacterMap.java` at Android 15 makes a dead key of 28 combining
+characters, composing by NFC (plus its own stroke pairs). The build and the importer use the source's table; rule
+`deadKeyAccent` picks a dead key's accent by its `spacing`, else by the most entries composed; entries composed
+differently are reported per dead key. The emulator cases include an accent beyond the five. Reason: the source
+decides what the device does; the documentation is older than it.
+
+**D169 (2026-11-28). `.kcm` import reads behaviour, not syntax.** The importer asks the lookup for each key's
+character in each state (both-sided states left out), groups states into layers, sets `capsLockFallback` to `false`,
+turns combining accents into dead keys with every composition Android makes, and keeps `map key` lines as pins.
+Labels, numbers, HID usage maps and fallbacks other than the build's own are reported, not kept. Reason: the property
+lines of a `.kcm` overlap; only the lookup says what a key types, and a build of the import must type the same.
+
+**D170 (2026-11-28). The `.kcm` target's tested floor is Android 15 (API 35).** The APK declares minimum 34 (it
+installs and is listed there), but on API 34 no chosen layout was ever applied in measurement, while on 35 and 36 it
+typed through its `.kcm`. Pinned key code names must be names Android 15 knows. Reason: what was measured; API 34
+stays documented as not working until a measurement says otherwise.

@@ -402,7 +402,41 @@ export const lossKindsCore03 = [
 ] as const;
 
 /** 0.3: the Android physical-keyboard target (`.kcm`; targets/android.md, coverage/kcm.md). Owner: the kcm work. */
-const lossKindsAndroid = ["android.*", "androidDefault.*"] as const;
+const lossKindsAndroid = [
+  "android.*",
+  "android.combiningIsDeadKey",
+  "android.deadKeyEntryDiffers",
+  "android.deadKeyNoAccent",
+  "android.kcmFallbackDropped",
+  "android.kcmLabelDropped",
+  "android.kcmModifierDropped",
+  "android.kcmNotOverlay",
+  "android.kcmUsageMapDropped",
+  "android.keyCodeDuplicate",
+  "android.keyCodeMissing",
+  "android.keyCodeUnknown",
+  "android.modifierUnmapped",
+  "android.nameInvalid",
+  "android.noHardwareLayers",
+  "android.numLockKeyReduced",
+  "android.outputMultiCharacter",
+  "android.outputOutsideBmp",
+  "android.outputUnencodable",
+  "android.scanCodeDuplicate",
+  "android.settingNotCompiled",
+  "android.systemKeyKept",
+  "android.transformNotCompiled",
+  "androidDefault.*",
+  "androidDefault.deadKeyAccent",
+  "androidDefault.keyCode",
+  "androidDefault.keyboardLocale",
+  "androidDefault.label",
+  "androidDefault.layoutName",
+  "androidDefault.packageName",
+  "androidDefault.scanCode",
+  "androidDefault.versionCode",
+  "androidDefault.versionName",
+] as const;
 
 /** 0.3: the Android on-screen keyboard target (targets/androidime.md). Owner: the touch-target work. */
 const lossKindsAndroidime = [
@@ -1810,6 +1844,76 @@ const targetsXkb = (OnLoss: OnLossSchema) =>
 const targetsAndroid = (OnLoss: OnLossSchema) =>
   z
     .strictObject({
+      packageName: z
+        .string()
+        .regex(/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/u)
+        .max(255)
+        .meta({ description: "The APK's package name, the application id a builder registers (rule packageName)." })
+        .optional(),
+      label: Text.meta({
+        description: "The layout's name in the physical-keyboard settings, also the app's label (rule label).",
+      }).optional(),
+      layoutName: z
+        .string()
+        .regex(/^[a-z][a-z0-9_]{0,99}$/u)
+        .meta({ description: "The keyboard-layout name and the raw resource res/raw/<layoutName>.kcm (rule layoutName)." })
+        .optional(),
+      keyboardLocale: z
+        .array(z.string().regex(/^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/u).meta({ description: "A BCP 47 tag." }))
+        .min(1)
+        .meta({ description: "android:keyboardLocale, the languages the layout is for (rule keyboardLocale)." })
+        .optional(),
+      keyboardLayoutType: z
+        .enum(["qwerty", "qwertz", "azerty", "dvorak", "colemak", "workman", "turkish_q", "turkish_f", "extended"])
+        .meta({ description: "android:keyboardLayoutType (no default: not written)." })
+        .optional(),
+      versionCode: z
+        .int()
+        .min(1)
+        .max(2100000000)
+        .meta({ description: "android:versionCode; a newer build of the same package needs a higher one (rule versionCode)." })
+        .optional(),
+      versionName: z
+        .string()
+        .regex(/^[^\x00-\x1f\x7f]{1,64}$/u)
+        .meta({ description: "android:versionName, shown to users (rule versionName)." })
+        .optional(),
+      keys: z
+        .record(
+          PositionId,
+          z
+            .strictObject({
+              keyCode: z
+                .string()
+                .regex(/^KEYCODE_[A-Z0-9_]{1,40}$/u)
+                .meta({ description: "The Android key code, a KEYCODE_ name (rule keyCode)." })
+                .optional(),
+              scanCode: z
+                .int()
+                .min(0)
+                .max(1023)
+                .meta({ description: "The Linux input scan code of the key, for a map key line (rule scanCode)." })
+                .optional(),
+            })
+            .meta({ description: "Android data of one position." }),
+        )
+        .meta({ description: "Android data per position." })
+        .optional(),
+      deadKeys: z
+        .record(
+          Id,
+          z
+            .strictObject({
+              accent: z
+                .string()
+                .regex(/^[̀-̵̀-̓]$/u)
+                .meta({ description: "The combining character Android composes this dead key with (rule deadKeyAccent)." })
+                .optional(),
+            })
+            .meta({ description: "Android data of one dead key." }),
+        )
+        .meta({ description: "Android data per dead key." })
+        .optional(),
       onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
     })
     .meta({ description: "Android physical-keyboard build choices (SPEC §16.6, targets/android.md)." });

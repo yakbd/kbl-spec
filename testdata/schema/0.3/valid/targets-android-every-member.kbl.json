@@ -1,0 +1,84 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json",
+  "kbl": "0.3",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "deadKeys": {
+    "acute": {
+      "spacing": "´",
+      "entries": [
+        {
+          "base": "a",
+          "result": "á"
+        }
+      ]
+    }
+  },
+  "targets": {
+    "android": {
+      "packageName": "org.example.keyboard.en_case",
+      "label": "Schema test case",
+      "layoutName": "en_case",
+      "keyboardLocale": [
+        "en",
+        "en-Latn-US"
+      ],
+      "keyboardLayoutType": "qwerty",
+      "versionCode": 2100000000,
+      "versionName": "1.0 beta",
+      "keys": {
+        "KeyA": {
+          "keyCode": "KEYCODE_A",
+          "scanCode": 30
+        },
+        "KeyB": {
+          "scanCode": 1023
+        },
+        "IntlBackslash": {
+          "keyCode": "KEYCODE_PLUS"
+        }
+      },
+      "deadKeys": {
+        "acute": {
+          "accent": "́"
+        }
+      },
+      "onLoss": {
+        "kinds": {
+          "android.outputMultiCharacter": "error",
+          "androidDefault.*": "error"
+        }
+      }
+    }
+  }
+}

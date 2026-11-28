@@ -749,11 +749,19 @@ rules are few and mechanical, every one can be overridden by the field it names,
 ### 16.6 `targets.android` (0.3)
 
 Android physical keyboards: a `.kcm` key character map in an APK without code, which the system lists under its physical-keyboard settings (`targets/android.md`, `coverage/kcm.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
-names, and every use is reported as `androidDefault.<rule>`. Its fields are written by the work on this target; until
-then the object holds only `onLoss`.
+names, and every use is reported as `androidDefault.<rule>`. One file builds one APK with one layout (D150).
 
 | property | type | meaning (default rule in `targets/android.md`) |
 |---|---|---|
+| `packageName` | Android package name, as `targets.androidime.packageName` | the APK's package name, what a builder registers for developer verification (rule `packageName`) |
+| `label` | Text | the layout's name in the physical-keyboard settings and the app's label (rule `label`) |
+| `layoutName` | string `^[a-z][a-z0-9_]{0,99}$` | the keyboard layout's `android:name` (part of its descriptor `<package>/<receiver>/<layoutName>`) and the resource `res/raw/<layoutName>.kcm` (rule `layoutName`) |
+| `keyboardLocale` | array of BCP 47 tags, at least one | `android:keyboardLocale`: the languages the layout is for; the system offers and may choose the layout by them (rule `keyboardLocale`) |
+| `keyboardLayoutType` | `qwerty`, `qwertz`, `azerty`, `dvorak`, `colemak`, `workman`, `turkish_q`, `turkish_f`, `extended` | `android:keyboardLayoutType`; no default (not written) |
+| `versionCode` | integer 1–2100000000 | `android:versionCode`; an update of an installed build needs a higher one (rule `versionCode`) |
+| `versionName` | string, 1–64 characters, no control character | `android:versionName` (rule `versionName`) |
+| `keys` | object PositionId → `{ "keyCode"?: string, "scanCode"?: integer 0–1023 }` | per position: the Android key code, a `KEYCODE_` name of `KeyEvent` (rule `keyCode`), and the Linux input scan code of the key (rule `scanCode`); together they decide the `map key` lines (`targets/android.md` §2) |
+| `deadKeys` | object DeadKeyId → `{ "accent"?: string }` | the combining character Android composes the dead key with, one of `targets/android.md` §4 (rule `deadKeyAccent`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.7 `targets.androidime` (0.3)
@@ -1047,6 +1055,28 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `xkb.actionsDropped` | warning | explicit actions, `virtualMods`, `repeat`, key behaviours (locks, overlays, radio groups) and `modifier_map` entries other than those of the level shifts have no home |
 | `xkb.composeSequenceDropped` | warning | an imported Compose sequence that does not start with a dead keysym of the layout, contains `Multi_key` or a keysym no key types, or has no text result |
 | `xkb.deadKeyNoCompose` | warning | the symbols file has dead keysyms and no Compose file was given; the dead keys are imported without entries |
+| `android.noHardwareLayers` | error | the file has no hardware layers: there is no key character map to build (0.3) |
+| `android.keyCodeMissing` | warning | a position with bindings has no Android key code (no pin `keys.<p>.keyCode`, no row of `targets/android-default-keycode.tsv`); its bindings are left out |
+| `android.keyCodeUnknown` | error | a pinned key code is not a key code name Android 15 knows (`targets/android.md` §2): the system would refuse the whole key character map |
+| `android.keyCodeDuplicate` | error | two positions get the same key code (rule `keyCode`) |
+| `android.scanCodeDuplicate` | error | two positions get the same scan code (rule `scanCode`) |
+| `android.nameInvalid` | error | a pinned `packageName` that is not an Android package name, or a `layoutName` that is not a resource name |
+| `android.systemKeyKept` | warning | a position whose key code is a system key of the position table (Enter, Backspace, Tab, Escape, modifiers, navigation, function keys) binds something other than the control character that key types; Android keeps the key's own behaviour (`targets/android.md` §2) |
+| `android.outputMultiCharacter` | warning | an output of more than one UTF-16 unit (a string); a key character map types one character per key and state; left out |
+| `android.outputOutsideBmp` | warning | an output that is one character outside the BMP (two UTF-16 units); a key character map holds one UTF-16 unit; left out |
+| `android.outputUnencodable` | warning | an output a key character map cannot hold: U+0000 or a lone surrogate; left out |
+| `android.combiningIsDeadKey` | warning | an output that is one of Android's combining accents (`targets/android.md` §4): Android makes the key a dead key, where the file types the character |
+| `android.deadKeyNoAccent` | warning | a dead key for which no Android accent composes any entry, or whose pinned `accent` is not one; its keys type its `spacing` when that is one UTF-16 unit, else nothing |
+| `android.deadKeyEntryDiffers` | warning | entries of a dead key that Android's composition with its accent (Unicode NFC plus the platform's own pairs) gives differently; the entries in `detail` |
+| `android.modifierUnmapped` | warning | a hardware layer needs a custom component (§7.2); Android key events give Shift, Caps Lock, Control and Alt only, so those modifier sets are not compiled |
+| `android.numLockKeyReduced` | warning | a `numLock` position is built with Num Lock only: with Num Lock on its base binding (Shift too), without it navigation; its other layers are left out |
+| `android.settingNotCompiled` | warning | `capsLockOffBy` `shift` or `bidiMarksOnShiftBackspace`; Android keeps its own Caps Lock and Backspace |
+| `android.transformNotCompiled` | warning | a transform, reorder or backspace transform; a key character map has none |
+| `android.kcmNotOverlay` | accept | import: the `.kcm` file is a device's base map (`type FULL` and the like), imported as a layout overlay |
+| `android.kcmLabelDropped` | accept | import: a key's `label` or `number` that differs from what a build derives is not kept |
+| `android.kcmFallbackDropped` | warning | import: `fallback` and `replace` key codes, other than those the build writes itself, have no home |
+| `android.kcmUsageMapDropped` | warning | import: `map key usage` lines (HID usages) have no home |
+| `android.kcmModifierDropped` | warning | import: a key types something with right Shift alone, Meta, Sym, Fn, Num Lock, Scroll Lock, or both Control or both Alt keys, that a modifier set of this format cannot say; those behaviours are not imported |
 | `androidime.noTouchLayout` | error | the file has no touch layer set and no hardware layers to derive one from (rule `touchFromHardware`); there is nothing to build |
 | `androidime.layerNotDerived` | warning | rule `touchFromHardware` built the touch layout from the hardware layers without modifiers and with Shift only; each other hardware layer (AltGr, Caps Lock, …) is not on the touch keyboard (it still types in physical-key mode) |
 | `androidime.transformNotCompiled` | warning | a transform whose `from` cannot be expanded into at most 1024 literal texts, whose `to` uses what a literal rule cannot say, or a `reorders` group (`targets/touch-runtime.md` §5); left out |

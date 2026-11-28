@@ -100,6 +100,11 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
   `.kmp`, desktop Keyman only, positions outside the form left to the system); kinds `keyman.*` (7) and
   `keymanDefault.*` (8 rules); D190–D194.
 
+- 2026-11-28 (branch `spec-0.3`, draft, Android physical keyboards): `targets.android` fields `packageName`, `label`,
+  `layoutName`, `keyboardLocale`, `keyboardLayoutType`, `versionCode`, `versionName`, `keys` (`keyCode`, `scanCode`),
+  `deadKeys` (`accent`) (SPEC §16.6); default rules and loss kinds `android.*` (22 kinds) and `androidDefault.*`
+  (`targets/android.md`); position table `targets/android-default-keycode.tsv`; `coverage/kcm.md` (D165 to D170).
+
 - 2026-11-28 (branch `spec-0.3`, draft, on-screen targets): the touch runtime file `targets/touch-runtime.md`
   (`touchRuntime` 1; schemas `schema/touch-runtime/1/touch-runtime.schema.json` and
   `schema/touch-runtime/runtime-manifest.schema.json` from `src/touch-runtime.ts`; cases `testdata/touch-runtime/`);
