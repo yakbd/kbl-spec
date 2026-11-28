@@ -81,8 +81,10 @@ nothing more with it) or passes it through (returns `false`: the system types or
 
 1. A position **the layout owns** (one with a binding in some compiled layer) is handled when it resolves to text, a
    dead key or the backspace action (also in a state with Control or Alt: the file's Control and Alt layers type).
-2. Where it resolves to nothing (an explicit nothing, no binding, no layer): in a state with Control or an Alt
-   component the press is a **shortcut** and is passed through, so the system's shortcuts work; in any other state
+2. In a state with Control or an Alt component that **no layer names** in a modifier set (directly or through the
+   Caps Lock fallback; `["other"]` does not count, so an `["other"]` layer never takes Control or Alt presses),
+   and where the key resolves to nothing (an explicit nothing, no binding, no layer): in a state with Control or
+   an Alt component the press is a **shortcut** and is passed through, so the system's shortcuts work; in any other state
    it is handled, so the system layout never types its own character on the layout's keys. Shortcut letters are the
    system layout's: where the base layer types another ASCII letter than `us` has at the position (`KeyQ` types
    `a`), a shortcut follows the key cap of `us`, not of the layout (`chromeos.shortcutsFollowSystemLayout`, a
@@ -138,9 +140,10 @@ later group sees only the context that the earlier ones left in the composition 
 window above).
 
 `reorders` groups are not compiled (`chromeos.reorderNotCompiled`, per group). Markers are not compiled: an output's
-markers are dropped (`chromeos.markerNotCompiled`). `settings.normalization` `enabled`: as `targets/touch-runtime.md` §5, every text (outputs, dead-key values,
-`from`, `to`) is put in NFC at build time (`general.outputNormalized` where that changes it), and text that several keystrokes make together is not
-(`general.normalizationNotApplied`).
+markers are dropped (`chromeos.markerNotCompiled`). `settings.normalization` `enabled`: key outputs, dead-key values and each `to` are put in NFC at build time
+(`general.outputNormalized` for a key output that changes), and text that several keystrokes make together is not
+(`general.normalizationNotApplied`). Unlike `targets/touch-runtime.md` §5, each `from` stays as written: the context
+is the keystrokes' text, not normalised, so `a\u{301}` must match the keys `a` and U+0301 as typed.
 
 ## 5. Files and installation
 

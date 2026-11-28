@@ -1187,7 +1187,7 @@ methods, and the file can pin another system layout.
 dead key and the part of the text that a transform may still change are shown as composition and committed when no
 compiled rule can change them any more; the transform context is that composition, never text read from the field.
 Transforms are expanded into literal rules exactly as for the on-screen runtimes (`targets/touch-runtime.md` §5,
-D202), without markers. Reason: committed text is never taken back, so the runtime needs neither
+D202), without markers and with each `from` as written, never normalised, since the context is not. Reason: committed text is never taken back, so the runtime needs neither
 `deleteSurroundingText` nor the field's surrounding text, whose reliability differs between apps; for one group of
 literal rules the result is exactly CLDR's, and the window is the shortest that keeps it so.
 
