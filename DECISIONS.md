@@ -668,7 +668,7 @@ that they would fit 0.x. Reason (the review): free tools already serve macOS and
 Keyman), while for Windows a free tool that builds native layout DLLs for current Windows does not exist; depth
 where the project is unique comes before breadth.
 
-**D104 (owner, 2026-11-27; changes D76 for the tool's own installer only). The tool's setup program is signed; layout
+**D104 (owner, 2026-11-27; changes D76 for the tool's own installer only; superseded by D112). The tool's setup program is signed; layout
 installers stay unsigned.** `yakbd-setup.exe`, which installs the `yakbd` tool, will be signed through a free
 open-source signing programme (SignPath Foundation), built on GitHub-hosted runners, each release approved by hand,
 and published as an immutable release with build attestations. The installers that `yakbd` builds for layouts stay
@@ -778,6 +778,13 @@ are never copied; text and code are written from understanding. Every source rea
 in the subsection of its platform (URL, what for, licence). Fixtures come only from openly licensed corpora; layouts
 owned by the platform are read on the platform and never committed. The Windows rules are unchanged (the reference
 specification and Microsoft's public documentation only).
+
+**D112 (owner, 2026-11-28; supersedes D104). Releases are not code-signed.** The free open-source signing programme
+D104 relied on found that the project does not qualify, and no other free signing is available, so signing is dropped
+until further notice, as for most software on GitHub. No file of a release is signed: not the tool's or the editor's
+installers, not the programs they install, not the macOS and Linux downloads. D76 applies to the tool's own
+installer again, as it always did to the layout installers; the format still has no signing field. Releases are
+checked with their `SHA256SUMS` file and build provenance attestations. The text of D104 is kept as it was.
 
 **D120 (2026-11-28; carries out D105 and D109 for macOS). The macOS target: fields and default rules.**
 `targets.macos` (SPEC §16.4) holds what a `.keylayout` and its bundle need beyond the general data: the names and
