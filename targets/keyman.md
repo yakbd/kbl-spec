@@ -23,9 +23,8 @@ Core's LDML test runner and ibus-keyman 18.0.235 on Linux, in containers) or **u
 6. **Desktop Keyman only** (D193). `kmc` 18 compiles a CLDR keyboard into a `.kmx` and a `.kvk` and writes no
    KeymanWeb keyboard (`.js`) **[KMC]** **[CHECK]**, which Keyman for Android, iOS and the web load. So the package
    runs on Keyman for Windows, macOS and Linux, and every build says so (`keyman.desktopOnly`, accept). The touch
-   layer sets and flicks of the file are not part of it (`keyman.touchNotCompiled`). A later version adds a second
-   source kind for those platforms, Keyman's own keyboard language with a touch layout, compiled by the same `kmc`
-   (§7).
+   layer sets and flicks of the file are not part of it (`keyman.touchNotCompiled`). Route `kmn` (§9) is the second
+   source kind for those platforms, Keyman's own keyboard language with a touch layout, compiled by the same `kmc`.
 
 ## 1. Rule index
 
@@ -39,6 +38,7 @@ Core's LDML test runner and ibus-keyman 18.0.235 on Linux, in containers) or **u
 | `languages` | the tag of `metadata.id` up to its first singleton subtag (`-t-`, `-u-`, `-x-`, …), then each of `metadata.locales` the same way, without repeats | `languages` | 5 |
 | `form` | `abnt2` when the hardware layers bind `IntlBackslash` and `IntlRo`; else `jis` when they bind `IntlRo` or `IntlYen`; else `iso` when they bind `IntlBackslash`; else `us` | `hardware.formId` | 2 |
 | `kmcVersion` | `18.0.255` | `kmcVersion` | 6 |
+| `route` | `kmn` when the file has touch layer sets, else `ldml` | `route` (or the command line's `-route`) | 9 |
 
 **Slug.** `fo-FO` gives `yakbd_fo_fo`, `und-Latn-t-k0-kbldemo` gives `yakbd_und_latn_t_k0_kbldemo`. The prefix keeps
 the keyboard clear of the ids of Keyman's own keyboard repository, under which an installed keyboard is known.
@@ -146,3 +146,25 @@ Measured with `kmc` 18.0.255 and Keyman for Linux (ibus-keyman 18.0.235, Debian)
   virtual key to its key code. The build does not report it; it is a limit of Keyman for Linux 18.
 
 Unmeasured: Keyman for Windows and macOS (the same `.kmp`); `IntlYen`; a file's own form; Wayland and fcitx5.
+
+## 9. Route `kmn`: Keyman's keyboard language (0.3)
+
+With `route` `kmn` (rule `route`: when the file has touch layer sets) the build writes, instead of the CLDR keyboard,
+a keyboard source in Keyman's own language and, with touch sets, its touch layout, as `convert -to kmn` writes them
+(`coverage/kmn.md` §5, `coverage/keymantouch.md` §5; their `kmn.*` and `keymantouch.*` kinds are this build's
+losses). `kmc` compiles the source to a `.kmx` (desktop Keyman) and, with a touch layout, to a KeymanWeb `.js`
+(Keyman for Android, iOS and the web); the package holds both, one keyboard (D150). `keyman.desktopOnly` and
+`keyman.touchNotCompiled` are not reported on this route; `keyman.noHardwareLayers` is not either (a touch-only layout
+is a mobile keyboard; on a hardware keyboard Keyman types US English, `kmn.passThroughKeys`). The package rules of
+§1 (ids, name, version, copyright, languages, `kmcVersion`) are the same on both routes.
+
+Why every behaviour is written out (D251): a key without a rule types its US English character in Keyman, a pending
+deadkey is passed over by a key without a matching rule, and a `T_` key on a layer carries that layer's modifiers.
+The model's meaning differs on each point, so the source states it: `nul` where the layout types nothing, the
+dead key's `noMatch` per key, the rules of a touch key per layer with that layer's modifiers.
+
+Measured **[CHECK]** (`tools/keyman-check`, touch venue: KeymanWeb 18.0.255 in headless Chromium under phone
+emulation, touch events at the keys' rectangles): a layout written by this route types its expected text by touch,
+dead key, its noMatch and Backspace cancelling it, and a one-shot Shift layer included. Unmeasured: the `.js` in
+Keyman for Android and iOS themselves, long-press, flicks and multi-tap (not driven), the hardware rules of this
+route on desktop Keyman.

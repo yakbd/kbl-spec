@@ -829,6 +829,7 @@ names, and every use is reported as `keymanDefault.<rule>`.
 | `copyright` | string, no control character | the package's copyright line (rule `copyright`) |
 | `languages` | array of BCP 47 tags, at least one | the languages the package lists for the keyboard, in order (rule `languages`) |
 | `kmcVersion` | `major.minor.patch` | the version of `kmc` the layout was tested with; a build with another one says so (rule `kmcVersion`) |
+| `route` | `ldml`, `kmn` | the source kind: `ldml` (the CLDR keyboard above, desktop Keyman) or `kmn` (Keyman's keyboard language with a touch layout, every Keyman platform; `targets/keyman.md` §9) (rule `route`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.11 Conversion formats
@@ -1129,6 +1130,25 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `kbdgen.gestureDropped` | warning | export: `multiTapKeyIds`, flicks, and long-press lists that differ between keys of the same text (kbdgen's `longpress` is one list per text) (0.3) |
 | `kbdgen.deadKeyNotExpressible` | warning | export: a dead key's `noMatch` other than `emitBoth`, its `name` or `display`, or a cycle of chained dead keys (0.3) |
 | `kbdgen.transformNotExpressible` | warning | export: CLDR `transforms` (kbdgen's transforms are dead-key trees only) (0.3) |
+| `kmn.malformed` | **fatal** | the input is not a keyboard source: an unclosed string or bracket, a line that is neither a statement nor a rule, no `begin`, a begin group that does not exist or is not `using keys` (`coverage/kmn.md` §4) (0.3) |
+| `kmn.sourceMissing` | error | a keyboard of a package source (`.kps`) whose `.kmn` is not found; the package's other keyboards are imported (0.3) |
+| `kmn.touchLayoutMissing` | warning | the touch layout `&LAYOUTFILE` names cannot be read; the layout has no touch sets (0.3) |
+| `kmn.languageUnknown` | warning | neither the source (`&ETHNOLOGUECODE`) nor a package names a language: `metadata.id` is `und` (0.3) |
+| `kmn.storeDropped` | accept | system stores without a home: `&VERSION`, `&TARGETS`, `&BITMAP`, `&VISUALKEYBOARD`, `&HOTKEY`, `&DISPLAYMAP`, `&KMW_*`, … (one entry listing them) (0.3) |
+| `kmn.capsRuleDropped` | warning | `&CASEDKEYS`, `&CAPSALWAYSOFF`, `&CAPSONONLY` (0.3) |
+| `kmn.mnemonicLayout` | warning | `&MNEMONICLAYOUT '1'`: keys named by the character of the user's own layout are read as US English positions (0.3) |
+| `kmn.beginDropped` | warning | `begin ANSI` beside `begin Unicode`, `begin NewContext`, `begin PostKeystroke` (0.3) |
+| `kmn.optionFixed` | warning | an option store a rule tests with `if()`, read at its initial value; one entry per store (0.3) |
+| `kmn.ruleNotExpressible` | warning | a rule, or a group, the format cannot hold (`coverage/kmn.md` §3: `notany()`, `nul` contexts, `call()`, `beep`, options set at run time, `baselayout()`, platform names of an operating system or browser, `use()` inside a rule, `nomatch` in the key group, groups nothing reaches); one entry per rule (0.3) |
+| `kmn.deadKeyNotExpressible` | warning | a deadkey rule that is no dead-key entry: the key types nothing (or a marker) without the dead key, or two keys of one text have different results (0.3) |
+| `kmn.passThroughKeys` | accept | import: key states without a rule, where Keyman types the US English character, written as bindings (one entry with the count); export: a layout without hardware layers, where Keyman types US English on a hardware keyboard (0.3) |
+| `kmn.contextRuleAsTransform` | accept | rules with a context became transforms on their key's own output: such a transform also applies when another key types the same text after that context (one entry with the count) (0.3) |
+| `kmn.layerNotExpressible` | warning | export: a hardware layer whose modifier set has a custom modifier (Keyman has none) (0.3) |
+| `kmn.positionNotExpressible` | warning | export: a position with no Keyman virtual key (`coverage/kmn.md` §6) (0.3) |
+| `kmn.outputNotExpressible` | warning | export: CodeUnits that are not text, the backspace action on a key other than Backspace, a variable in an output that is not a string variable (0.3) |
+| `kmn.transformNotExpressible` | warning | export: a transform outside the pattern subset of `coverage/kmn.md` §5, a reorder group, backspace transforms (0.3) |
+| `kmn.transformOrderChanged` | warning | export: a transform longer than an earlier one with a set or marker: Keyman tries longer contexts first, so it may now win (0.3) |
+| `kmn.settingDropped` | warning | export: `settings.bidiMarksOnShiftBackspace` (0.3) |
 | `keymantouch.malformed` | **fatal** | the input is not a touch layout: invalid JSON, or a file the schema named in `coverage/keymantouch.md` §1 rejects (0.3) |
 | `keymantouch.platformDropped` | warning | the `desktop` platform (0.3) |
 | `keymantouch.presentationDropped` | accept | fonts and font sizes, `displayUnderlying`, `defaultHint` `dot`, key styles (`sp` 1, 2, 8, `dk`), special labels other than those of the functions (0.3) |

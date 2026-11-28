@@ -533,6 +533,7 @@ const lossKindsKeyman = [
   "keymanDefault.languages",
   "keymanDefault.name",
   "keymanDefault.packageId",
+  "keymanDefault.route",
   "keymanDefault.version",
 ] as const;
 
@@ -555,7 +556,28 @@ const lossKindsKbdgen = [
   "kbdgen.touchSectionDropped",
   "kbdgen.transformNotExpressible",
 ] as const;
-const lossKindsKmn = ["kmn.*"] as const;
+const lossKindsKmn = [
+  "kmn.*",
+  "kmn.beginDropped",
+  "kmn.capsRuleDropped",
+  "kmn.contextRuleAsTransform",
+  "kmn.deadKeyNotExpressible",
+  "kmn.languageUnknown",
+  "kmn.layerNotExpressible",
+  "kmn.malformed",
+  "kmn.mnemonicLayout",
+  "kmn.optionFixed",
+  "kmn.outputNotExpressible",
+  "kmn.passThroughKeys",
+  "kmn.positionNotExpressible",
+  "kmn.ruleNotExpressible",
+  "kmn.settingDropped",
+  "kmn.sourceMissing",
+  "kmn.storeDropped",
+  "kmn.touchLayoutMissing",
+  "kmn.transformNotExpressible",
+  "kmn.transformOrderChanged",
+] as const;
 const lossKindsKeymantouch = [
   "keymantouch.*",
   "keymantouch.flickPathDropped",
@@ -2133,6 +2155,13 @@ const targetsKeyman = (OnLoss: OnLossSchema) =>
         .meta({
           description:
             "The version of Keyman's compiler kmc the build was tested with; a build with another kmc reports keyman.kmcVersionUntested (rule kmcVersion).",
+        })
+        .optional(),
+      route: z
+        .enum(["ldml", "kmn"])
+        .meta({
+          description:
+            "The source kind the build writes for kmc: ldml (a CLDR keyboard, desktop Keyman only) or kmn (a Keyman keyboard source with its touch layout, every Keyman platform) (rule route, targets/keyman.md §9).",
         })
         .optional(),
       onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),

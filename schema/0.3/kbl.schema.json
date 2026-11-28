@@ -2977,6 +2977,14 @@
               "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
               "description": "The version of Keyman's compiler kmc the build was tested with; a build with another kmc reports keyman.kmcVersionUntested (rule kmcVersion)."
             },
+            "route": {
+              "type": "string",
+              "enum": [
+                "ldml",
+                "kmn"
+              ],
+              "description": "The source kind the build writes for kmc: ldml (a CLDR keyboard, desktop Keyman only) or kmn (a Keyman keyboard source with its touch layout, every Keyman platform) (rule route, targets/keyman.md §9)."
+            },
             "onLoss": {
               "description": "Loss policy for this target.",
               "$ref": "#/$defs/OnLoss"
@@ -3592,6 +3600,7 @@
               "keymanDefault.languages",
               "keymanDefault.name",
               "keymanDefault.packageId",
+              "keymanDefault.route",
               "keymanDefault.version",
               "kbdgen.*",
               "kbdgen.bundleDataDropped",
@@ -3609,6 +3618,25 @@
               "kbdgen.touchSectionDropped",
               "kbdgen.transformNotExpressible",
               "kmn.*",
+              "kmn.beginDropped",
+              "kmn.capsRuleDropped",
+              "kmn.contextRuleAsTransform",
+              "kmn.deadKeyNotExpressible",
+              "kmn.languageUnknown",
+              "kmn.layerNotExpressible",
+              "kmn.malformed",
+              "kmn.mnemonicLayout",
+              "kmn.optionFixed",
+              "kmn.outputNotExpressible",
+              "kmn.passThroughKeys",
+              "kmn.positionNotExpressible",
+              "kmn.ruleNotExpressible",
+              "kmn.settingDropped",
+              "kmn.sourceMissing",
+              "kmn.storeDropped",
+              "kmn.touchLayoutMissing",
+              "kmn.transformNotExpressible",
+              "kmn.transformOrderChanged",
               "keymantouch.*",
               "keymantouch.flickPathDropped",
               "keymantouch.geometryDropped",

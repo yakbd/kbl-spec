@@ -1288,3 +1288,30 @@ lines of a `.kcm` overlap; only the lookup says what a key types, and a build of
 installs and is listed there), but on API 34 no chosen layout was ever applied in measurement, while on 35 and 36 it
 typed through its `.kcm`. Pinned key code names must be names Android 15 knows. Reason: what was measured; API 34
 stays documented as not working until a measurement says otherwise.
+
+**D250 (2026-11-28). `.kmn`: the format holds what maps exactly onto layers, dead keys and transforms.** Rules without
+context become bindings, rules after one deadkey become dead-key entries, rules with a context of text, `any()` sets
+and markers become transforms on the key's own output, context-only groups chained by `match > use()` become
+transform groups; option stores are read at their initial value. Every other construct is a loss reported per rule
+(`kmn.ruleNotExpressible` and the other `kmn.*` kinds, `coverage/kmn.md`). Reason: the owner's simple-defaults rule;
+the format does not grow a second rule language, and a file that needs more stays a Keyman source.
+
+**D251 (2026-11-28). Writing `.kmn`: every behaviour is stated, none left to Keyman's defaults.** Keyman types a key's
+US English character when no rule matches, passes over a pending deadkey on a key without a matching rule, and gives a
+`T_` touch key the modifiers of its layer (measured in KeymanWeb 18.0.255). The writer therefore writes `nul` where the
+layout types nothing (states without Control and Alt), the dead key's `noMatch` for every key, one rule per touch key
+and layer, `platform()` conditions where hardware and touch use the same `K_` key, and touch keys as `T_` keys. On
+import the same defaults are read back as bindings (`kmn.passThroughKeys`). Reason: the model's meaning is exact only
+when the source says it; the cost is a longer source.
+
+**D252 (2026-11-28). Keyman route `kmn`: chosen by default when the file has touch sets.** `targets.keyman.route`
+(`ldml` | `kmn`), rule `route`: `kmn` with touch layer sets, else `ldml`; the command line's `-route` overrides both.
+Route `kmn` writes the `.kmn` and touch layout of D251, `kmc` compiles `.kmx` and KeymanWeb `.js`, the package keeps
+one keyboard. Reason: only route `kmn` reaches Keyman for Android, iOS and the web; a hardware-only file keeps the
+CLDR route, which the LDML compiler and Keyman Core check against CLDR's own tests.
+
+**D253 (2026-11-28). Keyman packages: sources are imported, compiled packages are not.** A `.kps` with several
+keyboards imports as one `.kbl.json` and one report per keyboard (D150), each keyboard's `.kmn` found by its id next
+to the `.kps` or in folders the command names, its languages from the package. A `.kmp` holds compiled keyboards
+(`.kmx`, `.js`) and no source, so it is not an input format. Reason: the importer reads the language, not Keyman's
+binary formats.
