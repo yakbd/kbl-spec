@@ -1113,7 +1113,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `keyman.desktopOnly` | accept | every build: the package holds a keyboard compiled from a CLDR keyboard source, which Keyman for Windows, macOS and Linux run and Keyman for Android, iOS and the web cannot load (`targets/keyman.md` §0) (0.3) |
 | `keyman.touchNotCompiled` | warning | the file has touch layer sets or flicks; they are not part of the package (0.3) |
 | `keyman.positionUnreachable` | warning | a position with bindings that is not in the form of the build (`targets/keyman.md` §2: the number pad, the function keys, Backspace, Enter, …); its bindings are left out and Keyman leaves the key to the system; one entry per position (0.3) |
-| `keyman.controlKeyLeftOut` | accept | as `keyman.positionUnreachable`, for bindings that type one control character (U+0000–U+001F, U+007F), which the system does itself on its own keys (Backspace, Tab, Enter, Escape); one entry per build listing the positions (0.3) |
+| `keyman.controlKeyLeftOut` | accept | bindings that type one control character (U+0000–U+001F, U+007F), on any position, are left out and the key is left to the system, which does Backspace, Tab, Enter and Escape on its own keys and keeps Control shortcuts; one entry per build listing the positions (0.3) |
 | `keyman.compilerRejected` | **fatal** | `kmc` ran and failed; its error messages are in `detail` (0.3) |
 | `keyman.kmcVersionUntested` | warning | `kmc` ran and its version is not `kmcVersion` (rule `kmcVersion`) (0.3) |
 | `kbdgen.malformed` | **fatal** | the input is not a readable bundle: a YAML feature outside the subset of `coverage/kbdgen.md` §4, a missing `project.yaml` or `layouts/`, a layout file that is not a mapping (0.3) |

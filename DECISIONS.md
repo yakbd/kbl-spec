@@ -1315,3 +1315,8 @@ keyboards imports as one `.kbl.json` and one report per keyboard (D150), each ke
 to the `.kps` or in folders the command names, its languages from the package. A `.kmp` holds compiled keyboards
 (`.kmx`, `.js`) and no source, so it is not an input format. Reason: the importer reads the language, not Keyman's
 binary formats.
+**D195 (2026-11-28). Keyman: every control-character binding is left to the system** (extends D192). A binding that
+types one control character is left out on every position, not only outside the form, and listed in
+`keyman.controlKeyLeftOut`. Reason: measured, Keyman for Linux 18 cannot install a package whose `.kvk` holds a
+control character (every `.klc` import has them in its Control layer); and a Control shortcut should reach the
+application, not type U+0003.

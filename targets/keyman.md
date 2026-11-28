@@ -59,11 +59,15 @@ the forms this target writes.
 - **`form`**: the form is `hardware.formId` when the file gives one, or when the file defines forms (the CLDR
   writer's choice, SPEC §16.3); otherwise the rule `form` (§1) picks the smallest implied form that holds the
   positions `IntlBackslash`, `IntlRo` and `IntlYen` the layout binds.
-- **Positions outside the form** are left out of the source, with all their bindings, before it is written: Keyman
-  has no key for them and leaves them to the system, which does what it does without a Keyman keyboard (the number
-  pad types digits, Backspace deletes) **[CHECK]**. A position all of whose bindings type one control character
-  (U+0000–U+001F, U+007F; what a `.klc` import gives Backspace, Tab, Enter, Escape and `Break`) is the system's own
-  key: one `keyman.controlKeyLeftOut` entry (accept) lists those positions. Every other such position is
+- **Control characters.** Every binding that types one control character (U+0000–U+001F, U+007F; what a `.klc`
+  import gives Backspace, Tab, Enter, Escape and `Break`, and Control+letter in its Control layer) is left out, on
+  any position: the system does those keys itself, and a Control shortcut reaches the application instead of a
+  control character. One `keyman.controlKeyLeftOut` entry (accept) lists the positions. Besides, Keyman for Linux
+  18 cannot install a package whose on-screen view (`.kvk`) holds a control character (its installer stops with
+  "All strings must be XML compatible") **[CHECK]**.
+- **Positions outside the form** are left out of the source, with all their other bindings, before it is written:
+  Keyman has no key for them and leaves them to the system, which does what it does without a Keyman keyboard (Return
+  ends every typed case of the check **[CHECK]**; the number pad follows the system's Num Lock). Each such position with a binding left is
   `keyman.positionUnreachable` (warning), one entry per position: the number pad of a layout whose decimal key types
   `,`, function keys, `IntlBackslash` in a `jis` form. The CLDR writer then never reports `cldr.positionNotInForm`
   for a binding.
@@ -79,8 +83,8 @@ layout, which differs from the layout as follows (D191). The layout itself is no
 | no `draft` and no `attribution` | `kmc` refuses `keyboard3/@draft` and `info/@attribution` (KM01001) **[CHECK]** | `general.metadataDropped` (accept), `detail.fields` |
 | `version` of rule `version` | `kmc` wants `major.minor.patch` (KM0000D) **[KMC]** | `keymanDefault.version` |
 | `name` of rule `name` | the keyboard's name in Keyman | `keymanDefault.name` |
-| `hardware.formId` of rule `form`, positions outside it left out | §2 | `keymanDefault.form`, `keyman.controlKeyLeftOut`, `keyman.positionUnreachable` |
-| no touch layer sets and no flicks | §0, item 6 | `keyman.touchNotCompiled` (warning) |
+| `hardware.formId` of rule `form`, positions outside it and control-character bindings left out | §2 | `keymanDefault.form`, `keyman.controlKeyLeftOut`, `keyman.positionUnreachable` |
+| no touch layer sets and no flicks; the keys only touch layers use are left out (with their display entries), and the others lose their touch members (`flickId`, long-press and multi-tap ids, `hint`, the function `nextKeyboard`) | §0, item 6; `kmc` checks every key a gesture names (KM0000B) **[KMC]** | `keyman.touchNotCompiled` (warning) |
 | `description` and `copyright` moved to the package | the `.kps` holds them (§5) | not a loss |
 | no `targets` other than `cldr` (`conformsTo` and `locale` kept), no `onLoss` | build choices, not keyboard data | not a loss |
 
@@ -140,8 +144,9 @@ Measured with `kmc` 18.0.255 and Keyman for Linux (ibus-keyman 18.0.235, Debian)
 - the CLDR writer's output as it stood before this target was refused by `kmc` for every layout (the kbl
   `<special>`), and built after the changes of §3;
 - the package installs with `km-package-install`, the keyboard is selected as an ibus engine and types the
-  layout's expected text from key codes, in a GTK window under Xvfb; the number pad and other positions outside the
-  form type what the system layout types;
+  layout's expected text from key codes, in a GTK window under Xvfb; positions outside the form do what the
+  system does with them (the check's X server starts with Num Lock off, so its number pad navigates); a run of nine
+  layouts typed 1032 of 1072 cases, the rest being the limits named here and on the cases' own files;
 - `IntlRo` (the key left of the right Shift on JIS and ABNT2 keyboards) types nothing on Linux: ibus-keyman maps no
   virtual key to its key code. The build does not report it; it is a limit of Keyman for Linux 18.
 
