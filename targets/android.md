@@ -207,7 +207,11 @@ key. On **API 34** every route stores the choice but no layout is ever applied (
 the cause is not known. **The tested floor is Android 15 (API 35)**; the APK still declares minimum 34, where it installs
 and is listed but, as measured, does not type.
 
-Not yet measured, for the cases of the Android check that a build of this target makes (`tools/android-check/`): an
-APK written by `yakbd` (not `aapt2`) installs and is listed; its key blocks type the model's characters for Shift,
-Caps Lock, AltGr and the dead accents; a combining accent beyond the five of AOSP's documentation composes; an
-`android.outputMultiCharacter` key types nothing.
+Measured with an APK written by this target (`yakbd compile -target android`, no Android SDK; run 46155692254,
+API 35 and 36): it installs, has no `HAS_CODE` flag and its layout is listed; its key blocks type through the
+chosen layout: a Caps Lock layer of its own, Shift, and Caps Lock turned off again; a dead diaeresis and a dead
+caron (an accent beyond the five of AOSP's documentation, D168) each compose with the next key.
+
+Not yet measured (the run's harness lost the first keys of a long burst): `map key` lines (a swapped pair,
+`map key 86 PLUS`), AltGr through `ralt`, the other four documented accents through a build of this target, and an
+`android.outputMultiCharacter` key typing nothing.
