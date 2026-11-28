@@ -824,13 +824,15 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `xkb.lockUnmapped` | error | a layer needs a custom `lock` component; Caps Lock is the only lock an XKB build uses |
 | `xkb.controlAltLayerDropped` | warning | a layer, or one of its modifier sets, needs Control or an Alt key that is not the level-3 shift; Linux programs read Control and Alt shortcuts from the levels themselves, so the build leaves it out (`targets/xkb.md` §3) |
 | `xkb.capsLockNotExpressible` | warning | no stock key type gives every state of a key its output, so the build uses the closest one (rule `keyType`); the keys and the states that differ, all with Caps Lock on, in `detail` |
+| `xkb.capsLockStacks` | warning | a key types a letter that Caps Lock leaves lower case (its output with Caps Lock alone is not case-stable): GTK 4 on X11 types its upper case whatever the key type (measured; `targets/xkb.md` §3); one entry per build listing the positions |
 | `xkb.customKeyType` | warning | the build wrote a yakbd key type (`customTypes`, or a pin): it works with libxkbcommon 1.13 and later, and on X11 when the types are named when loading the layout; older libxkbcommon and `xkbcomp` without the types fall back to another type (`targets/xkb.md` §5) |
 | `xkb.keyTypeNotExact` | warning | a pinned key type does not give some state of the key its output; each level gets the output of the first state that selects it |
 | `xkb.tooManyLevels` | error | a yakbd key type would need more than 8 levels, the most that X11 and libxkbcommon before 1.11 accept |
 | `xkb.multiCharacterOutput` | warning | a level types several characters (several keysyms): libxkbcommon and Qt type them and GTK 4 types nothing (measured), an X11 server refuses the whole layout (measured: Xvfb 21.1), so the build adds the X11 section, in which those levels are empty (`targets/xkb.md` §3, §5); the level cannot be the base of a Compose sequence |
 | `xkb.outputUnencodable` | error | an output no keysym carries: U+0000, a control character other than Backspace, Tab, Line Feed, Vertical Tab, Return, Escape and Delete, or CodeUnits that are not well-formed UTF-16 |
 | `xkb.utf8Characters` | warning | the file pins `characters` `utf8`: libxkbcommon before 1.9 and `xkbcomp` (X11) reject the symbols file (measured) |
-| `xkb.numLockKeyReduced` | warning | a `numLock` position is built with XKB's `KEYPAD` type: its navigation keysym and, with Num Lock on, its base binding; its other layers are left out, and Shift does not turn the key into a navigation key |
+| `xkb.systemLayoutShadowed` | warning | a variant whose symbols name does not begin with `yakbd-`: if the name is a system layout, the user's symbols file hides it, and libxkbcommon before 1.13.2 gives the variant for the layout alone (measured; `targets/xkb.md` §5) |
+| `xkb.numLockKeyReduced` | warning | a `numLock` position is built with XKB's `KEYPAD` type: its navigation keysym and, with Num Lock on, its base binding; its other layers are left out; with Num Lock on, Shift gives the base binding with xkeyboard-config 2.48 and later and the navigation keysym (no text) with 2.42 and 2.46 (measured) |
 | `xkb.settingNotCompiled` | warning | a setting an XKB layout cannot express: `capsLockOffBy` `shift`, `bidiMarksOnShiftBackspace` |
 | `xkb.markerNotCompiled` | warning | a binding emits a marker; the output is built without it |
 | `xkb.transformNotCompiled` | warning | a transform, reorder or backspace transform; an XKB build compiles `deadKeys` only |
@@ -846,7 +848,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `xkb.includeUnresolved` | warning | an `include` that names no file and section the importer was given; it is left out |
 | `xkb.groupDropped` | warning | groups other than the first (`symbols[Group2]` …); a `.kbl.json` file is one layout |
 | `xkb.keyNameUnknown` | accept | an imported key name that no row of the position table names (neither as `keyName` nor as an alias) became the position `Xkb<name>` with a `keys.<p>.keyName` pin |
-| `xkb.keysymNotText` | warning | a keysym with no character and no dead-key meaning (function keys, `XF86` keysyms, `VoidSymbol`); its level is imported as no binding |
+| `xkb.keysymNotText` | warning | a keysym with no character and no dead-key meaning (function keys, `XF86` keysyms); its level is imported as no binding (`VoidSymbol` is an explicit nothing and reports nothing) |
 | `xkb.keyTypeUnknown` | warning | a key type that is neither a stock type of `targets/xkb.md` §3 nor defined in what the importer was given; the key is read with the type libxkbcommon gives a key without one (`coverage/xkb.md` §3) |
 | `xkb.typeModifierDropped` | warning | a key type uses modifiers other than Shift, Lock, LevelThree and LevelFive (Control, Alt, NumLock, …); those states are not imported (a `KEYPAD` key becomes a `numLock` position) |
 | `xkb.actionsDropped` | warning | explicit actions, `virtualMods`, `repeat`, key behaviours (locks, overlays, radio groups) and `modifier_map` entries other than those of the level shifts have no home |

@@ -96,7 +96,7 @@ that needs a custom `lock` `xkb.lockUnmapped`; the layer is left out.
 **preserves** **[LXC]**. When Caps Lock is on and the type does not consume Lock, libxkbcommon and Qt upper-case the
 level's keysym themselves, and GTK 4 on X11 does not **[LNX]** (`FOUR_LEVEL`, letters œ and ß). The build therefore
 never relies on that upper-casing. The stock types the build uses, all of xkeyboard-config's `types/complete`
-**[XKC]** (`types/basic`, `types/extra`, `types/level5`), give these levels for the states 0 to 7 and 8 to 15; `*`
+**[XKC]** (`types/basic`, `types/extra`, `types/level5`, `types/pc`), give these levels for the states 0 to 7 and 8 to 15; `*`
 marks a state with Caps Lock on in which the type does not consume Lock:
 
 | type | states 0–7 | states 8–15 |
@@ -105,6 +105,7 @@ marks a state with Caps Lock on in which the type does not consume Lock:
 | `TWO_LEVEL` | 1 2 1* 2* 1 2 1* 2* | 1 2 1* 2* 1 2 1* 2* |
 | `ALPHABETIC` | 1 2 2 1 1 2 2 1 | 1 2 2 1 1 2 2 1 |
 | `FOUR_LEVEL` | 1 2 1* 2* 3 4 3* 4* | 1 2 1* 2* 3 4 3* 4* |
+| `CTRL+ALT` | 1 2 1* 2* 3 4 3* 4* | 1 2 1* 2* 3 4 3* 4* |
 | `FOUR_LEVEL_ALPHABETIC` | 1 2 2 1 3 4 4 3 | 1 2 2 1 3 4 4 3 |
 | `FOUR_LEVEL_SEMIALPHABETIC` | 1 2 2 1 3 4 3* 4* | 1 2 2 1 3 4 3* 4* |
 | `FOUR_LEVEL_PLUS_LOCK` | 1 2 5 2 3 4 3 4 | 1 2 5 2 3 4 3 4 |
@@ -115,9 +116,11 @@ marks a state with Caps Lock on in which the type does not consume Lock:
 A type **fits** a key P when, for every state s of the build, the level the type gives s holds O(P, s), where each
 level holds the output of the lowest state the type maps to it, and in a `*` state that output is also
 **case-stable**: nothing, a dead key, or a text none of whose characters has the Unicode property
-Changes_When_Uppercased (Unicode 18.0.0, the version of SPEC §5). A level no state reaches is `NoSymbol`.
+Changes_When_Uppercased (Unicode 18.0.0, the version of SPEC §5). `CTRL+ALT` (`types/pc`) is `FOUR_LEVEL` with a
+fifth level for Control+Alt, which no build state reaches.
 
-**`keyType`.** A key's type is `keys.<p>.type`; otherwise the first type of the table that fits it. When none fits:
+**`keyType`.** A key's type is `keys.<p>.type`; otherwise the first type of the table that fits it, where the keys
+`<FK01>` to `<FK12>`, `<KPMU>`, `<KPDV>`, `<KPSU>` and `<KPAD>` try `CTRL+ALT` first and the other keys never try it. When none fits:
 
 - `customTypes` `false` (the default): the type of the table that gives the most states their output, the earlier
   on a tie, and `xkb.capsLockNotExpressible` (the states that differ all have Caps Lock on: `FOUR_LEVEL` or
@@ -135,15 +138,21 @@ Changes_When_Uppercased (Unicode 18.0.0, the version of SPEC §5). A level no st
 A pinned type gives each level the output of the lowest state that selects it; a state it then does not give its
 output reports `xkb.keyTypeNotExact`. A pinned yakbd type is written with the key's levels in the same way.
 
+**Caps Lock and GTK 4 on X11.** A key whose output with Caps Lock alone (state 2) has a character that is not
+case-stable (a letter that Caps Lock leaves lower case) types that output in libxkbcommon, Qt, and GTK 4 on Wayland,
+and its upper case in GTK 4 on X11, whatever the key type: `FOUR_LEVEL_PLUS_LOCK`, `TWO_LEVEL`, `FOUR_LEVEL`,
+`FOUR_LEVEL_SEMIALPHABETIC` and a yakbd type that consumes Lock all gave the capital **[LNX]**. No type avoids it, so
+the build reports it (`xkb.capsLockStacks`, one entry per build listing the positions; D148).
+
 **Number-pad keys.** A `numLock` position whose row has a `keypad` keysym is written with xkeyboard-config's
 `KEYPAD` type: level 1 the navigation keysym, level 2 (Num Lock on) its base binding; `keys.<p>.type` does not apply
 to it. The `KEYPAD` type that `types/complete` brings (`types/numpad`, section `numlock_only_base`, the same in
-release 2.49 and commit `f4d3ed8` **[XKC]**) uses Num Lock alone, so Shift with Num Lock on still types the binding
-where the model gives a navigation key. Its other layers are left out (`xkb.numLockKeyReduced`, one entry per
+release 2.49 and commit `f4d3ed8` **[XKC]**) uses Num Lock alone; with Num Lock on, Shift types the binding with xkeyboard-config 2.48 and 2.49 and the
+navigation keysym (no text) with 2.42 and 2.46 **[LNX]**. Its other layers are left out (`xkb.numLockKeyReduced`, one entry per
 build listing the positions). A `numLock` position without a `keypad`
 keysym is built like any other key.
 
-**Keysyms** (rule `characters`). Every level is a list of keysyms: none (`NoSymbol`), one, or several for a text of
+**Keysyms** (rule `characters`). Every level is a list of keysyms: none (`VoidSymbol`, below), one, or several for a text of
 several characters (`{ a, b }`), which libxkbcommon and Qt type and GTK 4 types nothing for **[LNX]**; an X11 server
 refuses the whole keymap when one level has several keysyms (Xvfb 21.1, `XkbSetMap` fails **[LNX]**), so such a
 build also writes the **X11 section** (below) (`xkb.multiCharacterOutput`, one entry per build listing the levels). A dead key is its
@@ -152,11 +161,14 @@ build also writes the **X11 section** (below) (`xkb.multiCharacterOutput`, one e
 1. U+0008 `BackSpace`, U+0009 `Tab`, U+000A `Linefeed`, U+000B `Clear`, U+000D `Return`, U+001B `Escape`, U+007F
    `Delete`;
 2. U+0020–U+007E and U+00A0–U+00FF: the Latin-1 keysym of that value, by name (`a`, `space`, `udiaeresis`);
-3. otherwise a keysym of xorgproto's `keysymdef.h` (release 2026.1) whose comment gives the code point as a plain
+3. otherwise a keysym of xorgproto's `keysymdef.h` (release 2026.1) below 0x01000000 whose comment gives the code point as a plain
    `U+XXXX` (not in parentheses, which mark a deprecated mapping, nor in angle brackets, which mark a more specific
    keysym such as a keypad one) and does not begin with `deprecated`: the one with the lowest value, by its first
    listed (canonical) name (`oe` for U+0153, `Lstroke` for U+0141);
-4. otherwise `U` followed by the code point in upper-case hexadecimal, at least four digits (`U1E9E`).
+4. otherwise `U` followed by the code point in upper-case hexadecimal, at least four digits (`U1E9E`). This is the
+   Unicode keysym 0x01000000 + the code point, also where `keysymdef.h` names that value: xorgproto keeps adding such
+   names, and an older libxkbcommon reads a newer one as `NoSymbol` (`leftsingleanglequotemark`, U+2039, added in
+   2026.1: `NoSymbol` with libxkbcommon 1.7.0 and 1.13.1 **[LNX]**), while every version reads `U2039` (D147).
 
 These are the keysyms libxkbcommon itself gives a character (`xkb_utf32_to_keysym`) **[LXC]**, so the symbols file,
 a UTF-8 string and the Compose file all mean the same keysym; Compose sequences match keysyms by value, so a `U`
@@ -179,7 +191,7 @@ reports `general.normalizationNotApplied` once. **Markers and transforms** are n
 default partial alphanumeric_keys
 xkb_symbols "basic" {
     name[Group1] = "<description>";
-    key <AC01> { type[Group1] = "FOUR_LEVEL_ALPHABETIC", symbols[Group1] = [ ae, AE, NoSymbol, NoSymbol ] };
+    key <AC01> { type[Group1] = "FOUR_LEVEL_ALPHABETIC", symbols[Group1] = [ ae, AE, VoidSymbol, VoidSymbol ] };
     key <RALT> { type[Group1] = "ONE_LEVEL", symbols[Group1] = [ ISO_Level3_Shift ] };
 };
 ```
@@ -188,15 +200,18 @@ One section, named `variant` (rule `variant`, default `basic`), marked `default`
 includes no other symbols, so a position the file does not bind types nothing, as the model says; the system's
 `symbols/pc` still gives the keys it defines (Escape, Return, Backspace, Tab, the arrows, the function keys, Space)
 **[XKC]**. Keys are written in the order of the position table, then the other positions in ascending order of
-their names; a key is written when some state gives it an output, with as many levels as its type has (trailing
-`NoSymbol` levels may be left out). The text of `description` is a string literal with `"` and `\` escaped by `\`.
+their names; a key is written when some state gives it an output, with every level of its type. A level whose
+output is nothing is `VoidSymbol`, never `NoSymbol`: libxkbcommon merges the layout's key with the key of the same
+name that `symbols/pc` and the rules' other files define, and fills a `NoSymbol` level from it (Numpad1 bound in the
+base layer only: Shift typed `KP_1`; `<LSGT>` has four levels there) **[LNX]**; only level 5 of `CTRL+ALT` stays
+`NoSymbol`, so that the system's Control+Alt action of the key stays (D146). The text of `description` is a string literal with `"` and `\` escaped by `\`.
 
 **The X11 section** (D143). When some level has several keysyms, the symbols file gets a second section after the
 first, named V + `-x11` (`basic-x11` for the default), never `default`, the same as the first except that each level
-of several keysyms is `NoSymbol`. Wayland sessions select the first section and type everything; X11 sessions load
+of several keysyms is `VoidSymbol`. Wayland sessions select the first section and type everything; X11 sessions load
 the X11 section (§5) and type nothing on those levels instead of refusing the layout. The registry does not list the
-X11 section. Whether X11 loads it is **unmeasured** (§8; the same layout with one keysym on those levels loads
-**[LNX]**).
+X11 section. X11 loads it **[LNX]** (Xvfb 21.1); with `NoSymbol` on those levels it did not, because a key whose
+levels are all `NoSymbol` keeps a type of several levels and the server refuses the keymap (D146).
 
 ## 4. Dead keys
 
@@ -286,7 +301,9 @@ compose/N.XCompose            only with a Compose file (§4)
   `shortDescription` (rule `shortDescription`), `description` (rule `description`) and, with `languages`, a
   `languageList` of `iso639Id` elements. With another `variant`, the `layout`'s `configItem` has only `name` N and
   its `variantList` holds one `variant` with `name` V and the same three items; N may be a system layout (the
-  registry merges a user's entries into the system's **[LXC]**).
+  registry merges a user's entries into the system's **[LXC]**), but the user's symbols file N then hides the
+  system's: libxkbcommon 1.7.0 and 1.13.1 give the variant for N alone, 1.13.2 the system layout **[LNX]**. A build
+  with a variant and a symbols name that does not begin with `yakbd-` reports it (`xkb.systemLayoutShadowed`; D149).
 - **Yakbd types** **[LAB]**: `types/N-types` holds one `default partial xkb_types "basic"` section with
   `virtual_modifiers LevelThree, LevelFive;` and every yakbd type the layout uses (`modifiers`, one `map` per state
   whose level is not 1, a `level_name` per level). `rules/evdev.post` holds one rule set that adds the types file
@@ -314,16 +331,17 @@ default section `basic`, `N(V)` for a variant V (D144; neither name can hold `(`
    `~/.config/xkb/rules/evdev.post` between `// yakbd B begin` and `// yakbd B end`. Every step replaces an earlier
    block of the same name and never changes other lines;
 3. put the Compose sequences where every program finds them, given which files win **[LNX]**: libxkbcommon and Qt
-   read the first of `$XCOMPOSEFILE`, `~/.config/XCompose`, `~/.XCompose`; GTK 4 reads `~/.config/gtk-4.0/Compose`
-   first; a user file replaces the system's file, so it keeps the system sequences only with `include "%L"`.
+   read the first of `$XCOMPOSEFILE`, `~/.config/XCompose`, `~/.XCompose`; GTK 4 reads `~/.config/gtk-4.0/Compose`,
+   else `~/.XCompose`, and never `~/.config/XCompose` nor `$XCOMPOSEFILE` (measured: with only `~/.config/XCompose`,
+   GTK 4 on X11 and weston used the system's table); a user file replaces the system's file, so it keeps the system sequences only with `include "%L"`.
    There are two targets: the file libxkbcommon and Qt use (`$XCOMPOSEFILE` when set, else the first existing of
    `~/.config/XCompose` and `~/.XCompose`) and the file GTK 4 uses (`~/.config/gtk-4.0/Compose` when it exists,
-   else the same file as libxkbcommon).
+   else `~/.XCompose`; D148).
    - A target that has no file: install the build's Compose file as `~/.XCompose` (with its `include "%L"`), which
      both libxkbcommon and GTK read when it is the only one **[LNX]**.
    - A target that has a file: append the sequences (without the include line) between `# yakbd B begin` and
      `# yakbd B end`, after keeping a copy of the file; never change other lines, and never add `include "%L"` to
-     the user's own file. Whether GTK reads `~/.config/XCompose` when it is the only file is **unmeasured** (§8);
+     the user's own file.;
 4. on uninstall, remove exactly its own blocks and the types file, and a symbols file or a Compose file the script
    created once no block is left in it; the other builds' blocks stay;
 5. say how to select the layout (below) and that a session restart may be needed for the settings apps to list it.
@@ -395,3 +413,9 @@ settings apps, the other still selectable; the registry keeps the description an
 element of a name **[LXC]**, so a variant installed before the default section of the same layout leaves that
 layout without its description in the settings apps (expected; rare). A measured result is recorded here with its
 run and, where it changes a rule, in `DECISIONS.md`.
+
+Measured since (run of 2026-11-28 and its follow-up, `tools/xkb-check`): (5) the variant is listed and compiles, but
+hides the system layout before libxkbcommon 1.13.2 (§5, D149); (7) GTK 4 never reads `~/.config/XCompose` (§5,
+D148); (9) one name (`leftsingleanglequotemark`) unknown before 1.13.2 (§3 rule `characters`, D147); (10) Shift with
+Num Lock depends on the xkeyboard-config release (§3); (11) the X11 section loads once its emptied levels are
+`VoidSymbol` (§3, D146).

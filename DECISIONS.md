@@ -929,3 +929,32 @@ table has; `keyCodeMissing` / `keyNameMissing` made every such layout fail. The 
 without a code that has a row in another target's position table (SPEC §16) is a key the target does not have, reported
 as `macos.positionWithoutKey` / `xkb.positionWithoutKey` (warning) and left out; a position no table names still needs a
 pin (`keyCodeMissing` / `keyNameMissing`, error).
+
+**D146 (2026-11-28; measured; changes D143). Nothing is `VoidSymbol`; `CTRL+ALT` for the keys that carry it.**
+libxkbcommon merges a layout's key with the key of the same name that `symbols/pc` and the rules' other files define,
+and fills every `NoSymbol` level from it: a Numpad1 bound in the base layer only typed `KP_1` with Shift, and
+`<LSGT>` has four levels there. A level that types nothing is therefore `VoidSymbol` and every level of the key's
+type is written. F1 to F12 and the number-pad operators have the type `CTRL+ALT` there (five levels, the fifth for
+Control+Alt: switching the virtual terminal, grabs); on the operators that level carries actions, so a key written
+with a type of fewer levels makes an X11 server refuse the whole keymap (every converted `.klc` file binds them).
+Rule `keyType` tries `CTRL+ALT` first for those sixteen keys and writes its fifth level `NoSymbol`, which keeps the
+system's action. The X11 section of D143 empties levels as `VoidSymbol` too: a key whose levels were all `NoSymbol`
+kept its five-level type and the server refused the section.
+
+**D147 (2026-11-28; measured). Unicode keysyms are written `U` + hex.** xorgproto keeps naming Unicode keysym values
+(0x01000000 + code point): `leftsingleanglequotemark` for U+2039 is new in 2026.1, and libxkbcommon 1.7.0 and 1.13.1
+read it as `NoSymbol`. The value is the same either way, so rule `characters` writes such a keysym as `U2039`, which
+every version reads; step 3 takes only named keysyms below 0x01000000.
+
+**D148 (2026-11-28; measured). Compose for GTK; Caps Lock in GTK on X11.** GTK 4 reads `~/.config/gtk-4.0/Compose`, else
+`~/.XCompose`, and never `~/.config/XCompose`: with only that file present, a layout's appended sequences reached
+libxkbcommon and Qt but not GTK. The install script's GTK target is therefore `~/.config/gtk-4.0/Compose` when it
+exists, else `~/.XCompose`, created with `include "%L"` when missing. Separately, GTK 4 on X11 types the upper case
+of a letter that Caps Lock should leave lower case with every key type tried, stock and yakbd; no type avoids it, so
+the build reports it (`xkb.capsLockStacks`) instead of changing the rules.
+
+**D149 (2026-11-28; measured). A variant of a system layout is reported.** A user symbols file N that holds only a
+variant hides the system's N: libxkbcommon 1.7.0 and 1.13.1 then give the variant for N alone (1.13.2 the system
+layout). No file in the user path can include the system's N (the name resolves to the user file), so the build
+reports `xkb.systemLayoutShadowed` for a variant whose symbols name does not begin with `yakbd-`. The build also
+accepts a real U+FFFD (keysym `UFFFD`); only code units that are not well-formed UTF-16 are `xkb.outputUnencodable`.

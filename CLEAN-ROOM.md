@@ -127,3 +127,10 @@ No layout of a distribution was copied. The decisions D135 to D142 and the Linux
 | libxkbcommon, the same commit `15b2b4e`, read 2026-11-28: `src/registry.c` (`parse_layout`, `parse_variant`) | that the registry merges `layout` elements of one name and adds their variants once each, so install blocks may each hold a whole `layout` element (`targets/xkb.md` §5, D144) | MIT; facts only |
 | `yakbd/yakbd-cli` `tools/xkb-check/` README "Results" (MIT-0, this project) | Xvfb 21.1 refuses a keymap with a level of several keysyms (D143) | MIT-0, this project |
 | This repository's position tables (`targets/*-default-*.tsv`) | which positions a target has no row for (D145) | MIT-0, this project |
+
+### Linux (XKB) fixes after the verification run (D146 to D149)
+
+| source | read for | licence |
+|---|---|---|
+| xkeyboard-config 2.42 and 2.49 as installed in the check's containers (Debian 13, Arch Linux): `symbols/pc`, `symbols/keypad`, and the keymap `xkbcli compile-keymap` gives a layout without keys | which keys the system defines and with how many levels and which type (`CTRL+ALT` on F1 to F12 and the number-pad operators, four levels on `<LSGT>`), D146 | MIT/X11 notices; names and values only |
+| Measurements in those containers (libxkbcommon 1.7.0 and 1.13.2 `xkbcli`, Xvfb 21.1 with `setxkbmap` and `xkbcomp`) and `yakbd/yakbd-cli` `tools/xkb-check/` (MIT-0, this project) | `NoSymbol` levels filled from the system key, `VoidSymbol` kept, X11 refusals and what loads (D146); GTK 4 on X11 and Caps Lock (D148) | MIT-0, this project |

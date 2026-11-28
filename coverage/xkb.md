@@ -32,11 +32,11 @@ importer reads; the build direction is `targets/xkb.md`. Sources are cited as th
 | a keysym name (`a`, `udiaeresis`, `oe`), `U` + hex, a hex number `0x…` | a character of a text binding, by xorgproto's `keysymdef.h` and the Unicode keysym range **[LXC]** (`keysym-encoding.md`) | an unknown name is `NoSymbol` (libxkbcommon does the same) |
 | a UTF-8 string (`"æ"`, libxkbcommon 1.9 and later) | the text | |
 | `{ k1, k2 }` (several keysyms on one level) | a text of several characters | a build writes it back, and empty in its X11 section (`targets/xkb.md` §3) |
-| `NoSymbol`, `{}` | nothing at that level | |
+| `NoSymbol`, `{}`, `VoidSymbol` | nothing at that level (`VoidSymbol` is what a yakbd build writes for nothing, `targets/xkb.md` §3) | |
 | a `dead_*` keysym | `{"deadKey": <id>}` (§4) | |
 | `ISO_Level3_Shift`, `ISO_Level5_Shift` | the level-shift components (§3) | |
 | `BackSpace`, `Tab`, `Return`, `Escape`, `Delete`, `Linefeed`, `Clear` | U+0008, U+0009, U+000D, U+001B, U+007F, U+000A, U+000B | the build writes them back by `targets/xkb.md` §3 |
-| other keysyms without a character: function keys, navigation, `XF86…`, `VoidSymbol`, modifier keysyms other than the level shifts | — | `xkb.keysymNotText`; the level is no binding |
+| other keysyms without a character: function keys, navigation, `XF86…`, modifier keysyms other than the level shifts | — | `xkb.keysymNotText`; the level is no binding |
 | `actions[GroupN]`, `virtualMods`, `vmods`, `repeat`, `locks`, `overlay1`/`overlay2`, `radiogroup`, `allownone` | — | `xkb.actionsDropped` |
 | `modifier_map <Mod> { … }` | — | for the level-shift keys the mapping comes from `symbols/pc` again; any other `xkb.actionsDropped` |
 | `xkb_keymap { … }` (a complete keymap) | its `xkb_symbols` and `xkb_types` are read as a symbols file with its types | its keycodes, compat and geometry `xkb.syntaxDetailsIgnored` |
@@ -59,7 +59,8 @@ importer reads; the build direction is `targets/xkb.md`. Sources are cited as th
   Lock, it upper-cases each character with the Unicode simple uppercase mapping (UnicodeData.txt, Unicode 18.0.0),
   as libxkbcommon does **[LXC]** (libxkbcommon 1.13 also maps ß to ẞ, which 1.7 does not **[LNX]**; the importer
   follows Unicode). States with modifiers other than these four (Control, Alt, NumLock, …) are not imported
-  (`xkb.typeModifierDropped`).
+  (`xkb.typeModifierDropped`). `CTRL+ALT` is read as `FOUR_LEVEL`: its fifth level, Control+Alt, is the system's (a yakbd
+  build leaves it `NoSymbol`) and is left out without a report.
 - **Layers.** One hardware layer per state that some key gives an output: the base `[[]]`, `[["shift"]]`,
   `[["altR"]]` (LevelThree), …, with Lock as `caps` and LevelFive as the level-5 component. The importer writes
   `settings.capsLockFallback` `true` and puts a key into a Caps Lock layer only where the Caps Lock state's output
