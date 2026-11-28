@@ -1,8 +1,8 @@
 # Compatibility of `.kbl.json` 0.x
 
-The format is released as **0.1 preview**; 0.2, which adds macOS and Linux (XKB) targets, is in draft. 0.1 is
-complete enough to implement and to write layouts in, and it is not frozen. This page says what you can rely on
-before 1.0.
+The format is released as **0.2 preview** (tag `v0.2.0-preview`), which adds macOS and Linux (XKB) targets to the
+**0.1 preview** (tag `v0.1.0-preview`). Both are complete enough to implement and to write layouts in, and neither is
+frozen. This page says what you can rely on before 1.0.
 
 ## What 0.1 promises
 
@@ -16,10 +16,14 @@ before 1.0.
   not do what its text says), recorded in `DECISIONS.md` and the changelog. A file that writes its defaults out
   (pinning, `targets/windows.md` §10) does not depend on them at all.
 
-## What 0.2 promises (draft)
+## What 0.2 promises
 
-0.2 is being written. Until it is tagged it may still change in any way, and its schema path is not published.
-What it already promises, and keeps when it is released (D108):
+- **A valid 0.2 file stays valid and keeps its meaning** for as long as the format is 0.2, as "What 0.1 promises"
+  says for 0.1: the texts may be clarified and corrected, `schema/0.2/` changes only to fix bugs and to add loss
+  kinds, and the macOS and XKB default rules and position tables keep their names and results within 0.2, except
+  to fix a bug.
+
+And, from D108:
 
 - **0.2 does not change 0.1.** `schema/0.1/kbl.schema.json` changes only as "What 0.1 promises" allows (the
   repository's checker pins its hash, so no other change slips in), and those rules still hold for 0.1 files.
@@ -51,7 +55,7 @@ What it already promises, and keeps when it is released (D108):
 - Every change to the shape of the format (schema, `targets.windows`, loss kinds, default rules) gets a line in the
   changelog at the end of [`STATUS.md`](STATUS.md), naming the commit.
 - The reason for each change is a numbered entry in [`DECISIONS.md`](DECISIONS.md).
-- Versions are marked by git tags (`v0.1.0-preview`, then `v0.1.1`, `v0.2.0`, …).
+- Versions are marked by git tags (`v0.1.0-preview`, `v0.2.0-preview`, then `v0.2.1`, `v0.3.0`, …).
 
 ## When 1.0 comes
 

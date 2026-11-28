@@ -1,4 +1,4 @@
-# Target `macos`: default rules and pinning (0.2 draft, normative)
+# Target `macos`: default rules and pinning (0.2 preview, normative)
 
 How a `.kbl.json` file becomes a macOS keyboard layout, a `.keylayout` file in a `.bundle`, when `targets.macos`
 (SPEC §16.4) is silent. Facts about macOS are cited by source: **TN2056** = Apple's archived technical note
@@ -174,8 +174,8 @@ the key acts as in `none` (TN2056, its dead-key example).
   while the model leaves D pending (§14.2, "nothing"). The build writes nothing for such a key and so differs from
   the model there (D130); it reports this once per build as `macos.deadKeyEndedByEmptyKey` (a warning, D131) when
   a dead key is reached and some key code of the position table (not a modifier) or a pinned code has no output in
-  some key map. The form `<when state="D" next="D"/>` for such keys, which might keep D pending, is unmeasured
-  (§8 item 8).
+  some key map. The form `<when state="D" next="D"/>` for such keys keeps D pending for a dead key without a
+  terminator **[MAC run 46129926577]**; with a terminator it is unmeasured, and the build does not write it (§8 item 8).
 - **Normalisation** (SPEC §5): macOS does not normalise while typing, so a build does what a Windows build does
   (`targets/windows.md` §6): with `normalization` `enabled` every output is NFC-normalised at build time, each changed
   output reports `general.outputNormalized`, and the build reports `general.normalizationNotApplied` once.
@@ -276,6 +276,8 @@ The cases of the macOS verification harness (`yakbd/yakbd-cli`, `tools/macos-che
 7. `maxout` with a dead key followed by a multi-unit key: applied to each output, not to the terminator and the
    output together (§5) **[MAC runs 46119172899, 46126097229]**.
 8. A key whose action keeps a pending state, `<when state="D" next="D"/>`, as the way to compile item 1 as the
-   model says: **unmeasured** (the harness has a hand-written case for it; the build does not write it).
+   model says: for a dead key without a terminator (`noMatch` `emitText`) D stays pending and the next key gets D's
+   result **[MAC run 46129926577]**, hand-written case `twin-pending-next`; for a dead key with a terminator
+   (`emitBoth`, the situation of item 1): **unmeasured**. The build does not write the form.
 
 A measured result is recorded here with its run and, where it changes a rule, in `DECISIONS.md`.

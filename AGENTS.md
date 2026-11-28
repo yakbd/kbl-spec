@@ -17,7 +17,7 @@ other majors).
 
 CI (`.github/workflows/validate.yml`) runs `npm ci && npm test` on push to `main` only when a filtered path changes
 (`src/`, `schema/`, `examples/`, `testdata/`, `tools/`, `targets/`, `coverage/`, `SPEC.md`, package files, the
-workflow); a push that touches none of them (root docs only), and every push to `spec-0.2`, starts no run. Start
+workflow); a push that touches none of them (root docs only), and every push to another branch, starts no run. Start
 one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
 
 ## Which text wins
@@ -29,9 +29,10 @@ one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
 - The schema checks structure only; the cross-field rules of SPEC §19 live in prose and partly in `tools/check`.
 - `src/schema.ts` is the only edited schema source; `schema/0.1/` and `schema/0.2/kbl.schema.json` are generated
   from it and committed.
-- Versions (SPEC §1.1, D108): this branch writes **0.2** (draft, macOS and XKB). 0.1 is released and frozen: the
-  checker pins the hash of `schema/0.1/kbl.schema.json`. Work on 0.2 stays on the branch `spec-0.2` until the owner
-  merges it; Pages publishes `main`, and `schema/latest/` must not move to an unfinished 0.2.
+- Versions (SPEC §1.1, D108): `main` writes **0.2** (preview, macOS and XKB; tag `v0.2.0-preview`). 0.1 is released
+  and frozen: the checker pins the hash of `schema/0.1/kbl.schema.json`. Pages publishes `main`, and
+  `schema/latest/` is the newest `schema/<version>/`: work on a next minor version stays on its own branch until the
+  owner merges it.
 - Record every format design decision as the next numbered entry of `DECISIONS.md`, with its reason; a later
   entry that changes an earlier one says so. Entries are never renumbered. Questions for the owner go to
   `OPEN-QUESTIONS.md`, each with a recommendation.

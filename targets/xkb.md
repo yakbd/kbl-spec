@@ -1,4 +1,4 @@
-# Target `xkb`: default rules and pinning (0.2 draft, normative)
+# Target `xkb`: default rules and pinning (0.2 preview, normative)
 
 How a `.kbl.json` file becomes a Linux keyboard layout for Wayland and X11, an XKB symbols file with its registry
 entry and a Compose file, when `targets.xkb` (SPEC §16.5) is silent. Facts about Linux are cited by source:
