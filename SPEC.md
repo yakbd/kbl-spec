@@ -611,12 +611,31 @@ Windows layout).
 
 ### 16.4 `targets.macos` (0.2)
 
-macOS keyboard layouts: a `.keylayout` file in a `.bundle` (`targets/macos.md`, `coverage/macos.md`). Being
-written; until then the object holds only:
+macOS keyboard layouts: a `.keylayout` file in a `.bundle` (`targets/macos.md`, `coverage/macos.md`). As for Windows
+(§16.1), the default rules are few and mechanical, every one can be overridden by the field it names, and every
+use is reported as `macosDefault.<rule>`.
 
-| property | type | meaning |
+| property | type | meaning (default rule in `targets/macos.md`) |
 |---|---|---|
-| `onLoss` | OnLoss | |
+| `layoutName` | string, 1–128 characters, no `/`, `:` or control character | `keyboard/@name`, the `.keylayout` and `.icns` file names and the `KLInfo_<name>` key of `Info.plist` (rule `layoutName`) |
+| `bundleName` | the same | the bundle folder `<bundleName>.bundle` and `CFBundleName` (rule `bundleName`) |
+| `bundleId` | reverse-DNS string | `CFBundleIdentifier` (rule `bundleId`) |
+| `inputSourceId` | reverse-DNS string | `TISInputSourceID`, the id the system enables and selects the layout by (rule `inputSourceId`) |
+| `language` | BCP 47 tag | `TISIntendedLanguage` (rule `language`) |
+| `localizedNames` | object BCP 47 → Text | the layout name per language, written as `<tag>.lproj/InfoPlist.strings` (rule `localizedNames`) |
+| `bundleVersion` | `a`, `a.b` or `a.b.c` (digits) | `CFBundleShortVersionString` and `CFBundleVersion` (rule `bundleVersion`) |
+| `icon` | `{ "icns": base64, "template"?: boolean }` | the layout's icon, `Resources/<layoutName>.icns`, held in the file (§1, self-contained); `template` is `TISIconIsTemplate`. No default: without it the system shows its generic icon |
+| `group` | integer 0–32767 | `keyboard/@group`, the script code; 126 is Unicode (rule `group`) |
+| `id` | integer (32-bit signed) | `keyboard/@id`; Unicode layouts use negative ids (rule `keyboardId`) |
+| `maxout` | integer 1–65535 | `keyboard/@maxout`, the most UTF-16 units one key press emits (rule `maxout`) |
+| `hardwareRanges` | array of `{ "first": 0–255, "last": 0–255 }` | the `<layout>` elements, in order, each selecting the one key map set for the hardware keyboard types `first` … `last` (rule `hardwareRanges`) |
+| `keys` | object PositionId → `{ "keyCode": integer 0–255 }` | the virtual key code of each position, `key/@code` (rules `keyCode`, `isoKeys`) |
+| `standardKeys` | boolean | `true`: standard keys the file leaves unbound in a state (Return, Tab, Delete, Escape, arrows, …) get the outputs of the position table (rule `standardKeys`, default `true`) |
+| `commandMap` | `withoutCommand`, `base` | what a state with Command that no layer serves types: the same state without Command, or the base table (rule `commandMap`) |
+| `controlMap` | `controlCharacters`, `withoutControl`, `nothing` | what a state with Control that no layer serves types: the state without Control with the letters `A`–`Z`, `a`–`z` turned into U+0001–U+001A, that state unchanged, or nothing (rule `controlMap`) |
+| `modifiers` | `{ "command"?: component }` | the custom `held` component (§7.2) that is the Command key; no default (without it no layer is reached with Command, rule `commandMap` applies) |
+| `deadKeys` | object DeadKeyId → `{ "state"?: string }` | the `.keylayout` state name of each dead key, an XML NMTOKEN of 1–64 characters other than `none` (rule `stateName`) |
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.5 `targets.xkb` (0.2)
 
@@ -762,6 +781,27 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `cldr.positionNotInForm` | error | a bound position has no place in the hardware form's rows |
 | `cldr.customForm` | warning | the form is not one of CLDR's implied forms (CLDR's repository refuses such files) |
 | `cldr.keyIdGenerated` | accept | key ids were invented for bindings that had none |
+| `macos.noHardwareLayers` | error | the file has no hardware layers (a touch-only keyboard): the layout would hold only the standard keys (0.2) |
+| `macos.keyCodeMissing` | error | a position with bindings, or one named by `modifiers.command`, has no key code (no pin, no row of `targets/macos-default-keycode.tsv`) |
+| `macos.keyCodeDuplicate` | error | two positions get the same key code (rules `keyCode`, `isoKeys`) |
+| `macos.sideModifierWidened` | warning | a layer for `ctrlL`, `ctrlR`, `altL` or `altR` is built for either side (`anyControl`, `anyOption`); where two layers then serve the same state, the earlier layer wins (`targets/macos.md` §3) |
+| `macos.modifierUnmapped` | error | a layer needs a custom `held` component that is not `modifiers.command`; macOS key maps select by Shift, Option, Control, Command and Caps Lock only |
+| `macos.lockUnmapped` | error | a layer needs a custom `lock` component; Caps Lock is the only lock of a `.keylayout` |
+| `macos.settingNotCompiled` | warning | a setting the `.keylayout` cannot express: `capsLockOffBy` `shift`, `bidiMarksOnShiftBackspace` |
+| `macos.numLockIgnored` | accept | a `numLock` position always types its binding: macOS has no Num Lock (the key there is Clear) |
+| `macos.outputBeyondMaxout` | error | an output (a key's, a dead-key result, a terminator) has more UTF-16 units than a pinned `maxout` |
+| `macos.outputUnencodable` | error | an output a `.keylayout` cannot hold: U+0000, or CodeUnits that are not well-formed UTF-16 (a lone surrogate) |
+| `macos.markerNotCompiled` | warning | a binding emits a marker; the output is built without it |
+| `macos.transformNotCompiled` | warning | a transform, reorder or backspace transform; a macOS build compiles `deadKeys` only |
+| `macos.deadKeyNoMatchExpanded` | accept | `noMatch` other than `emitBoth`, or a dead key pressed while another one is pending, was compiled by giving keys an explicit `when` for the pending state (`targets/macos.md` §4) |
+| `macos.stateNameDuplicate` | error | two dead keys get the same state name (rule `stateName`) |
+| `macos.malformed` | **fatal** | the input is not a readable `.keylayout`: not well-formed XML, a missing required element or attribute, a reference (`modifiers`, `mapSet`, `action`, `baseMapSet`/`baseIndex`) that resolves to nothing, a loop of `baseMapSet` references (`coverage/macos.md` §2) |
+| `macos.xmlDetailsIgnored` | accept | XML details that are not layout data (declaration, DOCTYPE, comments, white space, attribute order, character references against literal characters, action and table numbering) are not kept |
+| `macos.keyCodeUnknown` | accept | an imported key code that no row of the position table names became the position `MacKey<code>` with a `keys.<p>.keyCode` pin |
+| `macos.keyMapSetDropped` | warning | a `<layout>` element that selects another key map set or modifier map than the first one (for example a JIS set); one `.kbl.json` file holds one set (`coverage/macos.md` §3) |
+| `macos.sideModifierDropped` | warning | an imported modifier map gives a right-side state (`rightShift`, `rightOption`, `rightControl`) another table than its left-side state; the left side's table is kept |
+| `macos.rangeActionDropped` | warning | a `when` with `through` or `multiplier` (range actions, for example hex input) has no counterpart in `deadKeys`; dropped |
+| `macos.stateNotExpressible` | warning | an imported state-machine shape the dead-key model cannot say, imported as close as it can: a `when` with both `output` and `next`, a dead key pressed in a state without its own `when` (macOS emits the terminator and starts the new dead key), an action without a `none` state, keys whose actions differ for the same base text (`coverage/macos.md` §4); the shapes in `detail` |
 
 A tool MUST NOT invent kinds outside this list for its version; a loss that fits none is reported as the closest kind with
 an explanatory `message`, and the gap is a defect of this specification. The kinds of the families `macos` and

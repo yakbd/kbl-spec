@@ -1,0 +1,116 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.2/kbl.schema.json",
+  "kbl": "0.2",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case",
+    "provenance": {
+      "format": "keylayout"
+    }
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    },
+    "MetaLeft": {
+      "scanCode": "E05B"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "customModifiers": {
+    "cmd": {
+      "kind": "held",
+      "positions": [
+        "MetaLeft"
+      ]
+    }
+  },
+  "deadKeys": {
+    "acute": {
+      "spacing": "´",
+      "entries": [
+        {
+          "base": "a",
+          "result": "á"
+        }
+      ]
+    }
+  },
+  "targets": {
+    "macos": {
+      "layoutName": "Schema Test",
+      "bundleName": "Schema Test",
+      "bundleId": "org.example.keyboardlayout.schematest",
+      "inputSourceId": "org.example.keyboardlayout.schematest.schema-test",
+      "language": "en",
+      "localizedNames": {
+        "fo": "Roynd",
+        "pt-BR": "Teste"
+      },
+      "bundleVersion": "1.2.3",
+      "icon": {
+        "icns": "aWNucwAAAAg=",
+        "template": false
+      },
+      "group": 126,
+      "id": -12345,
+      "maxout": 2,
+      "hardwareRanges": [
+        {
+          "first": 0,
+          "last": 255
+        }
+      ],
+      "keys": {
+        "KeyA": {
+          "keyCode": 0
+        },
+        "KeyB": {
+          "keyCode": 11
+        },
+        "MetaLeft": {
+          "keyCode": 55
+        }
+      },
+      "standardKeys": true,
+      "commandMap": "withoutCommand",
+      "controlMap": "controlCharacters",
+      "modifiers": {
+        "command": "cmd"
+      },
+      "deadKeys": {
+        "acute": {
+          "state": "acute"
+        }
+      },
+      "onLoss": {
+        "kinds": {
+          "macos.sideModifierWidened": "error",
+          "macosDefault.keyCode": "warning"
+        }
+      }
+    }
+  }
+}

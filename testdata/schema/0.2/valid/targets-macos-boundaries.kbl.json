@@ -1,0 +1,84 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.2/kbl.schema.json",
+  "kbl": "0.2",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case",
+    "provenance": {
+      "format": "keylayout"
+    }
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    },
+    "MetaLeft": {
+      "scanCode": "E05B"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "customModifiers": {
+    "cmd": {
+      "kind": "held",
+      "positions": [
+        "MetaLeft"
+      ]
+    }
+  },
+  "deadKeys": {
+    "acute": {
+      "spacing": "´",
+      "entries": [
+        {
+          "base": "a",
+          "result": "á"
+        }
+      ]
+    }
+  },
+  "targets": {
+    "macos": {
+      "group": 0,
+      "id": 51116678,
+      "maxout": 65535,
+      "hardwareRanges": [
+        {
+          "first": 255,
+          "last": 255
+        }
+      ],
+      "keys": {
+        "KeyA": {
+          "keyCode": 255
+        }
+      },
+      "deadKeys": {
+        "acute": {
+          "state": "A.b_c:d-1"
+        }
+      }
+    }
+  }
+}

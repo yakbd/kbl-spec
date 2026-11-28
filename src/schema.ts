@@ -289,7 +289,48 @@ const lossKinds01 = [
 // defaulted-choice kinds `<target>Default.<rule>` (SPEC §17.1); the wildcards are there from the start.
 
 /** 0.2: the macOS target's kinds (targets/macos.md). */
-const lossKindsMacos = ["macos.*", "macosDefault.*"] as const;
+const lossKindsMacos = [
+  "macos.*",
+  "macos.deadKeyNoMatchExpanded",
+  "macos.keyCodeDuplicate",
+  "macos.keyCodeMissing",
+  "macos.keyCodeUnknown",
+  "macos.keyMapSetDropped",
+  "macos.lockUnmapped",
+  "macos.malformed",
+  "macos.markerNotCompiled",
+  "macos.modifierUnmapped",
+  "macos.noHardwareLayers",
+  "macos.numLockIgnored",
+  "macos.outputBeyondMaxout",
+  "macos.outputUnencodable",
+  "macos.rangeActionDropped",
+  "macos.settingNotCompiled",
+  "macos.sideModifierDropped",
+  "macos.sideModifierWidened",
+  "macos.stateNameDuplicate",
+  "macos.stateNotExpressible",
+  "macos.transformNotCompiled",
+  "macos.xmlDetailsIgnored",
+  "macosDefault.*",
+  "macosDefault.bundleId",
+  "macosDefault.bundleName",
+  "macosDefault.bundleVersion",
+  "macosDefault.commandMap",
+  "macosDefault.controlMap",
+  "macosDefault.group",
+  "macosDefault.hardwareRanges",
+  "macosDefault.inputSourceId",
+  "macosDefault.isoKeys",
+  "macosDefault.keyCode",
+  "macosDefault.keyboardId",
+  "macosDefault.language",
+  "macosDefault.layoutName",
+  "macosDefault.localizedNames",
+  "macosDefault.maxout",
+  "macosDefault.standardKeys",
+  "macosDefault.stateName",
+] as const;
 
 /** 0.2: the XKB target's kinds (targets/xkb.md). */
 const lossKindsXkb = ["xkb.*", "xkbDefault.*"] as const;
@@ -1209,9 +1250,148 @@ const targetsWindows = (OnLoss: OnLossSchema) =>
 // targets/macos.md) and the XKB target fills `TargetsXkb` (SPEC §16.5, targets/xkb.md); each also appends its
 // loss kinds to its own list near OnLoss above. Nothing else in this file is per platform.
 
+/** 0.2: a `.keylayout` state name (TN2056 `when/@state`, an XML NMTOKEN); `none` is the base state. */
+const MacosStateName = z
+  .string()
+  .regex(/^(?!none$)[A-Za-z0-9._:-]{1,64}$/u)
+  .meta({ description: "A .keylayout state name: an XML NMTOKEN of 1–64 characters, not none." });
+
+/** 0.2: a reverse-DNS name (bundle identifier, input-source id). */
+const MacosReverseDns = z.string().regex(/^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/u).max(255);
+
+/** 0.2: a name used as a file name inside the bundle (no slash, colon or control character). */
+const MacosFileName = z.string().regex(/^[^/:\u0000-\u001f\u007f]{1,128}$/u);
+
 /** 0.2: macOS `.keylayout` build choices. */
 const TargetsMacos = z
   .strictObject({
+    layoutName: MacosFileName.meta({
+      description:
+        "Layout name: keyboard/@name, the .keylayout and .icns file names, the KLInfo_<name> key (rule layoutName).",
+    }).optional(),
+    bundleName: MacosFileName.meta({
+      description: "Bundle folder name without .bundle, and CFBundleName (rule bundleName).",
+    }).optional(),
+    bundleId: MacosReverseDns.meta({ description: "CFBundleIdentifier (rule bundleId)." }).optional(),
+    inputSourceId: MacosReverseDns.meta({
+      description: "TISInputSourceID, the input-source id the system selects by (rule inputSourceId).",
+    }).optional(),
+    language: z
+      .string()
+      .regex(/^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/u)
+      .meta({ description: "TISIntendedLanguage, a BCP 47 tag (rule language)." })
+      .optional(),
+    localizedNames: z
+      .record(
+        z
+          .string()
+          .regex(/^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/u)
+          .meta({ description: "A BCP 47 tag: the <tag>.lproj folder." }),
+        Text,
+      )
+      .meta({ description: "Localised layout names, one InfoPlist.strings per language (rule localizedNames)." })
+      .optional(),
+    bundleVersion: z
+      .string()
+      .regex(/^[0-9]{1,9}(\.[0-9]{1,9}){0,2}$/u)
+      .meta({ description: "CFBundleShortVersionString and CFBundleVersion (rule bundleVersion)." })
+      .optional(),
+    icon: z
+      .strictObject({
+        icns: z
+          .string()
+          .regex(/^[A-Za-z0-9+/]+={0,2}$/u)
+          .meta({ description: "The .icns file, base64 (RFC 4648 §4, no line breaks)." }),
+        template: z
+          .boolean()
+          .meta({ description: "TISIconIsTemplate: the icon is a template image the system tints. Default false." })
+          .optional(),
+      })
+      .meta({ description: "The layout's icon, Resources/<layoutName>.icns (no default: the system's generic icon)." })
+      .optional(),
+    group: z
+      .int()
+      .min(0)
+      .max(32767)
+      .meta({ description: "keyboard/@group, the script code; 126 = Unicode (rule group)." })
+      .optional(),
+    id: z
+      .int()
+      .min(-2147483648)
+      .max(2147483647)
+      .meta({ description: "keyboard/@id; Unicode layouts use negative ids (rule keyboardId)." })
+      .optional(),
+    maxout: z
+      .int()
+      .min(1)
+      .max(65535)
+      .meta({ description: "keyboard/@maxout: most UTF-16 units one key press emits (rule maxout)." })
+      .optional(),
+    hardwareRanges: z
+      .array(
+        z
+          .strictObject({
+            first: z.int().min(0).max(255).meta({ description: "layout/@first, first hardware keyboard type." }),
+            last: z.int().min(0).max(255).meta({ description: "layout/@last, last hardware keyboard type." }),
+          })
+          .meta({ description: "One <layout> element." }),
+      )
+      .min(1)
+      .meta({ description: "The <layout> elements, in order, all selecting the one key map set (rule hardwareRanges)." })
+      .optional(),
+    keys: z
+      .record(
+        PositionId,
+        z
+          .strictObject({
+            keyCode: z.int().min(0).max(255).meta({ description: "Virtual key code, key/@code (rule keyCode)." }),
+          })
+          .meta({ description: "macOS data of one position." }),
+      )
+      .meta({ description: "macOS data per position." })
+      .optional(),
+    standardKeys: z
+      .boolean()
+      .meta({
+        description:
+          "true: unbound standard keys (Return, Tab, arrows, …) get the outputs of the position table (rule standardKeys, default true).",
+      })
+      .optional(),
+    commandMap: z
+      .enum(["withoutCommand", "base"])
+      .meta({
+        description:
+          "States with Command that no layer serves: the table of the same state without Command, or the base table (rule commandMap).",
+      })
+      .optional(),
+    controlMap: z
+      .enum(["controlCharacters", "withoutControl", "nothing"])
+      .meta({
+        description:
+          "States with Control that no layer serves: the table without Control with ASCII letters turned into U+0001–U+001A, that table unchanged, or no output (rule controlMap).",
+      })
+      .optional(),
+    modifiers: z
+      .strictObject({
+        command: z
+          .string()
+          .regex(/^[A-Za-z][A-Za-z0-9]{0,31}$/u)
+          .meta({ description: "The custom held component that is the Command key." })
+          .optional(),
+      })
+      .meta({ description: "Which custom components are macOS modifier keys." })
+      .optional(),
+    deadKeys: z
+      .record(
+        z.string(),
+        z
+          .strictObject({
+            state: MacosStateName.meta({ description: "The dead key's state name (rule stateName)." }).optional(),
+          })
+          .meta({ description: "macOS data of one dead key." }),
+      )
+      .meta({ description: "macOS data per dead key." })
+      .optional(),
     onLoss: OnLoss02.meta({ description: "Loss policy for this target." }).optional(),
   })
   .meta({ description: "macOS build choices (SPEC §16.4, targets/macos.md)." });
