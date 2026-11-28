@@ -120,3 +120,15 @@ Third-party material
    Chromium Authors), and the standard key outputs from a layout Kiimo generated. Only names and
    values are used; no code or text is copied. macOS and Apple are trademarks of Apple Inc.; this
    project is not affiliated with or endorsed by Apple.
+
+8. XKB names and values (targets/xkb-default-keyname.tsv, targets/xkb.md, coverage/xkb.md)
+
+   The XKB key names and aliases, the stock key type names and their level maps, and the level-shift
+   and keypad keysyms come from xkeyboard-config (https://gitlab.freedesktop.org/xkeyboard-config/
+   xkeyboard-config, commit f4d3ed8bb830e4b695408fe1df5b3cb038b97926; MIT/X11-style permission
+   notices, see its COPYING), the keysym names and their code points from xorgproto's keysymdef.h
+   (release 2026.1; Copyright The Open Group and others, MIT/X11-style notice) and libxkbcommon
+   (https://github.com/xkbcommon/libxkbcommon, commit 15b2b4e47a350712c0ebd120a100c95a7c17e04e;
+   MIT), and the X keycode per W3C code value from Chromium's ui/events/keycodes/dom/dom_code_data.inc
+   (BSD-3-Clause; Copyright 2013 The Chromium Authors). Only names and values are used; no code or
+   text is copied, and no file of these projects is included.

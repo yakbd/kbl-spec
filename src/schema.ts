@@ -1485,7 +1485,7 @@ const TargetsXkb = z
     }).optional(),
     variant: XkbFileName.meta({
       description:
-        "The section name; given, the layout is the variant <variant> of the layout symbolsName, otherwise the section basic is the file's default (rule variant).",
+        "The section name: basic (default) is the file's default section and a layout of its own; any other name is a variant of the layout symbolsName (rule variant).",
     }).optional(),
     description: Text.meta({
       description: "The layout's name: name[Group1] and the registry's <description> (rule description).",

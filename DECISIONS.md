@@ -839,3 +839,72 @@ so the importer takes the first `<layout>`'s modifier map and key map set and re
 (`macos.sideModifierDropped`), writes Command and Control layers only where rules `commandMap` and `controlMap`
 would not give the same tables, and writes `capsLockFallback: false` so that Caps Lock layers mean exactly their key
 maps (`coverage/macos.md`). Range actions have no home and are dropped (`macos.rangeActionDropped`), as D105 said.
+
+**D135 (2026-11-28; carries out D105 and D109 for Linux). The XKB target: fields and default rules.** `targets.xkb`
+(SPEC §16.5) holds what a symbols file, its registry entry and its Compose file need beyond the general data: the
+names (`symbolsName`, `variant`, `description`, `shortDescription`, `languages`), how characters are written
+(`characters`), a key name and a key type per position (`keys.<p>.keyName`, `keys.<p>.type`, D105's names), whether
+yakbd key types may be written (`customTypes`), which components shift levels 3 and 5 (`modifiers`), a keysym per
+dead key and the Compose choices. Ten default rules (`targets/xkb.md` §1), reported as `xkbDefault.<rule>`; 35 loss
+kinds `xkb.*` (SPEC §17.3). The default symbols name is `yakbd-` + slug of `metadata.id`, so that a user file never
+hides a file of xkeyboard-config (before libxkbcommon 1.9 that breaks the system layout). Reason: the pattern of D16
+and D120; the rules stay simple and the file carries the rest.
+
+**D136 (2026-11-28). The XKB position table.** `targets/xkb-default-keyname.tsv` joins the XKB column of Chromium's
+table of W3C code values (the X keycode, evdev + 8) with the key names xkeyboard-config's evdev keycodes give those
+codes: every Table A position except `SysRq` and `Break`, which XKB has only as levels of `<PRSC>` and `<PAUS>` (the
+checker wants unique codes), plus the positions of Appendix A that Table A lacks and `Lang1`, `Lang2`, so that ISO,
+ABNT2 and JIS layouts build. It also lists each key's aliases (for importers) and the navigation keysym of the
+number-pad keys (for `numLock` positions).
+
+**D137 (2026-11-28). Key types: exact where the stock types reach, yakbd types only on request.** The build resolves
+every key in every combination of Shift, Caps Lock and the two level shifts (SPEC §9.3) and takes the first stock
+type that gives each combination its output, without ever relying on the upper-casing that libxkbcommon and Qt apply
+when a type leaves Lock unconsumed (GTK 4 on X11 does not, measured). For Caps Lock on letters this is exact except
+where the file wants Caps Lock to leave a level-3 letter alone: no stock type does that (FOUR_LEVEL_SEMIALPHABETIC
+preserves Lock and gives Þ, measured). Such keys get the closest stock type and `xkb.capsLockNotExpressible` by
+default. With `customTypes` the build writes a yakbd type named by its level map (`YAKBD_12213434`, every modifier
+consumed, so one name always means one type), installed through a types file and a `rules/evdev.post` rule set.
+Rejected: yakbd types by default, as macOS makes Caps Lock exact by default (D122), because the `.post` rules need
+libxkbcommon 1.13 and Debian 13 ships 1.7.0 (measured), where the key silently gets its automatic type, and because
+the user's `rules/evdev.post` is a file all layouts share.
+
+**D138 (2026-11-28). One function from character to keysym.** Characters are written as keysym names and `U`
+keysyms by default, because libxkbcommon before 1.9 (Debian 13: 1.7.0) and `xkbcomp` reject UTF-8 strings
+(measured); `characters: "utf8"` writes strings and reports `xkb.utf8Characters`. The keysym of a character is the
+one libxkbcommon itself gives it (the named keysym of xorgproto's `keysymdef.h` where one exists, else `U` +
+hex), in the symbols file and the Compose file alike: Compose matches keysyms by value, and a `U0153` key would not
+meet the system's `oe` sequences.
+
+**D139 (2026-11-28; carries out D110 for Linux). Dead keys become `dead_*` keysyms and the file's Compose
+sequences, nothing more.** Each dead key a key types gets a `dead_*` keysym (`dead_` + its id, else by its spacing,
+else a spare one); each entry becomes a sequence, a chained result a longer sequence, a cycle is cut
+(`xkb.deadKeyChainCut`). `noMatch` is not compiled (`xkb.deadKeyNoMatchNotCompiled`): a Compose file is per user,
+not per layout, so sequences that force `noMatch` onto every other key would change the user's other layouts, and
+what a program types for an unmatched sequence is its input method's choice. The file begins with `include "%L"`
+so the user's other layouts keep the system's sequences (`xkb.systemComposeSequences` says what that adds). GTK 4
+under sway, KWin and mutter without an input method drops dead keys (measured): `xkb.deadKeyStacks` on every build
+with dead keys.
+
+**D140 (2026-11-28). Linux installation: the user path, merged with care.** The release form is an archive with the
+files of `targets/xkb.md` §5 and an install script for `~/.config/xkb/` (no root; every Wayland stack measured reads
+it). The registry `rules/evdev.xml`, the `rules/evdev.post` rules and the Compose files are shared by all of a
+user's layouts, so the script adds and removes marked blocks and never rewrites the user's lines; when the user has
+no Compose file it installs `~/.XCompose`, which GTK and libxkbcommon both read (measured), otherwise it appends the
+sequences to each Compose file that wins for some toolkit (measured order: GTK `~/.config/gtk-4.0/Compose` first,
+libxkbcommon and Qt `~/.config/XCompose` before `~/.XCompose`). X11 sessions load the layout with
+`setxkbmap -I … | xkbcomp -I …` (measured). The package directory `/usr/share/xkeyboard-config.d/` (libxkbcommon
+1.13) is described for later `.deb` and `.rpm` packages.
+
+**D141 (2026-11-28). Control and Alt layers are left out; Num Lock keys use `KEYPAD`.** XKB levels serve text;
+programs read Control and Alt shortcuts from the levels themselves. So modifier sets with Control, or with an Alt
+key that is not the level-3 shift, are not compiled (`xkb.controlAltLayerDropped`), and a `held` custom component
+must be the level-3 or level-5 shift (`xkb.modifierUnmapped`). `numLock` positions are written with the `KEYPAD`
+type and the table's navigation keysym (`xkb.numLockKeyReduced`).
+
+**D142 (2026-11-28). XKB import conventions.** One section per `.kbl.json` file; includes inlined from the files the
+importer is given; levels read per state through the key's type (or libxkbcommon's automatic type), upper-casing
+where the type leaves Lock unconsumed; Caps Lock layers only where they differ (`capsLockFallback: true`); level
+shifts on other keys than `<RALT>` become custom components; dead keys named after their keysym, longer Compose
+sequences become chained dead keys, `noMatch` `emitNothing`; `normalization: "disabled"`; the importer pins the
+rule-decided values (`coverage/xkb.md` §6).

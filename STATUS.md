@@ -32,7 +32,7 @@ numbers refer to `targets/windows-vm-tests.md`, the D numbers to `DECISIONS.md`)
 | `targets/windows-install.md` | normative: fields and rules (`productCode`, `enableForUser`, `enableForSignInAndNewUsers`, `uninstallEntry`), machine kinds and refusals (D46), KLID / Layout Id allocation (D47), languages, enabling, upgrade, uninstall. **Stable for the tool**: everything; the custom-language route is confirmed for enabling (VM-5), settled with its uninstall (VM-5); the sign-in screen and new users (§7.1, D87, D94, D97–D99) verified on Windows 11 (VM-18 to VM-27). Container and signing settled by the owner (D76): unsigned `.exe` only, behaving like `msiexec`; no MSI |
 | `schema/0.2/kbl.schema.json` | draft (D108); generated from the same source, holds 0.1 (`SPEC.md` §1.1) |
 | `schema/0.1/kbl.schema.json` | stable (see above); frozen, its hash pinned by `npm test`; closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
-| `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes), (f) `macos-option-deadkeys` (0.2: Option layer, per-key Caps Lock, chained dead keys, ISO key, `targets.macos` pins); all validate |
+| `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes), (f) `macos-option-deadkeys` (0.2: Option layer, per-key Caps Lock, chained dead keys, ISO key, `targets.macos` pins), (g) `xkb-caps-deadkeys` (0.2: Caps Lock that leaves an AltGr letter alone through a yakbd key type, a dead key, `targets.xkb` pins); all validate |
 | `coverage/cldr-keyboard3.md`, `coverage/windows.md` | complete first drafts; `coverage/windows.md` §11 (DLL import conventions, D53–D55) |
 | `DECISIONS.md` D1–D107, `OPEN-QUESTIONS.md` Q1–Q15 closed | current |
 | CI | `.github/workflows/validate.yml`: push to `main` (paths filter) and manual runs only; Node 22, `npm ci`, `npm test` |
@@ -88,6 +88,8 @@ Round 2: the installer per `targets/windows-install.md` (stable; VM-5 settled); 
 is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D67). Q11 (container) and Q12 (signing) closed by the owner (D76).
 
 ## Changelog
+
+- 2026-11-28 (branch `spec-0.2`, draft, XKB target, commits after the fields): `targets/xkb.md` and `coverage/xkb.md` written, D135 to D142, Linux sources in `CLEAN-ROOM.md` and `NOTICE`, example (g) `xkb-caps-deadkeys`; `variant` defaults to `basic` (the file's default section); rule `characters` names xorgproto 2026.1; §19 item 1 checks `targets.xkb` references.
 
 - 2026-11-28 (branch `spec-0.2`, draft, XKB target): `targets.xkb` fields (SPEC §16.5: `symbolsName`, `variant`, `description`, `shortDescription`, `languages`, `characters`, `keys.<p>.keyName`, `keys.<p>.type`, `customTypes`, `modifiers.levelThree`, `modifiers.levelFive`, `deadKeys.<id>.keysym`, `compose.write`, `compose.includeLocale`), 35 loss kinds `xkb.*` and 10 default rules `xkbDefault.*` (`targets/xkb.md` §1), position table `targets/xkb-default-keyname.tsv` (142 rows); 0.2 schema cases for them. No change to 0.1.
 

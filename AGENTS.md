@@ -59,7 +59,7 @@ workflow); a push that touches none of them (root docs only) starts no run. Star
 - The schema `$id`s (`https://yakbd.github.io/kbl-spec/schema/<version>/kbl.schema.json`) serve the copies that
   `.github/workflows/pages.yml` last published; it publishes only `schema/` plus a generated `schema/latest/` (D106),
   so never commit `schema/latest/`. Validate against the local files. Keep the `$id`s as they are (D100).
-- Examples are 0.1 files except those that need 0.2 (`macos-option-deadkeys`, a `targets.macos` file); the tool repository copies them, and reads both versions. 0.2 shapes are also tested by `testdata/schema/0.2/`.
+- Examples are 0.1 files except those that need 0.2 (`macos-option-deadkeys`, `xkb-caps-deadkeys`: `targets.macos`, `targets.xkb`); the tool repository copies them, and reads both versions. 0.2 shapes are also tested by `testdata/schema/0.2/`.
 - A change that would make a valid 0.1 file invalid or change its meaning is not a 0.1 change: it waits for a new
   minor version with its own schema path (`COMPATIBILITY.md`). This includes the default rules and Table A.
   Bug fixes (a schema that follows SPEC, a rule that follows its text) are the exception.

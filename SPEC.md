@@ -647,7 +647,7 @@ rules are few and mechanical, every one can be overridden by the field it names,
 | property | type | meaning (default rule in `targets/xkb.md`) |
 |---|---|---|
 | `symbolsName` | string `^[a-z0-9][a-z0-9_-]{0,63}$` | the symbols file `symbols/<symbolsName>` and the layout's name in the registry, the name a user selects (rule `symbolsName`) |
-| `variant` | the same | the section name: given, the layout is the variant `<variant>` of the layout `symbolsName` (which may be a system layout); otherwise the section `basic` is the file's default (rule `variant`) |
+| `variant` | the same | the section name. `basic` (the default, rule `variant`): the section is the file's default and the registry lists the layout `symbolsName`; any other name: the layout is the variant `<variant>` of the layout `symbolsName`, which may be a system layout |
 | `description` | Text | the layout's name as the settings apps show it: `name[Group1]` and the registry's `description` (rule `description`) |
 | `shortDescription` | string, 1–16 characters, no control character | the registry's `shortDescription`, the short label of the active layout (rule `shortDescription`) |
 | `languages` | array of ISO 639-2 or 639-3 codes (three letters) | the registry's `languageList`; no default (no list is written) |
