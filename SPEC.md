@@ -797,7 +797,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `macos.stateNameDuplicate` | error | two dead keys get the same state name (rule `stateName`), or a dead key gets the name `none` of the base state |
 | `macos.malformed` | **fatal** | the input is not a readable `.keylayout`: not well-formed XML, a missing required element or attribute, a reference (`modifiers`, `mapSet`, `action`, `baseMapSet`/`baseIndex`) that resolves to nothing, a loop of `baseMapSet` references (`coverage/macos.md` §2) |
 | `macos.xmlDetailsIgnored` | accept | XML details that are not layout data (declaration, DOCTYPE, comments, white space, attribute order, character references against literal characters, action and table numbering) are not kept |
-| `macos.keyCodeUnknown` | accept | an imported key code that no row of the position table names became the position `MacKey<code>` with a `keys.<p>.keyCode` pin |
+| `macos.keyCodeUnknown` | accept | an imported key code that no row of the position table names became the position `MacKey<code>` with a `keys.<p>.keyCode` pin; a code above 255 is dropped |
 | `macos.keyMapSetDropped` | warning | a `<layout>` element that selects another key map set or modifier map than the first one (for example a JIS set); one `.kbl.json` file holds one set (`coverage/macos.md` §3) |
 | `macos.sideModifierDropped` | warning | an imported modifier map gives a right-side state (`rightShift`, `rightOption`, `rightControl`) another table than its left-side state; the left side's table is kept |
 | `macos.rangeActionDropped` | warning | a `when` with `through` or `multiplier` (range actions, for example hex input) has no counterpart in `deadKeys`; dropped |

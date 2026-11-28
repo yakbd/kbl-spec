@@ -32,7 +32,7 @@ Every element and attribute of the `.keylayout` format and of a keyboard-layout 
 | `keyMapSet`, `@id` | `hardware` | one set per file (§3) |
 | `keyMap/@index` | a layer | §3 |
 | `keyMap/@baseMapSet`, `@baseIndex` | — | resolved: the base map's keys are copied, then overridden; the result is the key map. A missing base or a loop: `macos.malformed` |
-| `key/@code` | a position | the position table in reverse (`targets/macos-default-keycode.tsv`, with rule `isoKeys` in reverse: when codes 10 and 50 both have outputs, 10 is `Backquote` and 50 `IntlBackslash`; when only 10 has, it is `IntlBackslash` with a `keyCode` pin of 10); a code no row names becomes the position `MacKey<code>` with `targets.macos.keys.<p>.keyCode` (`macos.keyCodeUnknown`) |
+| `key/@code` | a position | the position table in reverse (`targets/macos-default-keycode.tsv`, with rule `isoKeys` in reverse: when codes 10 and 50 both have outputs, 10 is `Backquote` and 50 `IntlBackslash`; when only 10 has, it is `IntlBackslash` with a `keyCode` pin of 10); a code no row names becomes the position `MacKey<code>` with `targets.macos.keys.<p>.keyCode` (`macos.keyCodeUnknown`); a code above 255, the schema's limit (some editors write 512), is dropped with the same kind |
 | `key/@output` | a text binding | numeric character references decoded; a lone surrogate reference is `macos.malformed` |
 | `key/@action`, inline `key/action` | a binding and dead-key data | §4 |
 | `actions`, `action/@id` | `deadKeys` | §4; ids are the writer's choice |
@@ -52,24 +52,29 @@ Every element and attribute of the `.keylayout` format and of a keyboard-layout 
   ones, and unmatched combinations get `defaultIndex`. A combination with a right-side key whose key map differs
   from the same combination with the left-side key instead reports `macos.sideModifierDropped`; the left one is
   kept. That leaves the 32 states of `targets/macos.md` §3.
-- **Command.** When every state with Command has the key map the build's rule `commandMap` gives it
-  (`withoutCommand` or `base`), the importer writes that value and no Command layers. Otherwise it declares the
+- **Command.** The importer always pins `commandMap` (the default value where layers serve every Command state).
+  When every state with Command has the key map that rule gives it (`withoutCommand` or `base`), the importer
+  writes that value and no Command layers. Otherwise it declares the
   custom `held` component `cmd` on `MetaLeft` and `MetaRight`, sets `modifiers.command` to it and imports the
   Command states as layers.
-- **Control.** Likewise: when every state with Control has the key map rule `controlMap` gives it, the importer
-  writes that value and no Control layers; otherwise Control states become layers.
+- **Control.** Likewise: `controlMap` is always pinned; when every state with Control has the key map that rule
+  gives it, the importer writes that value and no Control layers; otherwise Control states become layers.
 - **Layers.** One hardware layer per key map that some remaining state uses, in key-map order; its `modifiers` are
   those states as kbl sets (Shift `shift`, Option `alt`, Control `ctrl`, Caps Lock `caps`, Command the `cmd`
   component), and its `bindings` the key map's keys. The importer writes `settings.capsLockFallback: false`, so
   that the Caps Lock layers mean exactly their key maps.
-- **Standard keys.** Keys whose output equals the position table's `output` for their code in every state are not
-  imported as bindings (rule `standardKeys` builds them again); the importer writes `standardKeys: true` when it
-  left any out.
+- **Standard keys.** When the file has every standard key of the position table (every row with an `output`) and
+  some of them type exactly that output in every state, the importer leaves those out (rule `standardKeys` builds
+  them again) and writes `standardKeys: true`. Otherwise it writes `standardKeys: false` and imports the standard
+  keys as bindings, so that a file without, say, arrow keys does not gain them; a state in which an imported
+  standard key types nothing gets `{"output": ""}` there.
 
 ## 4. Actions, states and terminators
 
 - **Dead keys.** Every state other than `none` that some `when` enters through `next` becomes a dead key with the
-  state name as its id and as `targets.macos.deadKeys.<id>.state`. Its `spacing` is its terminator's output, with
+  state name as its id and as `targets.macos.deadKeys.<id>.state`. A state name that is not a DeadKeyId (SPEC
+  §2.5; for example `State 1`) becomes an id with each white-space character and comma replaced by `_`, and gets
+  no `state` pin (rule `stateName` then names it; state names are writer's details, `macos.xmlDetailsIgnored`). Its `spacing` is its terminator's output, with
   `noMatch` `emitBoth`; without a terminator, `spacing` is the empty text and `noMatch` `emitText`.
 - **Actions.** For a key whose `action` is A:
   - A's `when state="none"`: `output` B → the binding is B; `next` E → the binding is `{"deadKey": "E"}`.
@@ -107,9 +112,15 @@ A bundle may hold several layouts (TN2056); a `.kbl.json` file is one layout, so
 ## 6. Importer conventions (`.keylayout` → `.kbl.json`)
 
 1. `metadata.id` is not in a `.keylayout`: the importer takes it from its caller, or else `und` with the private-use
-   extension `-x-` and the slug of the name (`und-x-my-layout`); `metadata.provenance.format` is `keylayout`.
-2. The importer pins what the build would otherwise decide from defaults: `layoutName`, `group`, `id`, `maxout`
-   when present, `hardwareRanges`, `commandMap`, `controlMap`, `deadKeys.<id>.state`.
-3. Positions get no `scanCode` (a `.keylayout` has none); a Windows build of the imported file needs them added.
-4. A file the importer writes and the build then turns back into a `.keylayout` gives the same key maps, actions and
+   extension `-x-` and the slug of the name (`targets/macos.md` §1), each of its `-`-separated parts cut to 8
+   characters so that the tag is valid BCP 47 (`und-x-my-layout`, `und-x-deutsch-programm`);
+   `metadata.provenance.format` is `keylayout`.
+2. The importer writes `settings.normalization: "disabled"`: a `.keylayout` types its outputs exactly, and a build
+   with normalisation would change them (`a` + U+0301 into U+00E1).
+3. The importer pins what the build would otherwise decide from defaults: `layoutName`, `group`, `id`,
+   `hardwareRanges`, `commandMap`, `controlMap`, `deadKeys.<id>.state`, and `maxout` when the file's value is at
+   least what rule `maxout` gives (files with `maxout="1"` and terminators exist and work, so a smaller value is not
+   pinned; whether macOS counts the terminator against `maxout` is unmeasured, `targets/macos.md` §8).
+4. Positions get no `scanCode` (a `.keylayout` has none); a Windows build of the imported file needs them added.
+5. A file the importer writes and the build then turns back into a `.keylayout` gives the same key maps, actions and
    terminators up to the details of `macos.xmlDetailsIgnored`, except what the import reported as a loss.
