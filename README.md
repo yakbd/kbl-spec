@@ -9,7 +9,13 @@ other keyboard formats. The format is a superset of Unicode CLDR Keyboard 3.0.
 | Windows (layout DLL, `.klc`) | 0.1, released |
 | macOS (`.keylayout` bundle) | 0.2 preview, released |
 | Linux (XKB and Compose, Wayland and X11) | 0.2 preview, released |
-| Android, iOS, ChromeOS, Keyman | planned |
+| Android (physical keyboards; on-screen keyboard) | 0.3 draft |
+| iOS (on-screen keyboard) | 0.3 draft |
+| ChromeOS (input-method extension) | 0.3 draft |
+| Keyman (`.kmp` package; `.kmn` and touch layouts) | 0.3 draft |
+
+0.3 also adds touch layers (rows, key sizes, long-press, multi-tap, flicks) and reads `.kcm`, `.kmn`, Keyman touch
+layouts and kbdgen bundles. It is a draft on the branch `spec-0.3` until it is tagged.
 
 ## Documentation
 
@@ -18,7 +24,9 @@ The documentation is on the website:
 - [The format: why, an example, validating a file](https://yakbd.github.io/spec/)
 - [Specification](https://yakbd.github.io/spec/format)
 - Target builds: [Windows](https://yakbd.github.io/spec/windows), [macOS](https://yakbd.github.io/spec/macos),
-  [Linux (XKB)](https://yakbd.github.io/spec/xkb)
+  [Linux (XKB)](https://yakbd.github.io/spec/xkb), [Android](https://yakbd.github.io/spec/android),
+  [Android on-screen](https://yakbd.github.io/spec/androidime), [iOS](https://yakbd.github.io/spec/ios),
+  [ChromeOS](https://yakbd.github.io/spec/chromeos), [Keyman](https://yakbd.github.io/spec/keyman)
 - [Compatibility and versions](https://yakbd.github.io/spec/compatibility) ·
   [status and changelog](https://yakbd.github.io/spec/status)
 - [Design decisions](https://yakbd.github.io/spec/decisions)
