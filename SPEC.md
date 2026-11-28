@@ -12,7 +12,7 @@ A `.kbl.json` file holds one keyboard layout: a platform-neutral part that can h
 Keyboard 3.0 keyboard holds, and one section per target in `targets` (§16) with the choices only that target's
 build needs. This version defines three build targets, Windows (`targets.windows`, `targets/windows.md`), macOS
 (`targets.macos`, `targets/macos.md`) and Linux XKB (`targets.xkb`, `targets/xkb.md`), plus the conversion sections
-`klc` and `cldr`. The XKB section is being written; until it is, its object holds only `onLoss`.
+`klc` and `cldr`.
 Sections for the official formats of further operating systems, and later for third-party formats such as Keyman,
 are planned (D107) and come with later minor versions.
 
@@ -639,12 +639,25 @@ use is reported as `macosDefault.<rule>`.
 
 ### 16.5 `targets.xkb` (0.2)
 
-Linux keyboard layouts for Wayland and X11: XKB symbols and a Compose file (`targets/xkb.md`, `coverage/xkb.md`).
-Being written; until then the object holds only:
+Linux keyboard layouts for Wayland and X11: an XKB symbols file, an entry of the layout registry `rules/evdev.xml`
+and a Compose file for the dead keys (`targets/xkb.md`, `coverage/xkb.md`). As for Windows (§16.1), the default
+rules are few and mechanical, every one can be overridden by the field it names, and every use is reported as
+`xkbDefault.<rule>`.
 
-| property | type | meaning |
+| property | type | meaning (default rule in `targets/xkb.md`) |
 |---|---|---|
-| `onLoss` | OnLoss | |
+| `symbolsName` | string `^[a-z0-9][a-z0-9_-]{0,63}$` | the symbols file `symbols/<symbolsName>` and the layout's name in the registry, the name a user selects (rule `symbolsName`) |
+| `variant` | the same | the section name: given, the layout is the variant `<variant>` of the layout `symbolsName` (which may be a system layout); otherwise the section `basic` is the file's default (rule `variant`) |
+| `description` | Text | the layout's name as the settings apps show it: `name[Group1]` and the registry's `description` (rule `description`) |
+| `shortDescription` | string, 1–16 characters, no control character | the registry's `shortDescription`, the short label of the active layout (rule `shortDescription`) |
+| `languages` | array of ISO 639-2 or 639-3 codes (three letters) | the registry's `languageList`; no default (no list is written) |
+| `characters` | `keysyms`, `utf8` | how characters are written in the symbols file: keysym names and `U` keysyms, which every libxkbcommon and `xkbcomp` read, or UTF-8 strings, which only libxkbcommon 1.9 and later read (rule `characters`) |
+| `keys` | object PositionId → `{ "keyName"?: string, "type"?: KeyType }` | per position: the XKB key name without the angle brackets, `^[0-9A-Za-z_+-]{1,4}$` (rule `keyName`), and the key type (rule `keyType`). KeyType = a stock type of `targets/xkb.md` §3 or a yakbd type, `YAKBD_` followed by 8 or 16 level digits |
+| `customTypes` | boolean | `true`: a key that no stock type fits gets a yakbd type, installed with the layout (libxkbcommon 1.13 and later; X11 with a types option); `false` (default): the closest stock type (rule `keyType`) |
+| `modifiers` | `{ "levelThree"?: component, "levelFive"?: component }` | the component (§7) that is XKB's level-3 shift (`altR`, `alt` or a custom `held` component; rule `levelThree`) and the one that is the level-5 shift (`altR` or a custom `held` component; no default: without it there is no level 5) |
+| `deadKeys` | object DeadKeyId → `{ "keysym"?: string }` | the `dead_*` keysym a dead key's key types, `^dead_[A-Za-z0-9_]{1,40}$` (rule `deadKeysym`) |
+| `compose` | `{ "write"?: boolean, "includeLocale"?: boolean }` | whether the build writes a Compose file (default: when the file has dead keys) and whether it begins with `include "%L"`, which keeps the system's sequences (default `true`) (rule `compose`) |
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ## 17. Losses
 
@@ -802,11 +815,46 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `macos.sideModifierDropped` | warning | an imported modifier map gives a right-side state (`rightShift`, `rightOption`, `rightControl`) another table than its left-side state; the left side's table is kept |
 | `macos.rangeActionDropped` | warning | a `when` with `through` or `multiplier` (range actions, for example hex input) has no counterpart in `deadKeys`; dropped |
 | `macos.stateNotExpressible` | warning | an imported state-machine shape the dead-key model cannot say, imported as close as it can: a `when` with both `output` and `next`, a dead key pressed in a state without its own `when` (macOS emits the terminator and starts the new dead key), an action without a `none` state, keys whose actions differ for the same base text (`coverage/macos.md` §4); the shapes in `detail` |
+| `xkb.noHardwareLayers` | error | the file has no hardware layers (a touch-only keyboard): there is nothing to build (0.2) |
+| `xkb.keyNameMissing` | error | a position with bindings has no XKB key name (no pin, no row of `targets/xkb-default-keyname.tsv`) |
+| `xkb.keyNameDuplicate` | error | two positions get the same key name (rule `keyName`) |
+| `xkb.modifierUnmapped` | error | a layer needs a custom `held` component that is neither `modifiers.levelThree` nor `modifiers.levelFive`; XKB levels are selected by Shift, Caps Lock and the two level shifts only |
+| `xkb.lockUnmapped` | error | a layer needs a custom `lock` component; Caps Lock is the only lock an XKB build uses |
+| `xkb.controlAltLayerDropped` | warning | a layer, or one of its modifier sets, needs Control or an Alt key that is not the level-3 shift; Linux programs read Control and Alt shortcuts from the levels themselves, so the build leaves it out (`targets/xkb.md` §3) |
+| `xkb.capsLockNotExpressible` | warning | no stock key type gives every state of a key its output, so the build uses the closest one (rule `keyType`); the keys and the states that differ, all with Caps Lock on, in `detail` |
+| `xkb.customKeyType` | warning | the build wrote a yakbd key type (`customTypes`, or a pin): it works with libxkbcommon 1.13 and later, and on X11 when the types are named when loading the layout; older libxkbcommon gives the key its default type (`targets/xkb.md` §5) |
+| `xkb.keyTypeNotExact` | warning | a pinned key type does not give some state of the key its output; each level gets the output of the first state that selects it |
+| `xkb.tooManyLevels` | error | a yakbd key type would need more than 8 levels, the most that X11 and libxkbcommon before 1.11 accept |
+| `xkb.multiCharacterOutput` | warning | a level types several characters (several keysyms): libxkbcommon and Qt type them, X11 (`xkbcomp`) gives no symbol and GTK 4 types nothing (measured, `targets/xkb.md` §8), and the level cannot be the base of a Compose sequence |
+| `xkb.outputUnencodable` | error | an output no keysym carries: U+0000, a control character other than Backspace, Tab, Line Feed, Vertical Tab, Return, Escape and Delete, or CodeUnits that are not well-formed UTF-16 |
+| `xkb.utf8Characters` | warning | the file pins `characters` `utf8`: libxkbcommon before 1.9 and `xkbcomp` (X11) reject the symbols file (measured) |
+| `xkb.numLockKeyReduced` | warning | a `numLock` position is built with XKB's `KEYPAD` type: its navigation keysym and, with Num Lock on, its base binding; its other layers are left out, and Shift with Num Lock off types the binding |
+| `xkb.settingNotCompiled` | warning | a setting an XKB layout cannot express: `capsLockOffBy` `shift`, `bidiMarksOnShiftBackspace` |
+| `xkb.markerNotCompiled` | warning | a binding emits a marker; the output is built without it |
+| `xkb.transformNotCompiled` | warning | a transform, reorder or backspace transform; an XKB build compiles `deadKeys` only |
+| `xkb.deadKeysymMissing` | error | a dead key that a key types gets no keysym: no pin, and rule `deadKeysym` has none left |
+| `xkb.deadKeysymDuplicate` | error | two dead keys get the same keysym |
+| `xkb.deadKeyChainCut` | warning | a chain of dead-key results comes back to a dead key already in the sequence; a Compose sequence cannot loop, so the sequence ends there (`targets/xkb.md` §4) |
+| `xkb.composeBaseNotSingle` | warning | an entry whose base is more than one character: each step of a Compose sequence is one keysym, so the entry is not written |
+| `xkb.deadKeyNoMatchNotCompiled` | warning | `noMatch` is not compiled: what a key without a sequence types after a dead key is decided by the program's input method (`targets/xkb.md` §4); one entry per build, the dead keys and their `noMatch` in `detail` |
+| `xkb.deadKeyStacks` | warning | the dead keys work only where the input stack reads the Compose file: measured to work with libxkbcommon, Qt, and GTK 4 on X11 and weston, and to fail in GTK 4 on sway, KWin and mutter without an input method (`targets/xkb.md` §8); one entry per build with dead keys |
+| `xkb.systemComposeSequences` | accept | with `include "%L"`, the system's sequences for the same dead keysyms also apply where the file has no entry, and the file's sequences replace the system's for the same keys, in every layout of the user |
+| `xkb.malformed` | **fatal** | the input is not a readable symbols, registry or Compose file: a syntax error, an unterminated block or string, invalid UTF-8 (`coverage/xkb.md` §2) |
+| `xkb.syntaxDetailsIgnored` | accept | text that is not layout data (comments, white space, section flags, merge modes, how a keysym is spelled, the order of sections) is not kept |
+| `xkb.includeUnresolved` | warning | an `include` that names no file and section the importer was given; it is left out |
+| `xkb.groupDropped` | warning | groups other than the first (`symbols[Group2]` …); a `.kbl.json` file is one layout |
+| `xkb.keyNameUnknown` | accept | an imported key name that no row of the position table names (neither as `keyName` nor as an alias) became the position `Xkb<name>` with a `keys.<p>.keyName` pin |
+| `xkb.keysymNotText` | warning | a keysym with no character and no dead-key meaning (function keys, `XF86` keysyms, `VoidSymbol`); its level is imported as no binding |
+| `xkb.keyTypeUnknown` | warning | a key type that is neither a stock type of `targets/xkb.md` §3 nor defined in what the importer was given; the key is read with the type libxkbcommon gives a key without one (`coverage/xkb.md` §3) |
+| `xkb.typeModifierDropped` | warning | a key type uses modifiers other than Shift, Lock, LevelThree and LevelFive (Control, Alt, NumLock, …); those states are not imported (a `KEYPAD` key becomes a `numLock` position) |
+| `xkb.actionsDropped` | warning | explicit actions, `virtualMods`, `repeat`, key behaviours (locks, overlays, radio groups) and `modifier_map` entries other than those of the level shifts have no home |
+| `xkb.composeSequenceDropped` | warning | an imported Compose sequence that does not start with a dead keysym of the layout, contains `Multi_key` or a keysym no key types, or has no text result |
+| `xkb.deadKeyNoCompose` | warning | the symbols file has dead keysyms and no Compose file was given; the dead keys are imported without entries |
 
 A tool MUST NOT invent kinds outside this list for its version; a loss that fits none is reported as the closest kind with
 an explanatory `message`, and the gap is a defect of this specification. The kinds of the families `macos` and
-`xkb` (0.2) are added as their targets are written, each family as one block of rows at the end of the table; a
-0.1 file cannot name them, and the 0.1 schema does not accept them (§1.1).
+`xkb` (0.2) are the two blocks of rows at the end of the table; a 0.1 file cannot name them, and the 0.1 schema
+does not accept them (§1.1).
 
 ## 18. Extensions and CLDR `special`
 
@@ -827,7 +875,7 @@ A validator MUST check, and report with the kinds given:
 
 1. every reference resolves (`general.unresolvedReference`): `{"key"}`, `{"deadKey"}`, `layerId`, `flickId`,
    `longPress*`, `multiTapKeyIds`, `displays.entries[].keyId`, forms' and bindings' PositionIds, components in
-   modifier sets, `{"variable"}` items, `hardware.formId`, `targets.windows.keys`/`tables`/`deadKeys` keys, `targets.macos.keys`/`deadKeys` keys and `targets.macos.modifiers.command` (0.2);
+   modifier sets, `{"variable"}` items, `hardware.formId`, `targets.windows.keys`/`tables`/`deadKeys` keys, `targets.macos.keys`/`deadKeys` keys and `targets.macos.modifiers.command`, `targets.xkb.keys`/`deadKeys` keys and `targets.xkb.modifiers.levelThree`/`levelFive` (`altR`, `alt` or a `held` custom component) (0.2);
 2. no layer overlap (§7.3) (`general.layerOverlap`) and no modifier set mixing `ctrl` with `ctrlL`/`ctrlR`, `alt`
    with `altL`/`altR`, left with right, or `none`/`other` with anything (`general.modifierSetInvalid`);
 3. unique `scanCode`s (`general.duplicateScanCode`), unique variable ids (`general.duplicateVariableId`),

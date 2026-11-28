@@ -1,0 +1,112 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.2/kbl.schema.json",
+  "kbl": "0.2",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case",
+    "provenance": {
+      "format": "xkb"
+    }
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          }
+        }
+      },
+      {
+        "modifiers": [
+          [
+            "altR"
+          ]
+        ],
+        "bindings": {
+          "KeyA": {
+            "deadKey": "acute"
+          }
+        }
+      }
+    ]
+  },
+  "customModifiers": {
+    "lv5": {
+      "kind": "held",
+      "positions": [
+        "KeyB"
+      ]
+    }
+  },
+  "deadKeys": {
+    "acute": {
+      "spacing": "´",
+      "entries": [
+        {
+          "base": "a",
+          "result": "á"
+        }
+      ]
+    }
+  },
+  "targets": {
+    "xkb": {
+      "symbolsName": "yakbd-en-t-k0-case",
+      "variant": "case",
+      "description": "Schema test case",
+      "shortDescription": "en",
+      "languages": [
+        "eng"
+      ],
+      "characters": "keysyms",
+      "keys": {
+        "KeyA": {
+          "keyName": "AC01",
+          "type": "FOUR_LEVEL_SEMIALPHABETIC"
+        },
+        "KeyB": {
+          "keyName": "AB05",
+          "type": "YAKBD_12213443"
+        }
+      },
+      "customTypes": true,
+      "modifiers": {
+        "levelThree": "altR",
+        "levelFive": "lv5"
+      },
+      "deadKeys": {
+        "acute": {
+          "keysym": "dead_acute"
+        }
+      },
+      "compose": {
+        "write": true,
+        "includeLocale": true
+      },
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "xkb.customKeyType": "accept",
+          "xkbDefault.keyType": "error"
+        }
+      }
+    }
+  }
+}

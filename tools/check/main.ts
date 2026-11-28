@@ -242,6 +242,14 @@ function refs(doc: Obj, name: string, specKinds: Set<string>) {
   const cmd = obj(mac.modifiers).command;
   if (cmd !== undefined && obj(customs[str(cmd)]).kind !== "held")
     errf(`${name}: targets.macos.modifiers.command ${str(cmd)} is not a held custom modifier`);
+  const xkb = obj(obj(doc.targets).xkb);
+  for (const p of sorted(obj(xkb.keys))) posOK(p, "targets.xkb.keys");
+  for (const d of sorted(obj(xkb.deadKeys))) dkOK(d, "targets.xkb.deadKeys");
+  for (const lv of ["levelThree", "levelFive"]) {
+    const c = obj(xkb.modifiers)[lv];
+    if (c !== undefined && !["altR", "alt"].includes(str(c)) && obj(customs[str(c)]).kind !== "held")
+      errf(`${name}: targets.xkb.modifiers.${lv} ${str(c)} is neither altR, alt nor a held custom modifier`);
+  }
   const seen = new Set<string>();
   for (const p of sorted(pos)) {
     const sc = obj(pos[p]).scanCode;

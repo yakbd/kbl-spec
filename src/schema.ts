@@ -333,7 +333,55 @@ const lossKindsMacos = [
 ] as const;
 
 /** 0.2: the XKB target's kinds (targets/xkb.md). */
-const lossKindsXkb = ["xkb.*", "xkbDefault.*"] as const;
+const lossKindsXkb = [
+  "xkb.*",
+  "xkb.actionsDropped",
+  "xkb.capsLockNotExpressible",
+  "xkb.composeBaseNotSingle",
+  "xkb.composeSequenceDropped",
+  "xkb.controlAltLayerDropped",
+  "xkb.customKeyType",
+  "xkb.deadKeyChainCut",
+  "xkb.deadKeyNoCompose",
+  "xkb.deadKeyNoMatchNotCompiled",
+  "xkb.deadKeyStacks",
+  "xkb.deadKeysymDuplicate",
+  "xkb.deadKeysymMissing",
+  "xkb.groupDropped",
+  "xkb.includeUnresolved",
+  "xkb.keyNameDuplicate",
+  "xkb.keyNameMissing",
+  "xkb.keyNameUnknown",
+  "xkb.keyTypeNotExact",
+  "xkb.keyTypeUnknown",
+  "xkb.keysymNotText",
+  "xkb.lockUnmapped",
+  "xkb.malformed",
+  "xkb.markerNotCompiled",
+  "xkb.modifierUnmapped",
+  "xkb.multiCharacterOutput",
+  "xkb.noHardwareLayers",
+  "xkb.numLockKeyReduced",
+  "xkb.outputUnencodable",
+  "xkb.settingNotCompiled",
+  "xkb.syntaxDetailsIgnored",
+  "xkb.systemComposeSequences",
+  "xkb.tooManyLevels",
+  "xkb.transformNotCompiled",
+  "xkb.typeModifierDropped",
+  "xkb.utf8Characters",
+  "xkbDefault.*",
+  "xkbDefault.characters",
+  "xkbDefault.compose",
+  "xkbDefault.deadKeysym",
+  "xkbDefault.description",
+  "xkbDefault.keyName",
+  "xkbDefault.keyType",
+  "xkbDefault.levelThree",
+  "xkbDefault.shortDescription",
+  "xkbDefault.symbolsName",
+  "xkbDefault.variant",
+] as const;
 
 /** The OnLoss schema of one version: the same shape, a different closed list of kinds. */
 function onLoss(kinds: readonly [string, ...string[]], defaultedKind: string) {
@@ -1246,9 +1294,9 @@ const targetsWindows = (OnLoss: OnLossSchema) =>
     .meta({ description: "Windows build choices (SPEC §16.1, targets/windows.md)." });
 
 // ---- 0.2 targets ----
-// Placeholders: closed objects with only the loss policy. The macOS target fills `TargetsMacos` (SPEC §16.4,
-// targets/macos.md) and the XKB target fills `TargetsXkb` (SPEC §16.5, targets/xkb.md); each also appends its
-// loss kinds to its own list near OnLoss above. Nothing else in this file is per platform.
+// Each platform target has its own object here, `TargetsMacos` (SPEC §16.4, targets/macos.md) and `TargetsXkb`
+// (SPEC §16.5, targets/xkb.md), and its own loss-kind list near OnLoss above. Nothing else in this file is per
+// platform.
 
 /** 0.2: a `.keylayout` state name (TN2056 `when/@state`, an XML NMTOKEN); `none` is the base state. */
 const MacosStateName = z
@@ -1396,9 +1444,133 @@ const TargetsMacos = z
   })
   .meta({ description: "macOS build choices (SPEC §16.4, targets/macos.md)." });
 
+/** 0.2: an XKB symbols file or section name (rules symbolsName, variant). */
+const XkbFileName = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/u);
+
+/** 0.2: an XKB key type: a stock type of targets/xkb.md §3, or a yakbd type named by its level map. */
+const XkbKeyType = z
+  .xor([
+    z
+      .enum([
+        "ONE_LEVEL",
+        "TWO_LEVEL",
+        "ALPHABETIC",
+        "FOUR_LEVEL",
+        "FOUR_LEVEL_ALPHABETIC",
+        "FOUR_LEVEL_SEMIALPHABETIC",
+        "FOUR_LEVEL_PLUS_LOCK",
+        "EIGHT_LEVEL",
+        "EIGHT_LEVEL_ALPHABETIC",
+        "EIGHT_LEVEL_SEMIALPHABETIC",
+      ])
+      .meta({ description: "A stock key type of xkeyboard-config (targets/xkb.md §3)." }),
+    z
+      .string()
+      .regex(/^YAKBD_[1-8]{8}([1-8]{8})?$/u)
+      .meta({
+        description:
+          "A yakbd key type: YAKBD_ and the level of each of the 8 (or 16, with LevelFive) states, Lock always consumed (targets/xkb.md §3).",
+      }),
+  ])
+  .meta({ description: "An XKB key type name (rule keyType)." });
+
+/** 0.2: a modifier component that drives an XKB level shift (a built-in Alt component or a custom held one). */
+const XkbLevelComponent = z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,31}$/u);
+
 /** 0.2: Linux XKB build choices. */
 const TargetsXkb = z
   .strictObject({
+    symbolsName: XkbFileName.meta({
+      description: "The symbols file name and the layout name in rules/evdev.xml (rule symbolsName).",
+    }).optional(),
+    variant: XkbFileName.meta({
+      description:
+        "The section name; given, the layout is the variant <variant> of the layout symbolsName, otherwise the section basic is the file's default (rule variant).",
+    }).optional(),
+    description: Text.meta({
+      description: "The layout's name: name[Group1] and the registry's <description> (rule description).",
+    }).optional(),
+    shortDescription: z
+      .string()
+      .regex(/^[^\x00-\x1f\x7f]{1,16}$/u)
+      .meta({ description: "The registry's <shortDescription>, the short label of the layout (rule shortDescription)." })
+      .optional(),
+    languages: unique(
+      z
+        .array(z.string().regex(/^[a-z]{3}$/u).meta({ description: "An ISO 639-2 or 639-3 language code." }))
+        .min(1),
+    )
+      .meta({ description: "The registry's <languageList>, three-letter codes; no default (none written)." })
+      .optional(),
+    characters: z
+      .enum(["keysyms", "utf8"])
+      .meta({
+        description:
+          "How characters are written in the symbols file: keysym names and Uxxxx (any libxkbcommon, xkbcomp) or UTF-8 strings (libxkbcommon 1.9 and later only) (rule characters).",
+      })
+      .optional(),
+    keys: z
+      .record(
+        PositionId,
+        z
+          .strictObject({
+            keyName: z
+              .string()
+              .regex(/^[0-9A-Za-z_+-]{1,4}$/u)
+              .meta({ description: "The XKB key name, without the angle brackets (rule keyName)." })
+              .optional(),
+            type: XkbKeyType.meta({ description: "The key type of this key (rule keyType)." }).optional(),
+          })
+          .meta({ description: "XKB data of one position." }),
+      )
+      .meta({ description: "XKB data per position." })
+      .optional(),
+    customTypes: z
+      .boolean()
+      .meta({
+        description:
+          "true: a key no stock type fits gets a yakbd key type, installed with the layout (needs libxkbcommon 1.13 or a types option on X11); default false (rule keyType).",
+      })
+      .optional(),
+    modifiers: z
+      .strictObject({
+        levelThree: XkbLevelComponent.meta({
+          description: "The component that is the level-3 shift: altR, alt or a custom held component (rule levelThree).",
+        }).optional(),
+        levelFive: XkbLevelComponent.meta({
+          description: "The component that is the level-5 shift: a custom held component or altR; no default (no level 5).",
+        }).optional(),
+      })
+      .meta({ description: "Which components shift XKB levels." })
+      .optional(),
+    deadKeys: z
+      .record(
+        z.string(),
+        z
+          .strictObject({
+            keysym: z
+              .string()
+              .regex(/^dead_[A-Za-z0-9_]{1,40}$/u)
+              .meta({ description: "The dead_* keysym the dead key's key types (rule deadKeysym)." })
+              .optional(),
+          })
+          .meta({ description: "XKB data of one dead key." }),
+      )
+      .meta({ description: "XKB data per dead key." })
+      .optional(),
+    compose: z
+      .strictObject({
+        write: z
+          .boolean()
+          .meta({ description: "Write a Compose file with the dead-key sequences (default: when the file has dead keys)." })
+          .optional(),
+        includeLocale: z
+          .boolean()
+          .meta({ description: 'Start the Compose file with include "%L", keeping the system sequences (default true).' })
+          .optional(),
+      })
+      .meta({ description: "The Compose file of the build (rule compose)." })
+      .optional(),
     onLoss: OnLoss02.meta({ description: "Loss policy for this target." }).optional(),
   })
   .meta({ description: "Linux XKB build choices (SPEC §16.5, targets/xkb.md)." });

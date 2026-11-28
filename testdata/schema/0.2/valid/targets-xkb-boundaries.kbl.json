@@ -1,0 +1,60 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.2/kbl.schema.json",
+  "kbl": "0.2",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "targets": {
+    "xkb": {
+      "symbolsName": "a",
+      "variant": "0123456789012345678901234567890123456789012345678901234567890123",
+      "shortDescription": "xxxxxxxxxxxxxxxx",
+      "characters": "utf8",
+      "keys": {
+        "KeyA": {
+          "keyName": "A",
+          "type": "YAKBD_1234567812345678"
+        },
+        "KeyB": {
+          "keyName": "VOL+",
+          "type": "ONE_LEVEL"
+        }
+      },
+      "deadKeys": {
+        "acute": {
+          "keysym": "dead_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "compose": {}
+    }
+  }
+}
