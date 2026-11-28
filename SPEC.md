@@ -1130,7 +1130,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `kbdgen.gestureDropped` | warning | export: `multiTapKeyIds`, flicks, and long-press lists that differ between keys of the same text (kbdgen's `longpress` is one list per text) (0.3) |
 | `kbdgen.deadKeyNotExpressible` | warning | export: a dead key's `noMatch` other than `emitBoth`, its `name` or `display`, or a cycle of chained dead keys (0.3) |
 | `kbdgen.transformNotExpressible` | warning | export: CLDR `transforms` (kbdgen's transforms are dead-key trees only) (0.3) |
-| `kmn.malformed` | **fatal** | the input is not a keyboard source: an unclosed string or bracket, a line that is neither a statement nor a rule, no `begin`, a begin group that does not exist or is not `using keys` (`coverage/kmn.md` §4) (0.3) |
+| `kmn.malformed` | **fatal** | the input is not a keyboard source: an unclosed string or bracket, a line that is neither a statement nor a rule, no `begin`, a begin group that does not exist (`coverage/kmn.md` §4) (0.3) |
 | `kmn.sourceMissing` | error | a keyboard of a package source (`.kps`) whose `.kmn` is not found; the package's other keyboards are imported (0.3) |
 | `kmn.touchLayoutMissing` | warning | the touch layout `&LAYOUTFILE` names cannot be read; the layout has no touch sets (0.3) |
 | `kmn.languageUnknown` | warning | neither the source (`&ETHNOLOGUECODE`) nor a package names a language: `metadata.id` is `und` (0.3) |

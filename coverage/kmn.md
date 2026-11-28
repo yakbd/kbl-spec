@@ -74,7 +74,8 @@ Lock off and on, and each key of the touch layout on its layer — against them.
 2. Hardware layers are named by their modifiers (`base`, `shift`, `caps`, `shift-caps`, `altR`, …); `positions` get
    the scan codes of Appendix A; number-pad positions `numLock: true`.
 3. A source that is not the language (an unclosed string or bracket, a line that is neither statement nor rule, no
-   `begin`, a begin group that does not exist or is not `using keys`) is `kmn.malformed`.
+   `begin`, a begin group that does not exist) is `kmn.malformed`. A begin group that is not `using keys` is read as
+   the key group (`kmn.ruleNotExpressible`, one entry).
 4. Touch keys: `coverage/keymantouch.md` §3, outputs by the rules of §3 for the key's layer and platform.
 5. **Packages.** A package source (`.kps`) holding several keyboards imports as one `.kbl.json` and one loss report
    per keyboard (SPEC §16.11, D150): each `<Keyboard>` is found as `<ID>.kmn` in the `.kps` folder or a folder the
