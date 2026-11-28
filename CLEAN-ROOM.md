@@ -86,7 +86,9 @@ The rule for these platforms is the owner's (D111) and differs from the Windows 
 - Windows facts still come only from the reference specification and Microsoft's public documentation.
 
 The groundwork for 0.2 (version mechanics, position-table pattern, dead-key statement, these rules; D108 to D111)
-was written from this repository and the owner's decisions; no outside source was read for it.
+was written from this repository and the owner's decisions. The drift test of D109 follows the tool repository's
+Table A test (`yakbd/yakbd-cli`, `target/windows/vk/tablea_test.go` and `scancodes.go`, MIT-0, read 2026-11-28 for how
+the embedded copy is compared); no other source was read for it.
 
 ### macOS sources
 

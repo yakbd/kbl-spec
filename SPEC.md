@@ -42,7 +42,7 @@ Appendix A position names and scan codes.
 Each minor version has its own `kbl` value and its own JSON Schema, at `schema/<version>/kbl.schema.json` with the
 `$id` `https://yakbd.github.io/kbl-spec/schema/<version>/kbl.schema.json` (D101, D108). This document defines
 **0.2**: `kbl` `"0.2"`, schema `schema/0.2/kbl.schema.json`. Version 0.1 is the released 0.1 preview; its schema
-`schema/0.1/kbl.schema.json` stays byte for byte as published.
+`schema/0.1/kbl.schema.json` is not changed by 0.2 (only by what `COMPATIBILITY.md` allows within 0.1).
 
 - **A file is valid against the version it names.** A 0.1 file is checked with the 0.1 schema and a 0.2 file with
   the 0.2 schema; each schema accepts only its own `kbl` value. A `$schema` member, when present, SHOULD be the
@@ -474,9 +474,9 @@ with base U+0008 it applies; otherwise `noMatch` applies with T = the backspace 
 **One model, every target** (D110). `deadKeys` (§10) and this machine are the only dead-key model of the format.
 Every target builds its own native form from it: Windows its dead-key tables (`targets/windows.md` §8), macOS
 `.keylayout` actions and states (`targets/macos.md`), XKB `dead_*` keysyms with Compose sequences
-(`targets/xkb.md`), and later targets their own forms. No target adds a second model or target-only dead-key
-data that changes what a file types; a target section may only say how the model is spelled in its form (names,
-keysyms, state names) and pin choices its form needs. Each target document has a dead-key section that maps every
+(`targets/xkb.md`), and later targets their own forms. No target adds a second dead-key model; a target
+section holds what its form needs beyond the model (as `targets.windows.deadKeys` holds the Windows dead
+character). Each target document has a dead-key section that maps every
 part of the model (`spacing`, `entries` in order, chained results, `noMatch`, the backspace action) to its form, and
 names the loss kind for each part its form cannot express.
 

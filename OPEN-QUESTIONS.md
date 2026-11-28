@@ -1,6 +1,6 @@
 # Open questions for the owner
 
-All questions are closed; the record stays for reference.
+Q16 is open; the others are closed and the record stays for reference.
 
 Short, each with a recommendation. Until an answer comes, the recommendation (or the stated interim) is what the draft
 does.
@@ -116,3 +116,9 @@ measurement decides the sign-in case. Interim: as now; ruling after the rerun.
 *Q14 closed 2026-11-26 (D98)*: as LocalSystem the installer lets `InstallLayoutOrTip` file the language in `.DEFAULT`, reads the tag Windows chose, and writes the D97 shape; elsewhere the option still fails. No tag is derived (`fo-FO` vs `fo`).
 
 *Q15 closed 2026-11-26 (D98)*: no separate option; enabling adds the input language and never the display language (`targets/windows-install.md` §6), measured in VM-25.
+
+**Q16. Which version does a tool write once 0.2 exists?** SPEC §1.1 (D108) says a tool SHOULD write the lowest
+version that holds the file: 0.1 unless the file uses `targets.macos`, `targets.xkb`, a `macos`/`xkb` loss kind or a
+0.2 provenance format. The other choice is "always write the newest version the tool implements", which is simpler
+for tools but makes every saved file unreadable by 0.1 tools (the released editor and tool). *Recommendation*: keep
+the lowest-version rule; the check is a short list of members. Interim: as written.

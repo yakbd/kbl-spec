@@ -35,7 +35,7 @@
   },
   "targets": {
     "macos": {
-      "keyMap": {}
+      "notAMemberOfMacos": true
     }
   }
 }

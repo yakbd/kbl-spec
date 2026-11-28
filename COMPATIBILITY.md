@@ -21,8 +21,8 @@ before 1.0.
 0.2 is being written. Until it is tagged it may still change in any way, and its schema path is not published.
 What it already promises, and keeps when it is released (D108):
 
-- **0.1 stays as it is.** `schema/0.1/kbl.schema.json` stays byte for byte as published (the repository's checker
-  pins its hash), and the 0.1 rules above still hold for 0.1 files.
+- **0.2 does not change 0.1.** `schema/0.1/kbl.schema.json` changes only as "What 0.1 promises" allows (the
+  repository's checker pins its hash, so no other change slips in), and those rules still hold for 0.1 files.
 - **0.2 holds 0.1.** 0.2 only adds (`targets.macos`, `targets.xkb`, their loss kinds, two provenance formats). A
   valid 0.1 file whose `kbl` (and `$schema`) is changed to `"0.2"` is a valid 0.2 file and means the same: the
   Windows default rules and Table A do not change in 0.2.

@@ -744,7 +744,7 @@ D3 rejects unknown members: never guess), so a 0.1 reader rejects 0.2 files, and
 A tool writes the lowest version that holds what it writes, so files that use nothing new stay readable by 0.1
 tools. Both schemas come from the one source `src/schema.ts`: the parts that differ (the onLoss kind list, the
 provenance formats, `targets`, `kbl`, `$id`) are built per version, the rest is shared, and the checker pins the
-SHA-256 of the generated 0.1 file, so a shared edit that reaches 0.1 fails `npm test` instead of silently
+SHA-256 of the generated 0.1 file (changed only for what `COMPATIBILITY.md` allows within 0.1), so a shared edit that reaches 0.1 fails `npm test` instead of silently
 republishing 0.1 (D100, D106). 0.2 is a draft until it is tagged. Reason: one minor version per set of new targets is
 what D101 and D105 planned; the superset rule spares tools a second code path for 0.1, and a frozen copy of the 0.1
 source was rejected because two copies of 1,200 lines would drift; the hash makes the freeze mechanical.
@@ -766,9 +766,9 @@ in step.
 **D110 (2026-11-28; extends D12). One dead-key model feeds every target.** `deadKeys` (SPEC §10) and the dead-key
 machine of §14.2 are the only dead-key model. Each target builds its own form from it (Windows dead-key tables,
 `.keylayout` actions and states, XKB `dead_*` keysyms with Compose sequences) and documents the mapping in a
-dead-key section of its `targets/<target>.md`, with a loss kind for each part of the model its form cannot express. A
-target section may name how the model is spelled in its form and pin choices that form needs, but never adds
-target-only data that changes what a file types. Reason: a layout typed the same way on every platform needs one
+dead-key section of its `targets/<target>.md`, with a loss kind for each part of the model its form cannot express. No
+target adds a second model; its section holds only what its form needs beyond the model (as `targets.windows.deadKeys`
+holds the dead character). Reason: a layout typed the same way on every platform needs one
 source of truth; D105 found that both new forms are views of the same machine (chained states, `noMatch`, spacing).
 
 **D111 (owner, 2026-11-28). Clean room for macOS and Linux: any public source, no copied code.** For macOS and
@@ -777,6 +777,4 @@ any licence (GPL included), public mirrors of headers, and reference tools for t
 are never copied; text and code are written from understanding. Every source read is recorded in `CLEAN-ROOM.md`,
 in the subsection of its platform (URL, what for, licence). Fixtures come only from openly licensed corpora; layouts
 owned by the platform are read on the platform and never committed. The Windows rules are unchanged (the reference
-specification and Microsoft's public documentation only). Reason (the owner): the Windows rules guard against one
-vendor's unpublished material; for macOS and Linux the facts are public and much of the reference material is open
-source, so the line that matters is copying, not reading.
+specification and Microsoft's public documentation only).

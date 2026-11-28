@@ -35,7 +35,7 @@
   },
   "targets": {
     "xkb": {
-      "symbols": "x"
+      "notAMemberOfXkb": true
     }
   }
 }
