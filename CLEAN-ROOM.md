@@ -52,6 +52,8 @@ this record name commits of that private history, which the public history does 
   skills (Microsoft's `wiki-agents-md`, https://github.com/microsoft/skills, and mblode's `agents-md`,
   https://github.com/mblode/agent-skills). The README's validation command was tried with the npm package
   `ajv-cli` 5.0.0.
+- README and AGENTS.md again (2026-11-28, documentation moved to the website): written from this repository and the
+  website's page list, following the same two skills and the `init-deep` skill (hierarchical AGENTS.md files).
 - 0.1 preview (2026-11-27): the macOS / XKB paper check (D105) read Apple's archived technical note TN2056
   "Installing and Using Keyboard Layouts" (https://developer.apple.com/library/archive/technotes/tn2056/_index.html)
   and libxkbcommon's keymap text format and Compose pages (https://xkbcommon.org/doc/current/).

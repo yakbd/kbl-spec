@@ -17,8 +17,8 @@ other majors).
 
 CI (`.github/workflows/validate.yml`) runs `npm ci && npm test` on push to `main` only when a filtered path changes
 (`src/`, `schema/`, `examples/`, `testdata/`, `tools/`, `targets/`, `coverage/`, `SPEC.md`, package files, the
-workflow); a push that touches none of them (root docs only) starts no run. Start one by hand with
-`gh workflow run validate.yml`. Push in batches.
+workflow); a push that touches none of them (root docs only), and every push to `spec-0.2`, starts no run. Start
+one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
 
 ## Which text wins
 
@@ -92,6 +92,20 @@ workflow); a push that touches none of them (root docs only) starts no run. Star
   `targets/windows-vm-tests.md`. Do not mark anything "verified on Windows" without such a run.
 - GitHub API: do not poll `gh` in a loop. Wait for a CI run with one `gh run watch <id> --exit-status`; on 403 or
   "rate limit", read the reset time from `gh api rate_limit` and wait.
+
+## Documentation and the website
+
+- People read the documentation on the website, https://yakbd.github.io/ (repository `yakbd/yakbd.github.io`). It
+  fetches this repository's reference files (SPEC.md, `targets/*.md`, `coverage/`, COMPATIBILITY.md, STATUS.md,
+  DECISIONS.md) at the commit pinned in its `sources.json`; the format's introduction (`/spec/`) is a page of the
+  website itself. `README.md` stays a short front door: one sentence, the targets table, links to the site's pages.
+  Explanatory text goes into the document it belongs to or a website page, not into the README.
+- **Part of every tagged version** (and of every change on `main` that adds, removes or changes what the format
+  can express): update this repository's documents (README targets table, `STATUS.md`, the documents the change
+  touches) and prepare the website change in `yakbd/yakbd.github.io`: re-pin `kbl-spec` in `sources.json` to the
+  version's commit, add or update the pages the change needs (a new target gets its spec and coverage pages, a new
+  fetched file its entry in `sources.json`), and update the landing page's platform list and `/spec/` page. The
+  owner tags and publishes; a version is not finished while the website still describes the previous one.
 
 ## Schema and checker work
 
