@@ -181,6 +181,13 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 
 ### ChromeOS sources
 
+| source | read for | licence |
+|---|---|---|
+| Chrome for Developers, `chrome.input.ime` API reference (https://developer.chrome.com/docs/extensions/reference/api/input/ime), read 2026-11-28 (ChromeOS work) | the KeyboardEvent fields, `onKeyEvent` return values and `keyEventHandled`, `commitText`, `setComposition`, `clearComposition`, the focus and reset events (`targets/chromeos.md` §3–§5, `coverage/chromeos.md` §3) | documentation; facts only |
+| Chrome for Developers, manifest pages `input_components`, `name`, `version`, `description` (https://developer.chrome.com/docs/extensions/reference/manifest/...), read 2026-11-28 | the input component members, one layout per input method, the length and version limits (`targets/chromeos.md` §1, §5, `coverage/chromeos.md` §2) | documentation; facts only |
+| Chrome for Developers, "The extension service worker lifecycle" and `chrome.storage` reference, read 2026-11-28 | the 30-second idle stop, lost globals, `storage.session` and its permission (`targets/chromeos.md` §5, D183) | documentation; facts only |
+| W3C, "UI Events KeyboardEvent code Values" (https://www.w3.org/TR/uievents-code/) | the code values of `targets/chromeos-default-code.tsv` (the positions of the XKB table, whose Chromium source is listed under "Linux (XKB) sources") | W3C document licence; names only |
+
 ### Keyman sources
 
 | source | read for | licence |

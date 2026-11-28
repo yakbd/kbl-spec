@@ -793,12 +793,18 @@ names, and every use is reported as `iosDefault.<rule>`. It has no position tabl
 
 ### 16.9 `targets.chromeos` (0.3)
 
-ChromeOS: a Manifest V3 extension using `chrome.input.ime`, built from the hardware layers by DOM `code` (`targets/chromeos.md`, `coverage/chromeos.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
-names, and every use is reported as `chromeosDefault.<rule>`. Its fields are written by the work on this target; until
-then the object holds only `onLoss`.
+ChromeOS: one Manifest V3 extension for this one layout, an input method using `chrome.input.ime`, built from the hardware layers by DOM `code` (`targets/chromeos.md`, `coverage/chromeos.md`). The extension is a fixed runtime written by the tool and the layout as data. As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `chromeosDefault.<rule>`.
 
 | property | type | meaning (default rule in `targets/chromeos.md`) |
 |---|---|---|
+| `name` | string, 1–75 characters, no control character | the manifest `name` and the input component's `name`, the input method's name in the settings (rule `name`) |
+| `engineId` | string `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$` | the input component's `id`, the engine id `chrome.input.ime` passes; not Chrome's extension id (rule `engineId`) |
+| `version` | one to four dot-separated integers 0–65535 without leading zeros | the manifest `version`; an update of an installed build needs a higher one (rule `version`) |
+| `language` | BCP 47 tag | the input component's `language` (rule `language`) |
+| `description` | string, 1–132 characters, no control character | the manifest `description` (rule `description`) |
+| `systemLayout` | string `^[A-Za-z0-9][A-Za-z0-9:()_+-]{0,63}$` | the input component's `layouts` entry: the system layout ChromeOS keeps under the input method, which types what the runtime passes through, Control and Alt shortcuts among it (rule `systemLayout`) |
+| `keys` | object PositionId → `{ "code": string }` | the DOM `KeyboardEvent.code` of each position, `^[A-Za-z][A-Za-z0-9]{0,63}$` (rule `code`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.10 `targets.keyman` (0.3)
@@ -1054,6 +1060,17 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `ios.outputUnencodable` | warning | as `androidime.outputUnencodable` |
 | `ios.functionNotSupported` | warning | a key with `function` `escape` and no output: a keyboard extension cannot send Escape; the key does nothing |
 | `ios.extensionBundleIdNotPrefixed` | error | `extensionBundleId` does not begin with `bundleId` and a dot; iOS refuses to install such an app |
+| `chromeos.noHardwareLayers` | error | the file has no hardware layers: a ChromeOS input method types a physical keyboard (0.3) |
+| `chromeos.codeMissing` | error | a position with bindings has no DOM code (no pin, no row of `targets/chromeos-default-code.tsv`) and is not a position of another target's table (0.3) |
+| `chromeos.positionWithoutCode` | warning | a position with bindings that another target's position table has (`Break`, `SysRq`) and this target's has not; its bindings are left out (0.3) |
+| `chromeos.codeDuplicate` | error | two positions get the same DOM code (rule `code`) (0.3) |
+| `chromeos.modifierUnmapped` | warning | a modifier set needs a fifth or later custom component; the runtime tracks four, so the set is left out (`targets/chromeos.md` §3) (0.3) |
+| `chromeos.shortcutsFollowSystemLayout` | warning | Control and Alt shortcuts are passed through to the system layout `us`, and the base layer types another ASCII letter than `us` at some positions: there a shortcut follows the `us` letter, not the layout's; one entry per build listing the positions (0.3) |
+| `chromeos.controlCharacterDropped` | warning | an output with a control character other than the backspace action and Return, Tab or Escape on their own keys; it is built as nothing (0.3) |
+| `chromeos.settingNotCompiled` | warning | `capsLockOffBy` `shift`: Caps Lock is the system's (0.3) |
+| `chromeos.markerNotCompiled` | warning | a binding emits a marker; the output is built without it (0.3) |
+| `chromeos.transformNotCompiled` | warning | a transform that cannot be expanded into literal rules (`targets/touch-runtime.md` §5) or that has a marker; left out (0.3) |
+| `chromeos.reorderNotCompiled` | warning | a `reorders` group; left out (0.3) |
 | `kbdgen.malformed` | **fatal** | the input is not a readable bundle: a YAML feature outside the subset of `coverage/kbdgen.md` §4, a missing `project.yaml` or `layouts/`, a layout file that is not a mapping (0.3) |
 | `kbdgen.bundleDataDropped` | accept | bundle-level data with no home, reported in the report of every layout: `project.yaml` `dependencies`, store and signing data of `targets/*.yaml`, kbdgen's own installer data, `resources/` (`coverage/kbdgen.md` §2; never the values) (0.3) |
 | `kbdgen.layoutDataDropped` | accept | layout data with no home: `decimal`, the sections' `config` (speller packages, locale and id overrides) (0.3) |
@@ -1106,7 +1123,7 @@ A validator MUST check, and report with the kinds given:
 
 1. every reference resolves (`general.unresolvedReference`): `{"key"}`, `{"deadKey"}`, `layerId`, `flickId`,
    `longPress*`, `multiTapKeyIds`, `displays.entries[].keyId`, forms' and bindings' PositionIds, components in
-   modifier sets, `{"variable"}` items, `hardware.formId`, `targets.windows.keys`/`tables`/`deadKeys` keys, `targets.macos.keys`/`deadKeys` keys and `targets.macos.modifiers.command`, `targets.xkb.keys`/`deadKeys` keys and `targets.xkb.modifiers.levelThree`/`levelFive` (`altR`, `alt` or a `held` custom component) (0.2);
+   modifier sets, `{"variable"}` items, `hardware.formId`, `targets.windows.keys`/`tables`/`deadKeys` keys, `targets.macos.keys`/`deadKeys` keys and `targets.macos.modifiers.command`, `targets.xkb.keys`/`deadKeys` keys and `targets.xkb.modifiers.levelThree`/`levelFive` (`altR`, `alt` or a `held` custom component) (0.2), `targets.chromeos.keys` keys (0.3);
 2. no layer overlap (§7.3) (`general.layerOverlap`) and no modifier set mixing `ctrl` with `ctrlL`/`ctrlR`, `alt`
    with `altL`/`altR`, left with right, or `none`/`other` with anything (`general.modifierSetInvalid`);
 3. unique `scanCode`s (`general.duplicateScanCode`), unique variable ids (`general.duplicateVariableId`),

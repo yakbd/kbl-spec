@@ -1,0 +1,61 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json",
+  "kbl": "0.3",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "targets": {
+    "chromeos": {
+      "name": "Føroyskt",
+      "engineId": "yakbd-fo",
+      "version": "1.2.3.4",
+      "language": "fo-FO",
+      "description": "Faroese",
+      "systemLayout": "us(intl)",
+      "keys": {
+        "KeyA": {
+          "code": "KeyA"
+        },
+        "KeyB": {
+          "code": "IntlRo"
+        }
+      },
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "chromeosDefault.*": "error",
+          "chromeos.shortcutsFollowSystemLayout": "accept"
+        }
+      }
+    }
+  }
+}

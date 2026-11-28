@@ -457,7 +457,28 @@ const lossKindsIos = [
 ] as const;
 
 /** 0.3: the ChromeOS input-method target (targets/chromeos.md). Owner: the ChromeOS work. */
-const lossKindsChromeos = ["chromeos.*", "chromeosDefault.*"] as const;
+const lossKindsChromeos = [
+  "chromeos.*",
+  "chromeos.codeDuplicate",
+  "chromeos.codeMissing",
+  "chromeos.controlCharacterDropped",
+  "chromeos.markerNotCompiled",
+  "chromeos.modifierUnmapped",
+  "chromeos.noHardwareLayers",
+  "chromeos.positionWithoutCode",
+  "chromeos.reorderNotCompiled",
+  "chromeos.settingNotCompiled",
+  "chromeos.shortcutsFollowSystemLayout",
+  "chromeos.transformNotCompiled",
+  "chromeosDefault.*",
+  "chromeosDefault.code",
+  "chromeosDefault.description",
+  "chromeosDefault.engineId",
+  "chromeosDefault.language",
+  "chromeosDefault.name",
+  "chromeosDefault.systemLayout",
+  "chromeosDefault.version",
+] as const;
 
 /** 0.3: the Keyman target (targets/keyman.md). Owner: the Keyman package work. */
 const lossKindsKeyman = ["keyman.*", "keymanDefault.*"] as const;
@@ -1888,6 +1909,60 @@ const targetsIos = (OnLoss: OnLossSchema) =>
 const targetsChromeos = (OnLoss: OnLossSchema) =>
   z
     .strictObject({
+      name: z
+        .string()
+        .regex(/^[^\x00-\x1f\x7f]{1,75}$/u)
+        .meta({
+          description:
+            "The extension's name and the input method's name in the ChromeOS settings: manifest name and input_components name, at most 75 characters (rule name).",
+        })
+        .optional(),
+      engineId: z
+        .string()
+        .regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/u)
+        .meta({
+          description:
+            "The input component's id (input_components id), the engine id chrome.input.ime names; not Chrome's extension id (rule engineId).",
+        })
+        .optional(),
+      version: z
+        .string()
+        .regex(/^(0|[1-9][0-9]{0,4})(\.(0|[1-9][0-9]{0,4})){0,3}$/u)
+        .meta({
+          description:
+            "The manifest version: one to four dot-separated integers 0-65535 without leading zeros; Chrome also refuses all zeros (rule version).",
+        })
+        .optional(),
+      language: TouchLanguage.meta({
+        description: "The input component's language, a BCP 47 tag (rule language).",
+      }).optional(),
+      description: z
+        .string()
+        .regex(/^[^\x00-\x1f\x7f]{1,132}$/u)
+        .meta({ description: "The manifest description, at most 132 characters (rule description)." })
+        .optional(),
+      systemLayout: z
+        .string()
+        .regex(/^[A-Za-z0-9][A-Za-z0-9:()_+-]{0,63}$/u)
+        .meta({
+          description:
+            "The input component's layouts entry: the system keyboard layout ChromeOS keeps under the input method, which gives the keys the layout leaves to the system, Control and Alt shortcuts among them (rule systemLayout).",
+        })
+        .optional(),
+      keys: z
+        .record(
+          PositionId,
+          z
+            .strictObject({
+              code: z
+                .string()
+                .regex(/^[A-Za-z][A-Za-z0-9]{0,63}$/u)
+                .meta({ description: "The DOM KeyboardEvent code of the position (rule code)." }),
+            })
+            .meta({ description: "One position's ChromeOS key." }),
+        )
+        .meta({ description: "Per position: its DOM code (rule code, targets/chromeos-default-code.tsv)." })
+        .optional(),
       onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
     })
     .meta({ description: "ChromeOS input-method build choices (SPEC §16.9, targets/chromeos.md)." });

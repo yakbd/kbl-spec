@@ -2780,6 +2780,58 @@
         "chromeos": {
           "type": "object",
           "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[^\\x00-\\x1f\\x7f]{1,75}$",
+              "description": "The extension's name and the input method's name in the ChromeOS settings: manifest name and input_components name, at most 75 characters (rule name)."
+            },
+            "engineId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+              "description": "The input component's id (input_components id), the engine id chrome.input.ime names; not Chrome's extension id (rule engineId)."
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,4})(\\.(0|[1-9][0-9]{0,4})){0,3}$",
+              "description": "The manifest version: one to four dot-separated integers 0-65535 without leading zeros; Chrome also refuses all zeros (rule version)."
+            },
+            "language": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
+              "description": "The input component's language, a BCP 47 tag (rule language)."
+            },
+            "description": {
+              "type": "string",
+              "pattern": "^[^\\x00-\\x1f\\x7f]{1,132}$",
+              "description": "The manifest description, at most 132 characters (rule description)."
+            },
+            "systemLayout": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9:()_+-]{0,63}$",
+              "description": "The input component's layouts entry: the system keyboard layout ChromeOS keeps under the input method, which gives the keys the layout leaves to the system, Control and Alt shortcuts among them (rule systemLayout)."
+            },
+            "keys": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PositionId"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+                    "description": "The DOM KeyboardEvent code of the position (rule code)."
+                  }
+                },
+                "required": [
+                  "code"
+                ],
+                "additionalProperties": false,
+                "description": "One position's ChromeOS key."
+              },
+              "description": "Per position: its DOM code (rule code, targets/chromeos-default-code.tsv)."
+            },
             "onLoss": {
               "description": "Loss policy for this target.",
               "$ref": "#/$defs/OnLoss"
@@ -3339,7 +3391,25 @@
               "iosDefault.systemRow",
               "iosDefault.touchFromHardware",
               "chromeos.*",
+              "chromeos.codeDuplicate",
+              "chromeos.codeMissing",
+              "chromeos.controlCharacterDropped",
+              "chromeos.markerNotCompiled",
+              "chromeos.modifierUnmapped",
+              "chromeos.noHardwareLayers",
+              "chromeos.positionWithoutCode",
+              "chromeos.reorderNotCompiled",
+              "chromeos.settingNotCompiled",
+              "chromeos.shortcutsFollowSystemLayout",
+              "chromeos.transformNotCompiled",
               "chromeosDefault.*",
+              "chromeosDefault.code",
+              "chromeosDefault.description",
+              "chromeosDefault.engineId",
+              "chromeosDefault.language",
+              "chromeosDefault.name",
+              "chromeosDefault.systemLayout",
+              "chromeosDefault.version",
               "keyman.*",
               "keymanDefault.*",
               "kbdgen.*",

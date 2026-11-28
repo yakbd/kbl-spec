@@ -1164,3 +1164,38 @@ Shift characters of `K_` keys, which is what Keyman types when no rule matches, 
 tap becomes the caps-lock multi-tap of D155. Reason: the touch layout is a view of a keyboard whose behaviour lives in
 the rules; importing it alone is still useful for layouts that use `U_` ids, and the report says exactly which keys
 lost their output.
+
+**D180 (2026-11-28). ChromeOS: a fixed runtime and the layout as data, deciding by position.** A ChromeOS build is one
+Manifest V3 input-method extension for one layout (D150): a runtime service worker that is the same for every layout
+of a tool version, and the layout compiled into data beside it (`targets/chromeos.md` §5). The runtime finds the
+position from the event's `code` and never reads its `key`, which comes from the system layout under the input method
+(the one exception is Num Lock on `numLock` positions, which no flag carries). `engineId` is the input component's id,
+not Chrome's extension id, which Chrome derives itself. Reason: generated code per layout would make every layout a
+program to review; data in a fixed runtime keeps the runtime checkable once, and `code` is the one value that does not
+depend on the system layout.
+
+**D181 (2026-11-28). ChromeOS: the runtime owns the layout's keys; shortcuts go to the system layout.** A position with
+a binding in some compiled layer is always handled, also where it resolves to nothing, so the system layout never types
+its own character there; a press with Control or Alt that no layer of the file names is passed through, so the
+system's shortcuts work, with the letters of the system layout (`systemLayout`, default `us`), which the build reports
+where they differ from the layout (`chromeos.shortcutsFollowSystemLayout`). Control and Alt layers of the file are
+compiled, since `commitText` types in every state. Reason: the only alternative for shortcuts, sending synthetic key
+events, is meant for virtual keyboards and untested; the US letters are what a ChromeOS user gets from most input
+methods, and the file can pin another system layout.
+
+**D182 (2026-11-28). ChromeOS: dead keys and transforms as composition, the context is the composition.** A pending
+dead key and the part of the text that a transform may still change are shown as composition and committed when no
+compiled rule can change them any more; the transform context is that composition, never text read from the field.
+Transforms are expanded into literal rules exactly as for the on-screen runtimes (`targets/touch-runtime.md` §5,
+D202), without markers. Reason: committed text is never taken back, so the runtime needs neither
+`deleteSurroundingText` nor the field's surrounding text, whose reliability differs between apps; for one group of
+literal rules the result is exactly CLDR's, and the window is the shortest that keeps it so.
+
+**D183 (2026-11-28). ChromeOS: the runtime's state survives a restart of its service worker.** A Manifest V3 service
+worker stops after 30 seconds without events and loses its globals, and `onKeyEvent` carries no context id, so the
+runtime keeps the focused field's context id, the pending dead key, the composition and the custom locks in
+`chrome.storage.session` and answers each key event with `keyEventHandled` after reading them. Reason: without it a
+user who pauses for half a minute types nothing until the field loses and regains focus.
+
+**D184 (2026-11-28). ChromeOS: no importer.** A ChromeOS input method is its own program; there is no data to read back
+into a `.kbl.json` (`coverage/chromeos.md`). Reason: the format converts native data, not code.
