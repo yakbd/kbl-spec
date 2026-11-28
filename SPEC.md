@@ -357,7 +357,7 @@ the same `orientation` (or both none).
 
 | property | type | req. | meaning |
 |---|---|---|---|
-| `minDeviceWidth` | integer 1–999 | no | the shorter side of the screen, in millimetres, from which the set applies (§14.4) |
+| `minDeviceWidth` | integer 1–999 | no | the minimum width of the touch surface, in millimetres, from which the set applies (CLDR's meaning; §14.4) |
 | `layers` | array of TouchLayer | **yes** | one of them has `id` `base` |
 | `orientation` | `portrait`, `landscape` | no | 0.3: the set is only for this screen orientation. Default: both |
 | `deviceClass` | `phone`, `tablet` | no | 0.3: a label naming the kind of device the set is for, for formats and targets that sort layouts by device class (kbdgen, Keyman). It never changes which set is chosen (§14.4). No default in the file; a writer that needs a class and finds none derives it (below) |
@@ -385,7 +385,7 @@ the row. Heights are relative only: the target chooses the keyboard's height (th
 set), and the rows share it in proportion to `rowHeights`. A key never spans several rows.
 
 **Device class** (0.3). Where a writer needs a device class and the set has no `deviceClass`, it takes `tablet`
-when `minDeviceWidth` is 90 or more, otherwise `phone` (90 mm is about the shorter side of a 7-inch tablet), and
+when `minDeviceWidth` is 90 or more, otherwise `phone` (90 mm is about the narrow side of a 7-inch tablet), and
 reports `general.deviceClassDerived`. The rule is knowingly simple; a file that cares sets `deviceClass`.
 
 ## 10. `deadKeys`
@@ -527,13 +527,15 @@ U+0008 to the application instead (Windows) is equivalent for applications that 
 ### 14.4 Touch
 
 A touch key press emits the Key's output or dead key, then switches layers if `layerId` is set. Flicks, long-presses
-and multi-taps emit the chosen Key the same way. In full (0.3; the first two sentences are the whole rule of 0.1 and
-0.2, which the rest spells out without changing it):
+and multi-taps emit the chosen Key the same way. In full (the steps spell out that rule and CLDR's set choice for every version;
+what is marked 0.3 applies to 0.3 files only):
 
-1. **Choosing the set.** Let W be the shorter side of the screen in millimetres and O the current orientation. The
-   candidates are the sets whose `orientation` is O or absent and whose `minDeviceWidth` is at most W or absent.
-   The set with the largest `minDeviceWidth` wins (absent counts as 0); of two with the same width, the one that
-   names O wins. With no candidate, the hardware layers may be shown (§9.4). The set is chosen again when W or O
+1. **Choosing the set.** Let W be the width of the touch surface in millimetres as it is now (CLDR: the set with the
+   greatest width that W meets is chosen) and, in 0.3, O the current orientation. The candidates are the sets whose
+   `minDeviceWidth` is at most W or absent and (0.3) whose `orientation` is O or absent. The set with the largest
+   `minDeviceWidth` wins (absent counts as 0); (0.3) of two with the same width, the one that names O wins. A file
+   that wants a phone turned to landscape to keep its phone layout gives that set `orientation` values rather than
+   relying on width. With no candidate, the hardware layers may be shown (§9.4). The set is chosen again when W or O
    changes; the layer then starts again at `base`.
 2. **Layout.** The current layer starts as `base`. Its rows are laid out as §9.4 says; with `systemRow` the
    target adds its bottom row. A `gap` key takes its width and does nothing. A key cap shows the key's display
@@ -551,7 +553,7 @@ and multi-taps emit the chosen Key the same way. In full (0.3; the first two sen
    choice presses that key (step 3); releasing outside presses nothing.
 5. **Multi-tap.** Quick taps on the same key form one sequence: the second tap presses `multiTapKeyIds[0]`, the third
    `multiTapKeyIds[1]`, and so on, each replacing the text the previous tap of the sequence emitted. When the first
-   tap switched layers, a tap at the same place on the new layer still continues the sequence. So a shift key with
+   tap switched layers, a tap at the same place on the new layer still continues the sequence (0.3). So a shift key with
    `layerId: "shift"` and `multiTapKeyIds: ["capsLock"]` gives one-shot shift on one tap (the shift layer has
    `returnLayerId: "base"`) and caps lock on a double tap (the key `capsLock` has `function: "capsLock"` and
    `layerId: "caps"`, a layer without `returnLayerId`). How quick a quick tap is, is the target's choice.
@@ -629,8 +631,8 @@ used where the file does not pin a code for a position (`targets.<target>.keys.<
 never by position, so `androidime` and `ios` have no position table and no `keys` member keyed by position. Where
 such a target also handles a physical keyboard (the Android input method's physical-key mode, `targets/androidime.md`
 §3), it maps hardware key events to positions with the table of `android` and its pins `targets.android.keys`, so
-one layout file gives the same position → key code mapping to both Android builds. iOS has no third-party
-hardware layouts; the `ios` target compiles only the touch layers.
+one layout file gives the same position → key code mapping to both Android builds. The `ios` target compiles only
+the touch layers.
 
 Every table is a tab-separated text file in this repository, normative over any summary of it, with `#` comment
 lines first that cite its sources, then a header line whose first column is `position`, second column the target's
@@ -796,8 +798,8 @@ then the object holds only `onLoss`.
 
 ### 16.11 Conversion formats
 
-The formats a tool converts from and to have fixed names, used by tools on the command line, in reports and in
-`metadata.provenance.format` (§4). Each has a coverage page (every element with its home or loss kind) and, where it
+The formats a tool converts from and to have fixed names, used by tools on the command line and in
+`metadata.provenance.format` (§4; `dll` is written `windowsDll` there). A tool's reports may spell them its own way. Each has a coverage page (every element with its home or loss kind) and, where it
 loses data, a loss-kind family of its own (§17.3).
 
 | name | format | coverage | loss family | since |

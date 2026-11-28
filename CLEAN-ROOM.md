@@ -177,3 +177,11 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 ### kbdgen sources
 
 ### Touch model sources
+
+| source | read for | licence |
+|---|---|---|
+| Unicode, UTS #35 Part 7 Keyboards (https://www.unicode.org/reports/tr35/tr35-keyboards.html, current version), read 2026-11-28 | the meaning of `layers/@minDeviceWidth` (minimum width of the touch surface, greatest matching width chosen) and the attributes of `key`, which have no height, hint or orientation (D152, D154) | Unicode License v3; facts only |
+
+The other touch decisions (D152, D153, D155, D156) were written from this repository, the round plan's survey of
+the platforms (recorded by the work on each platform in its own subsection) and the owner's decisions; their
+platform remarks say what the format decides, not how a platform behaves.

@@ -97,7 +97,7 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 - 2026-11-28 (branch `spec-0.3`, draft, touch core): keys `hint` and `function` `nextKeyboard`; touch layers `rowHeights`,
   `returnLayerId`; touch sets `orientation`, `deviceClass`, `systemRow` (SPEC §8, §9.4, all 0.3); the touch resolution
-  of SPEC §14.4 written out (set choice by the screen's shorter side and orientation, layout, press, long press,
+  of SPEC §14.4 written out (set choice by CLDR's width rule plus orientation, layout, press, long press,
   multi-tap across a layer switch); new loss kinds `cldr.touchDataDropped` (warning), `general.deviceClassDerived`
   (accept), `general.rowHeightsMismatch` (error) (D152 to D156); example `touch-qwerty` (26dc9a0).
 
