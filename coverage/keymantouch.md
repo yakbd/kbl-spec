@@ -38,8 +38,8 @@ layer (§3, `nextlayer`): each set gets none of them.
 | `id` `U_xxxx[_yyyy…]` | output = those code points | — |
 | `id` `K_…` of a character key (`K_A`, `K_1`, `K_QUOTE`, …) | output = what the `.kmn` rules give for that key in the layer's modifier state; imported alone: the US English character of that key in the base or Shift state, as Keyman types it when no rule matches, and nothing on other layers | `keymantouch.noOutput` for a key that gets nothing |
 | `id` `T_…` | output = what the `.kmn` rules give; imported alone: none | `keymantouch.noOutput` |
-| `id` `K_BKSP`, `K_ENTER`, `K_SPACE`, `K_TAB`, `K_SHIFT`, `K_CAPS`, `K_LOPT` | `function` `backspace`, `enter`, `space` (with output `" "`), `tab`, `shift`, `capsLock`, `nextKeyboard` (K_LOPT is Keyman's globe/menu key) | — |
-| `id` `K_ROPT` (hide the keyboard) and other `K_` keys without a character (`K_LCONTROL`, `K_ESC`, arrows, …) | none, except `K_ESC` → `function: escape` | `keymantouch.keyNotExpressible` |
+| `id` `K_BKSP`, `K_ENTER`, `K_SPACE`, `K_TAB`, `K_SHIFT`, `K_CAPS`, `K_LOPT` | `function` `backspace`, `enter`, `space` (with output `" "`), `tab`, `shift`, `capsLock`, `nextKeyboard` (in keymanapp/keyboards `K_LOPT` carries the label `*Menu*` or 🌐, the key that switches keyboards) | — |
+| `id` `K_ROPT` (label `*Hide*` in the corpus: hides the keyboard) and other `K_` keys without a character (`K_LCONTROL`, `K_ESC`, arrows, …) | none, except `K_ESC` → `function: escape` | `keymantouch.keyNotExpressible` |
 | `text` | `displays.entries` `{ keyId, display }`; a special label `*Shift*`, `*BkSp*`, `*Enter*`, `*Menu*`, `*Tab*`, `*Caps*` stands for the function's symbol and gives no display; other `*…*` labels (`*ZWJ*`, `*AltGr*`, …) no display | `keymantouch.presentationDropped` for the other `*…*` labels |
 | `hint` | `hint` | — |
 | `nextlayer` | `layerId` (`default` → `base`) | — |
@@ -57,8 +57,8 @@ layer (§3, `nextlayer`): each set gets none of them.
 
 ## 4. Importer conventions
 
-1. A touch layout is imported with its keyboard: `convert -from kmn` reads the `.kmn` and the touch layout its
-   `&LAYOUTFILE` store names; `convert -from keymantouch` alone gives a file whose outputs are what §3 says without
+1. A touch layout is imported with its keyboard: `convert -from kmn` reads the `.kmn` and the touch layout it names
+   (`coverage/kmn.md`); `convert -from keymantouch` alone gives a file whose outputs are what §3 says without
    rules. `metadata.provenance.format` is `kmn` or `keymantouch`.
 2. KeyIds are made from the Keyman id; a Keyman id that types differently on two layers gets one key per layer
    (the layer id in front), so every KeyId has one meaning.

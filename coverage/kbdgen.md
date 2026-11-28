@@ -11,7 +11,8 @@ kbdgen has no formal schema; its Rust data model is the definition. This page fo
 commit `7a93e952849295a8bd4e9b21f57e6d43028289cf`** (2026-11-19; github.com/divvun/kbdgen, MIT OR Apache-2.0):
 `src/bundle/project.rs`, `src/bundle/target/mod.rs`, `src/bundle/layout/*.rs` (the structures), `src/util/iso_key.rs`
 with the key maps of `src/build/*/keymap.rs` (the order of hardware rows), `src/build/android/generate_android.rs`
-(special keys). Bundles of the giellalt `keyboard-*` repositories (MIT) are the corpus; `keyboard-sme` at commit
+(special keys), and the special key names of kbdgen's iOS template, `Keyboard/Models/KeyDefinition.swift` of
+divvun/giellakbd-ios at commit `d877da4` (MIT OR Apache-2.0). Bundles of the giellalt `keyboard-*` repositories (MIT) are the corpus; `keyboard-sme` at commit
 `c2b103b` was read for the shapes below. A newer kbdgen that changes the model is a change of this page. Every
 source is listed in `CLEAN-ROOM.md` ("kbdgen").
 
@@ -89,21 +90,28 @@ bundle never holds it. When a layout has both `iOS` and `android` sections, the 
 (they hold widths and more layers) and the `android` sections, where they type differently, report
 `kbdgen.touchSectionDropped`; with only one of them, its sections become the sets.
 
-Layer names → touch layers: `default` → `base`; `shift` → `shift` (`returnLayerId: base`); `caps` → `caps`; `alt`,
-`alt+shift` → `alt`, `altShift`; `symbols-1`, `symbols-2` → `symbols1`, `symbols2`.
+Layer names → touch layers, written in this order: `default` → `base`; `shift` → `shift` (`returnLayerId: base`);
+`caps` → `caps`; `symbols-1`, `symbols-2` → `symbols1`, `symbols2`; `alt`, `alt+shift` → `alt`, `altShift`. So the
+layer-switch key of the system row (`targets/androidime.md` §2.1) reaches `symbols1`. kbdgen's iOS app reaches `alt`
+with a key of its own template that the bundle does not hold; a layer that no key of the set and no system-row key
+switches to is kept (for export) and reported as `kbdgen.layerUnreachable`.
 
 | key | Key (SPEC §8) |
 |---|---|
 | a text | output = the text; a text listed in `deadKeys` of the section's layer, or a first-level key of `transforms`, is a dead key |
-| `\s{shift}` | `function: shift`, `layerId` `shift` (on `shift` and `caps`: `base`) and `multiTapKeyIds` the caps-lock key where the section has a `caps` layer |
+| `\s{shift}` | `function: shift`; on `base` `layerId` `shift` (and `multiTapKeyIds` the caps-lock key where the section has a `caps` layer), on `shift` and `caps` `base`, on `alt` `altShift`, on `altShift` `alt` |
 | `\s{caps}` | `function: capsLock`, `layerId` `caps` (on `caps`: `base`) |
 | `\s{shiftSymbols}` | `layerId` `symbols2` (on `symbols2`: `symbols1`) |
+| `\s{symbols}` | `layerId` `symbols1` (on `symbols1` and `symbols2`: `base`) |
+| `\s{keyboard}` | `function: nextKeyboard` |
+| `\s{spacebar}` | the key `space` |
+| `\s{comma}`, `\s{fullstop}` | output `,`, `.` |
 | `\s{backspace}` | `function: backspace` |
 | `\s{return}` | `function: enter` |
 | `\s{tab}` | `function: tab` |
 | `\s{spacer}` | `gap: true` |
 | `:width` | `width` |
-| any other `\s{…}` | left out: `kbdgen.specialKeyUnknown` |
+| `\s{keyboardMode}` (iPad split and floating modes) and any other `\s{…}` | left out: `kbdgen.specialKeyDropped` |
 
 ### 3.3 Transforms and dead keys
 

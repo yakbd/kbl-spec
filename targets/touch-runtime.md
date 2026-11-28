@@ -220,7 +220,9 @@ A touch runtime file is valid when its schema accepts it and: every KeyId named 
 layer `base` and distinct layer ids; a `returnLayer`, and the `layer` of every key placed in a set, names a layer of
 that set; `longPressDefault` is an index of `longPress`; placement ids are distinct within a layer; an `ios` file has
 no `hardware`; hardware states have distinct `mods`. The checker of this repository checks them on the cases of
-`testdata/touch-runtime/` (check 9); the compiler's output must meet them.
+`testdata/touch-runtime/` (check 9); the compiler's output must meet them. A layout file whose touch key names in
+`layerId` a layer that is not in the set where the key is placed, or whose target `systemRow` names a key that does
+not exist, cannot be compiled: the build fails with `general.unresolvedReference`.
 
 ## 9. What stays the runtime's (informative)
 

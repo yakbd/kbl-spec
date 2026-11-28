@@ -171,6 +171,7 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 | source | read for | licence |
 |---|---|---|
 | Android Developers, "Configure the app module", section "Set the application ID" (https://developer.android.com/build/configure-app-module), read 2026-11-28 (on-screen targets work) | the grammar of an application id (`targets/androidime.md` §1, rule `packageName`) | documentation; facts only |
+| Android API reference `EditorInfo` and `InputMethodManager` (developer.android.com/reference/android/view/inputmethod/), read 2026-11-28 (on-screen targets work) | the `IME_ACTION_*` actions (`targets.androidime.returnKeyLabels`); `setAdditionalInputMethodSubtypes` deprecated since API 29; `shouldOfferSwitchingToNextInputMethod` (now on `InputMethodService`) | documentation; facts only |
 
 ### iOS sources
 

@@ -46,7 +46,7 @@ the same layout (`targets/android.md`), so both install side by side.
 
 **Who owns a package name.** Android identifies an app by its package name and signing key. Under Android's developer
 verification, a package name belongs to the verified developer who registers it with its key's fingerprint first
-**[AOSP]** (developer.android.com/developer-verification). An organisation that publishes keyboards sets its own
+(**unmeasured** here; developer.android.com/developer-verification). An organisation that publishes keyboards sets its own
 reverse-DNS `packageName` and registers it; the default `org.yakbd.keyboard.` names are for one's own builds and
 tests. The build report names the package name and the SHA-256 fingerprint of the signing certificate, the two
 values a builder registers.
@@ -94,7 +94,7 @@ layer, the digits always in the first row.
 ### 2.3 Return key, popups, special keys
 
 - The Return key's label is `returnKeyLabels` for the action the field asks for (`EditorInfo` `IME_ACTION_*`;
-  `default` for none and unspecified) **[AOSP]**; the runtime performs that action, or types a newline where the
+  `default` for `IME_ACTION_NONE` and `IME_ACTION_UNSPECIFIED`) **[AOSP]** (the `EditorInfo` reference); the runtime performs that action, or types a newline where the
   field is multi-line or asks for no action (`IME_FLAG_NO_ENTER_ACTION`).
 - Long-press popups show `popupColumns` choices per row, inside the keyboard's own window.
 
@@ -134,11 +134,13 @@ literal rules, and `reorders`, report `androidime.transformNotCompiled`; markers
   `packageName` (also in names derived from it, such as permissions and provider authorities), the label `appName`,
   `versionCode` and `versionName`, signed (APK signature schemes v2 and v3) with the builder's key (`-key`), or with a
   generated test key and a warning. The input method's one subtype has the locale `language` and is registered by
-  the runtime when it starts **[AOSP]**. No network permission, no data collection.
+  the runtime's input-method declaration, with the locale rewritten by the build, or registered by the runtime when
+  it starts (`InputMethodManager.setAdditionalInputMethodSubtypes`, deprecated since API 29 **[AOSP]**); which of the
+  two is the runtime's choice (**unmeasured**). No network permission, no data collection.
 - **Install** (**unmeasured**, §8): `adb install`; or the file opened on the device, with installs from unknown
   sources allowed. Under developer verification, installs through `adb` stay possible; other installs on certified
   devices need a package name registered with the key's fingerprint, by an organisation (Android Developer Console)
-  or an end user (a free limited-distribution account, or the device's advanced flow) **[AOSP]**.
+  or an end user (a free limited-distribution account, or the device's advanced flow) (**unmeasured** here).
 - **Enable and select** (**unmeasured**): Settings → System → Keyboard → On-screen keyboard, switch it on, then choose
   it with the keyboard switch key or the system's keyboard picker; headless: `adb shell ime enable <package>/<service>`
   and `adb shell ime set <package>/<service>`.
@@ -159,12 +161,12 @@ flick paths of more than one direction (`androidime.flickPathDropped`); `tests` 
 ## 8. Measured and unmeasured (informative)
 
 Measured with a test input method built by `aapt2` (not yet the YAKBD runtime) on emulators of API 34, 35 and 36 by
-the Android layout check of `yakbd/yakbd-cli` (`tools/android-check/`, 2026-11-28): `ime enable` / `ime set`
-select an input method headless; `adb shell input tap` at key rectangles the input method reports itself types
-through its keys on all three (on API 36 the navigation bar once covered the bottom-right key: a runtime places its
-keys inside the window insets); right after install, API 34 may not
-yet know the input method (wait for it before enabling); key events of a physical keyboard reach the input method's
-`onKeyDown` with their character.
+the Android layout check of `yakbd/yakbd-cli` (`tools/android-check/`, workflow runs of 2026-11-28 on its branch
+`android-check`): `ime enable` / `ime set` select an input method headless, and `adb shell input tap` at key
+rectangles the input method reports itself types through its keys, on all three (in one run on API 36 the
+navigation bar covered the bottom-right key: a runtime places its keys inside the window insets; in one run API 34
+did not yet know the input method right after install). Key events of a `uinput` keyboard reached the input method's
+`onKeyDown` with their character on API 35 and 36; on API 34 that case did not pass.
 
 Not yet measured, for the emulator cases of the runtime: the repackaged runtime APK installs, and two such APKs with
 different package names install side by side; the touch runtime file's keys type the expected text; physical keys

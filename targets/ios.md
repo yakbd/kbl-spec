@@ -36,7 +36,7 @@ specification's choice, the iOS behaviour behind it not yet measured; §7).
 
 **Slug** (rule `bundleId`): as in `targets/macos.md` §1 (lower case, every run of characters outside `a`–`z`, `0`–`9`
 replaced by one `-`, leading and trailing `-` removed, `layout` if nothing is left): `fo-t-k0-windows` →
-`org.yakbd.keyboard.fo-t-k0-windows`. A bundle identifier is letters, digits, hyphens and dots **[APL]**. An app
+`org.yakbd.keyboard.fo-t-k0-windows`. A bundle identifier is letters, digits, hyphens and dots (**unmeasured** here). An app
 extension's bundle identifier must begin with its app's identifier and a dot, or Xcode refuses to embed it
 (**unmeasured**: Apple's App Extension guide does not say so; §7): a file whose `extensionBundleId` does not reports
 `ios.extensionBundleIdNotPrefixed` (an error).
@@ -59,14 +59,15 @@ orientation (an iPad counts about a fifth narrower than it is, §2.1 there: a se
   for it (`targets/touch-runtime.md` §3.2).
 - **A touch layout from the hardware layers** (rule `touchFromHardware`): as `targets/androidime.md` §2.2, with
   `ios.layerNotDerived` and `ios.noTouchLayout`. A file with touch sets and hardware layers builds its touch sets
-  only: `ios.hardwareDropped` (iOS keyboard extensions do not serve physical keyboards **[APL]**).
-- **Return key**: the label is `returnKeyLabels` for the field's `returnKeyType` **[APL]**; the key inserts U+000A.
+  only: `ios.hardwareDropped` (iOS keyboard extensions do not serve physical keyboards; **unmeasured**, no source says otherwise).
+- **Return key**: the label is `returnKeyLabels` for the field's `returnKeyType` (UIKit `UIReturnKeyType`; its
+  documentation page could not be read here, **unmeasured**); the key inserts U+000A.
 - **Popups**: long-press choices, `popupColumns` per row, are drawn inside the keyboard's own view; an extension
-  cannot draw above it **[APL]**.
+  cannot draw above it (**unmeasured** here).
 - **Escape**: a keyboard extension cannot send Escape; a key with `function` `escape` and no output does nothing
   (`ios.functionNotSupported`).
 - **Fields iOS keeps for its own keyboard**: secure text fields and phone-pad fields always get the system keyboard
-  **[APL]**; nothing the file can change.
+  (**unmeasured** here); nothing the file can change.
 
 ## 3. Dead keys and transforms
 
@@ -87,7 +88,7 @@ at build time only (`general.normalizationNotApplied`).
   `NSExtensionPointIdentifier` `com.apple.keyboard-service`, `NSExtensionAttributes` with `PrimaryLanguage`
   `language` and `RequestsOpenAccess` false) **[APL]**; both with
   `bundleVersion`. The team id, when the builder gives one, is written into the project's signing settings.
-- **What a builder needs** **[APL]**: a Mac with Xcode. Without an Apple account: build and run in the simulator.
+- **What a builder needs** (**unmeasured** here): a Mac with Xcode. Without an Apple account: build and run in the simulator.
   With a free Apple ID: install on one's own devices, valid for 7 days. With a paid Apple Developer Program
   membership: TestFlight, the App Store, and installs that do not expire; each builder under their own team.
 - **Enable and select** (**unmeasured**, §7): Settings → General → Keyboard → Keyboards → Add New Keyboard → the

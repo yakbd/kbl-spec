@@ -103,7 +103,8 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
   `extensionBundleId`, `language`, `bundleVersion`, `returnKeyLabels`, `popupColumns`, `systemRow` (SPEC §16.7,
   §16.8); default rules and loss kinds of `androidime` and `ios` (`targets/androidime.md`, `targets/ios.md`;
   D200 to D206); `coverage/kbdgen.md` (kbdgen 3.0.0-beta.5 at `7a93e95`) and `coverage/keymantouch.md` (format 2.1.2)
-  with the `kbdgen.*` and `keymantouch.*` kinds (D207, D208); example `touch-onscreen-targets`.
+  with the `kbdgen.*` and `keymantouch.*` kinds (D207, D208); example `touch-onscreen-targets` (3626ef9, 65146ec and
+  the following commits).
 
 - 2026-11-28 (branch `spec-0.3`, draft, touch core): keys `hint` and `function` `nextKeyboard`; touch layers `rowHeights`,
   `returnLayerId`; touch sets `orientation`, `deviceClass`, `systemRow` (SPEC §8, §9.4, all 0.3); the touch resolution

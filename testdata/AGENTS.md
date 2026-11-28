@@ -15,3 +15,4 @@
   an entry in `NOTICE`.
 - `touch-runtime/<N>/{valid,invalid}/*.json` and `touch-runtime/manifest/{valid,invalid}/*.json`: cases of the touch
   runtime schemas (`src/touch-runtime.ts`); valid runtime files must also meet `targets/touch-runtime.md` §8.
+  They are schema cases written by hand, not compiler output (their geometry does not follow §3.1).

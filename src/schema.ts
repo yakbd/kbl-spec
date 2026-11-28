@@ -473,10 +473,11 @@ const lossKindsKbdgen = [
   "kbdgen.hardwareSectionsDiffer",
   "kbdgen.layerNotExpressible",
   "kbdgen.layerUnmapped",
+  "kbdgen.layerUnreachable",
   "kbdgen.layoutDataDropped",
   "kbdgen.malformed",
   "kbdgen.setNotExpressible",
-  "kbdgen.specialKeyUnknown",
+  "kbdgen.specialKeyDropped",
   "kbdgen.touchSectionDropped",
   "kbdgen.transformNotExpressible",
 ] as const;

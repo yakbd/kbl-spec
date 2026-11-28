@@ -7,7 +7,7 @@
 - It also writes the touch runtime schemas of `src/touch-runtime.ts` (`schema/touch-runtime/<N>/touch-runtime.schema.json`,
   `schema/touch-runtime/runtime-manifest.schema.json`; `targets/touch-runtime.md`). They are not `.kbl.json` schemas:
   the Pages workflow's `latest` ignores them (it takes `schema/<major>.<minor>/` folders only).
-- `check/main.ts` is the repository checker (`npm run check`). Its header lists the eight checks; keep that list
+- `check/main.ts` is the repository checker (`npm run check`). Its header lists the nine checks; keep that list
   true when you add one. It runs from the repository root and reads files by relative path.
 - Targets are one list at the top of `check/main.ts` (`targets`: name, rule-index files, position table); a new
   build target adds a line there. The loss-kind families each version adds are `familiesSince`; kinds a version adds to older families

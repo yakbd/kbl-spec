@@ -1060,7 +1060,8 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `kbdgen.hardwareSectionsDiffer` | warning | the `windows`, `macOS` and `chromeOS` sections type differently; the file holds the layers of one of them (`coverage/kbdgen.md` §3.1), the differences are in `detail` (0.3) |
 | `kbdgen.layerUnmapped` | warning | a hardware layer with no modifier set of this format: the macOS Command layers (0.3) |
 | `kbdgen.touchSectionDropped` | warning | the layout has `iOS` and `android` sections that type differently; the `iOS` ones are imported (0.3) |
-| `kbdgen.specialKeyUnknown` | warning | a special key `\s{…}` that `coverage/kbdgen.md` §3.2 does not list; left out (0.3) |
+| `kbdgen.specialKeyDropped` | warning | a special key `\s{…}` without a home: `keyboardMode` and any name `coverage/kbdgen.md` §3.2 does not list; left out (0.3) |
+| `kbdgen.layerUnreachable` | warning | an imported touch layer that no key of its set and no system-row key switches to (kbdgen's iOS `alt` layers, reached by a template key); kept for export (0.3) |
 | `kbdgen.layerNotExpressible` | warning | export: a hardware layer whose modifier set, or a touch layer whose id, has no kbdgen layer name (Android keeps `default` and `shift` only), or a position outside kbdgen's ISO order (0.3) |
 | `kbdgen.setNotExpressible` | warning | export: a touch set beyond the device blocks kbdgen has (`primary`, `tablet-600`, `iPad-9in`, `iPad-12in`), or a set with `orientation` (0.3) |
 | `kbdgen.geometryDropped` | warning | export: `rowHeights`, `stretch`, `hint`, Android widths, a set with `systemRow: false` (kbdgen adds its own bottom row) (0.3) |

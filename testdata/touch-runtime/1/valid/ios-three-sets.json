@@ -108,7 +108,6 @@
     },
     "space": {
       "function": "space",
-      "label": " ",
       "input": {
         "text": " "
       }
