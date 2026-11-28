@@ -732,3 +732,51 @@ Windows is the only build target of 0.1. D105's paper check stands unchanged and
 macOS and XKB sections; as D105 says, they come with a minor version (0.2 or later, own schema path, D101).
 Reason (the owner): YAKBD's aim is that a custom or minority-language layout can be made, shared and kept up to date
 by anyone, on every platform, without depending on a single vendor's tool.
+
+**D108 (2026-11-28; carries out D101 and D107 for the macOS and XKB targets). Version 0.2: own `kbl`, own schema,
+holds 0.1.** The macOS and Linux XKB targets come together in one minor version, 0.2: `kbl` `"0.2"`, schema
+`schema/0.2/kbl.schema.json`, `$id` `https://yakbd.github.io/kbl-spec/schema/0.2/kbl.schema.json`. Each schema
+accepts only its own `kbl` value and a file is checked against the version it names (SPEC §1.1). 0.2 only adds
+(`targets.macos`, `targets.xkb`, the loss-kind families `macos`, `macosDefault`, `xkb`, `xkbDefault`, the provenance
+formats `keylayout` and `xkb`), so a valid 0.1 file with its `kbl` changed is a valid 0.2 file with the same meaning;
+the checker tests this on every 0.1 example and valid 0.1 case. A reader rejects a `kbl` it does not implement (as
+D3 rejects unknown members: never guess), so a 0.1 reader rejects 0.2 files, and a 0.2 reader MUST read 0.1 files.
+A tool writes the lowest version that holds what it writes, so files that use nothing new stay readable by 0.1
+tools. Both schemas come from the one source `src/schema.ts`: the parts that differ (the onLoss kind list, the
+provenance formats, `targets`, `kbl`, `$id`) are built per version, the rest is shared, and the checker pins the
+SHA-256 of the generated 0.1 file, so a shared edit that reaches 0.1 fails `npm test` instead of silently
+republishing 0.1 (D100, D106). 0.2 is a draft until it is tagged. Reason: one minor version per set of new targets is
+what D101 and D105 planned; the superset rule spares tools a second code path for 0.1, and a frozen copy of the 0.1
+source was rejected because two copies of 1,200 lines would drift; the hash makes the freeze mechanical.
+
+**D109 (2026-11-28; generalises D16 and D29). One position table per target, one target pattern.** Table A
+(position name → Windows virtual key, `targets/windows-default-vk.tsv`) becomes the first of one fixed default table
+per target whose native format has its own key codes: `targets/macos-default-keycode.tsv` (`.keylayout` key code),
+`targets/xkb-default-keyname.tsv` (XKB key name), later ones by the same pattern. Each table is a tab-separated file
+with comment lines citing its sources, a header `position`, the target's code, further columns, `source`; positions
+and codes unique, every row sourced. The target's document `targets/<target>.md` names its table in a "Position
+table" section. Drift: this repository's checker checks every table's shape; a tool embeds an unchanged copy and a
+test compares it byte for byte with the file at the release tag the tool names (as the Windows tool already does for
+Table A). Table A keeps its name and columns. Every build target also has a `## 1. Rule index` in its document
+(rules reported as `<target>Default.<rule>`, checked against the schema) and a coverage page `coverage/<target>.md`
+(SPEC §16). Reason: the format names physical keys only by position (D8), so each target needs exactly one mapping to
+its own codes, and the Windows mechanism (fixed table, one copy, a byte test) has already kept tool and specification
+in step.
+
+**D110 (2026-11-28; extends D12). One dead-key model feeds every target.** `deadKeys` (SPEC §10) and the dead-key
+machine of §14.2 are the only dead-key model. Each target builds its own form from it (Windows dead-key tables,
+`.keylayout` actions and states, XKB `dead_*` keysyms with Compose sequences) and documents the mapping in a
+dead-key section of its `targets/<target>.md`, with a loss kind for each part of the model its form cannot express. A
+target section may name how the model is spelled in its form and pin choices that form needs, but never adds
+target-only data that changes what a file types. Reason: a layout typed the same way on every platform needs one
+source of truth; D105 found that both new forms are views of the same machine (chained states, `noMatch`, spacing).
+
+**D111 (owner, 2026-11-28). Clean room for macOS and Linux: any public source, no copied code.** For macOS and
+Linux facts, any public source may be read: documentation, specifications, public repositories and source code of
+any licence (GPL included), public mirrors of headers, and reference tools for their behaviour. Code and long prose
+are never copied; text and code are written from understanding. Every source read is recorded in `CLEAN-ROOM.md`,
+in the subsection of its platform (URL, what for, licence). Fixtures come only from openly licensed corpora; layouts
+owned by the platform are read on the platform and never committed. The Windows rules are unchanged (the reference
+specification and Microsoft's public documentation only). Reason (the owner): the Windows rules guard against one
+vendor's unpublished material; for macOS and Linux the facts are public and much of the reference material is open
+source, so the line that matters is copying, not reading.

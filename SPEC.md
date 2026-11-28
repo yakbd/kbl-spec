@@ -1,17 +1,20 @@
-# The `.kbl.json` keyboard-layout format, version 0.1 (preview)
+# The `.kbl.json` keyboard-layout format, version 0.2 (draft)
 
-Status: **0.1 preview**; what stays stable in 0.x is in `COMPATIBILITY.md`. Normative unless a section says
-"informative". The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are used as in RFC 2119. Decisions behind the
-rules are numbered in `DECISIONS.md` ("D7" = decision 7); questions put to the owner are in `OPEN-QUESTIONS.md`
-("Q3"). The JSON Schema `schema/0.1/kbl.schema.json` checks the structure; this document also states the rules a
-schema cannot check (§17). When this document and the schema accept different files, this document wins (D101).
+Status: **0.2 draft**, not yet released; the released version is 0.1 preview. What stays stable in 0.x is in
+`COMPATIBILITY.md`. Normative unless a section says "informative". The key words MUST, MUST NOT, SHOULD, SHOULD NOT
+and MAY are used as in RFC 2119. Decisions behind the rules are numbered in `DECISIONS.md` ("D7" = decision 7);
+questions put to the owner are in `OPEN-QUESTIONS.md` ("Q3"). The JSON Schema `schema/0.2/kbl.schema.json` checks
+the structure of a 0.2 file, `schema/0.1/kbl.schema.json` that of a 0.1 file (§1.1); this document also states the
+rules a schema cannot check (§17). When this document and the schema accept different files, this document wins
+(D101).
 
 A `.kbl.json` file holds one keyboard layout: a platform-neutral part that can hold every piece of data a CLDR
 Keyboard 3.0 keyboard holds, and one section per target in `targets` (§16) with the choices only that target's
-build needs. This version defines one build target, Windows (`targets.windows`, `targets/windows.md`), plus the
-conversion sections `klc` and `cldr`. Sections for the official formats of other operating systems, and later for
-third-party formats such as Keyman, are planned (D107); they come with a later minor version, and D105 checks on
-paper that macOS and XKB fit this model.
+build needs. This version defines three build targets, Windows (`targets.windows`, `targets/windows.md`), macOS
+(`targets.macos`, `targets/macos.md`) and Linux XKB (`targets.xkb`, `targets/xkb.md`), plus the conversion sections
+`klc` and `cldr`. The macOS and XKB sections are being written; until they are, their objects hold only `onLoss`.
+Sections for the official formats of further operating systems, and later for third-party formats such as Keyman,
+are planned (D107) and come with later minor versions.
 
 Contents: 1 File · 2 Text values · 3 Top level · 4 `metadata` · 5 `settings` · 6 `positions` and `forms` ·
 7 Modifiers · 8 `keys` · 9 Layers and bindings · 10 `deadKeys` · 11 Gestures · 12 `displays` · 13 `variables` and
@@ -30,8 +33,32 @@ Appendix A position names and scan codes.
 - The order of properties inside a JSON object carries **no meaning**. Wherever order matters, the format uses an
   array (D4).
 - A file is **self-contained**: it never refers to another file, to CLDR import data or to a tool's built-in data
-  other than what this specification and `targets/windows.md` define (D2).
-- The property `kbl` gives the format version, `"0.1"` for this document.
+  other than what this specification and its target documents (`targets/*.md` and the tables they name) define
+  (D2).
+- The property `kbl` gives the format version, `"0.2"` for this document.
+
+### 1.1 Versions
+
+Each minor version has its own `kbl` value and its own JSON Schema, at `schema/<version>/kbl.schema.json` with the
+`$id` `https://yakbd.github.io/kbl-spec/schema/<version>/kbl.schema.json` (D101, D108). This document defines
+**0.2**: `kbl` `"0.2"`, schema `schema/0.2/kbl.schema.json`. Version 0.1 is the released 0.1 preview; its schema
+`schema/0.1/kbl.schema.json` stays byte for byte as published.
+
+- **A file is valid against the version it names.** A 0.1 file is checked with the 0.1 schema and a 0.2 file with
+  the 0.2 schema; each schema accepts only its own `kbl` value. A `$schema` member, when present, SHOULD be the
+  `$id` of that version.
+- **0.2 holds 0.1.** 0.2 only adds: `targets.macos` and `targets.xkb` (§16), their loss kinds (§17.3) and the
+  provenance formats `keylayout` and `xkb` (§4). A valid 0.1 file with `kbl` (and `$schema`) changed to 0.2 is a
+  valid 0.2 file and **means the same**: the Windows default rules and Table A are those of 0.1.
+- **Reading.** A reader MUST reject a file whose `kbl` names a version it does not implement; it never guesses (D3).
+  So a 0.1 reader rejects every 0.2 file. A 0.2 reader MUST accept 0.1 files as well, and reads a 0.1 file exactly
+  as the 0.2 file it becomes when its `kbl` is changed.
+- **Writing.** A tool SHOULD write the lowest version that holds what it writes, so that a file without any
+  0.2-only member stays readable by 0.1 tools: a file is written as 0.2 only when it uses `targets.macos`,
+  `targets.xkb`, a loss kind of a 0.2-only family (`macos`, `macosDefault`, `xkb`, `xkbDefault`) or a 0.2
+  provenance format. A tool MAY write a higher version when its user asks for one. Raising the version changes
+  `kbl` and `$schema` and nothing else.
+- While 0.2 is a draft (until it is tagged, `COMPATIBILITY.md`), it may still change in any way; 0.1 does not.
 
 ## 2. Text values
 
@@ -86,7 +113,7 @@ escaping: the CLDR text `\u{300}` is written `"\\u{300}"` in the file.
 | property | type | req. | meaning |
 |---|---|---|---|
 | `$schema` | string | no | the schema URL; informative |
-| `kbl` | `"0.1"` | **yes** | format version |
+| `kbl` | `"0.2"` | **yes** | format version (§1.1; `"0.1"` for a 0.1 file) |
 | `metadata` | object | **yes** | §4 |
 | `settings` | object | no | §5 |
 | `positions` | object PositionId → Position | no | §6.1, the physical keys |
@@ -101,7 +128,7 @@ escaping: the CLDR text `\u{300}` is written `"\\u{300}"` in the file.
 | `variables` | array of Variable | no | §13.1 |
 | `transforms` | object | no | §13.2 |
 | `tests` | array of TestFile | no | §15 |
-| `targets` | object | no | §16: `windows`, `klc`, `cldr` |
+| `targets` | object | no | §16: `windows`, `macos`, `xkb`, `klc`, `cldr` |
 | `onLoss` | object | no | §17.2 |
 | `extensions` | object | no | §18 |
 | `cldrSpecial` | array of string | no | §18 |
@@ -127,7 +154,7 @@ example a dead-key library under construction) but every build reports `general.
 | `copyright` | Text | no | copyright statement (`.klc` `COPYRIGHT`) |
 | `organization` | Text | no | publishing organisation (`.klc` `COMPANY`) |
 | `draft` | `approved`, `contributed`, `provisional`, `unconfirmed` | no | CLDR `keyboard3/@draft` |
-| `provenance` | object | no | informative record of where the data came from: `source` (string, e.g. a file name), `format` (`cldr`, `klc`, `windowsDll`, `kbl`, `other`), `cldrConformsTo` (integer), `cldrImports` (array of string: the CLDR import paths that were inlined), `notes` (Text). Never changes behaviour |
+| `provenance` | object | no | informative record of where the data came from: `source` (string, e.g. a file name), `format` (`cldr`, `klc`, `windowsDll`, `kbl`, `keylayout` (macOS, 0.2), `xkb` (0.2), `other`), `cldrConformsTo` (integer), `cldrImports` (array of string: the CLDR import paths that were inlined), `notes` (Text). Never changes behaviour |
 
 ## 5. `settings`
 
@@ -444,6 +471,15 @@ on input X:
 `settings.normalization`. The backspace action with a pending dead key is input like any other: if D has an entry
 with base U+0008 it applies; otherwise `noMatch` applies with T = the backspace action. A key-up never changes D.
 
+**One model, every target** (D110). `deadKeys` (§10) and this machine are the only dead-key model of the format.
+Every target builds its own native form from it: Windows its dead-key tables (`targets/windows.md` §8), macOS
+`.keylayout` actions and states (`targets/macos.md`), XKB `dead_*` keysyms with Compose sequences
+(`targets/xkb.md`), and later targets their own forms. No target adds a second model or target-only dead-key
+data that changes what a file types; a target section may only say how the model is spelled in its form (names,
+keysyms, state names) and pin choices its form needs. Each target document has a dead-key section that maps every
+part of the model (`spacing`, `entries` in order, chained results, `noMatch`, the backspace action) to its form, and
+names the loss kind for each part its form cannot express.
+
 ### 14.3 Backspace action
 
 The backspace action is a binding whose text is exactly U+0008, or a Key with `function: "backspace"` and no output.
@@ -492,6 +528,33 @@ so that the build no longer depends on those rules (`targets/windows.md` §10).
 | `windows` | §16.1 (fields) and `targets/windows.md` (default rules) |
 | `klc` | §16.2 |
 | `cldr` | §16.3 |
+| `macos` | §16.4 (fields) and `targets/macos.md` (default rules); 0.2 |
+| `xkb` | §16.5 (fields) and `targets/xkb.md` (default rules); 0.2 |
+
+Every build target follows the same pattern (D16, D109): a document `targets/<target>.md` with its default rules
+(a `## 1. Rule index` table, rules reported as `<target>Default.<rule>`, §17.1), its loss kinds in §17.3 under the
+family `<target>`, a coverage page `coverage/<target>.md` that gives every element of the native format a home,
+and a position table.
+
+**Position tables** (D109). Position names (§6.1) are the format's one way to name a physical key. A target whose
+native format names keys by its own codes has one fixed **default table** from position names to those codes,
+used where the file does not pin a code for a position (`targets.<target>.keys.<p>`). Table A of the Windows target
+(`targets/windows-default-vk.tsv`, position → virtual key) was the first; each target has its own:
+
+| target | table | code |
+|---|---|---|
+| `windows` | `targets/windows-default-vk.tsv` (Table A) | virtual key, scan-code flags |
+| `macos` | `targets/macos-default-keycode.tsv` | `.keylayout` key code |
+| `xkb` | `targets/xkb-default-keyname.tsv` | XKB key name |
+
+Every table is a tab-separated text file in this repository, normative over any summary of it, with `#` comment
+lines first that cite its sources, then a header line whose first column is `position`, second column the target's
+code and last column `source`; one row per position, positions and codes unique, every row naming its source.
+Table A keeps its own columns, written before this pattern. A table is part of its version: within a minor version
+its rows keep their meaning (`COMPATIBILITY.md`). Two tests keep it from drifting: this repository's checker
+(`npm test`) checks every table's shape; a tool embeds an unchanged copy of each table it uses and has a test that
+compares the copy byte for byte with the file in this repository at the release tag the tool names, so a tool can
+never carry rows of its own.
 
 ### 16.1 `targets.windows`
 
@@ -546,6 +609,24 @@ Windows layout).
 | `carryInSpecial` | boolean | write kbl-only data into a `<special>` element (`coverage/cldr-keyboard3.md` §4) so a round trip loses nothing. Default `true` |
 | `onLoss` | OnLoss | |
 
+### 16.4 `targets.macos` (0.2)
+
+macOS keyboard layouts: a `.keylayout` file in a `.bundle` (`targets/macos.md`, `coverage/macos.md`). Being
+written; until then the object holds only:
+
+| property | type | meaning |
+|---|---|---|
+| `onLoss` | OnLoss | |
+
+### 16.5 `targets.xkb` (0.2)
+
+Linux keyboard layouts for Wayland and X11: XKB symbols and a Compose file (`targets/xkb.md`, `coverage/xkb.md`).
+Being written; until then the object holds only:
+
+| property | type | meaning |
+|---|---|---|
+| `onLoss` | OnLoss | |
+
 ## 17. Losses
 
 ### 17.1 Loss reports
@@ -558,7 +639,8 @@ Every conversion and build returns a **loss report**: a list of entries
 ```
 
 Besides losses, a build reports every **defaulted choice**: an entry whose kind is `<target>Default.<rule>`
-(for Windows `windowsDefault.dllName`, …, the rule names of `targets/windows.md`), with the chosen value in
+(for Windows `windowsDefault.dllName`, …, the rule names of `targets/windows.md`; for macOS `macosDefault.<rule>` and
+for XKB `xkbDefault.<rule>`, the rule indexes of `targets/macos.md` and `targets/xkb.md`), with the chosen value in
 `detail.value`. Defaulted entries follow the same policy mechanism; their default policy is `accept`, so a file
 can turn them into warnings or errors (`"windowsDefault.*": "error"`).
 
@@ -587,6 +669,8 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | kind | default | when |
 |---|---|---|
 | `windowsDefault.<rule>` | accept | a Windows build used the default rule `<rule>` of `targets/windows.md` (one entry per rule, the affected items in `detail`) |
+| `macosDefault.<rule>` | accept | a macOS build used the default rule `<rule>` of `targets/macos.md` (0.2; as for Windows) |
+| `xkbDefault.<rule>` | accept | an XKB build used the default rule `<rule>` of `targets/xkb.md` (0.2; as for Windows) |
 | `general.noLayers` | warning | the file has neither `hardware` nor `touch` |
 | `general.layerOverlap` | **fatal** | two layers of one set match the same state (§7.3) |
 | `general.unresolvedReference` | **fatal** | a KeyId, DeadKeyId, FlickId, FormId, PositionId, VariableId or component is used but not defined (and not implied) |
@@ -679,8 +763,10 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `cldr.customForm` | warning | the form is not one of CLDR's implied forms (CLDR's repository refuses such files) |
 | `cldr.keyIdGenerated` | accept | key ids were invented for bindings that had none |
 
-A tool MUST NOT invent kinds outside this list for 0.1; a loss that fits none is reported as the closest kind with
-an explanatory `message`, and the gap is a defect of this specification.
+A tool MUST NOT invent kinds outside this list for its version; a loss that fits none is reported as the closest kind with
+an explanatory `message`, and the gap is a defect of this specification. The kinds of the families `macos` and
+`xkb` (0.2) are added as their targets are written, each family as one block of rows at the end of the table; a
+0.1 file cannot name them, and the 0.1 schema does not accept them (§1.1).
 
 ## 18. Extensions and CLDR `special`
 
@@ -719,7 +805,7 @@ Position names are W3C UI Events `code` values. Scan codes are the "Scan 1 Make"
 Keyboard Input" page (see `NOTICE`). Importers use this table to turn CLDR scan codes into positions; writers to fill
 `scanCode`. A file always states its own `scanCode`s; this table is never consulted at build time. The Windows target's
 default table `targets/windows-default-vk.tsv` lists further positions (media keys, `SysRq`, `Break`) with the same
-names and scan codes.
+names and scan codes. The position tables of the other targets (§16) use the same names.
 
 | position | scan | position | scan | position | scan | position | scan |
 |---|---|---|---|---|---|---|---|

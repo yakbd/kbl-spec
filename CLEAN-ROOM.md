@@ -66,3 +66,34 @@ reference specification does not give it, it is listed in `OPEN-QUESTIONS.md` in
 memory.
 
 The full working record, with the date and author of each reading, is kept in the private prototype repository.
+
+## macOS and Linux (version 0.2)
+
+The rule for these platforms is the owner's (D111) and differs from the Windows rule above, which is unchanged:
+
+- **Any public source may be read** for macOS and Linux facts: documentation, specifications, public repositories
+  and source code of any licence (GPL included), public mirrors of headers, and reference tools for their
+  behaviour (for example Kiimo, libxkbcommon, xkeyboard-config, compositors, Apple's TN2056).
+- **Nothing is copied.** No code and no long prose from any source; code and text here are written from
+  understanding. Short names and values a format requires (element names, keysym names, key codes) are facts and
+  may be used.
+- **Every source read is recorded** below, in the subsection of its platform: URL (with a version, tag or commit
+  where there is one), what it was read for, and its licence.
+- **Fixtures** come only from openly licensed corpora (MIT or Unlicense `.keylayout` files, CLDR `keyboards/osx` up
+  to release 43 under the Unicode licence, xkeyboard-config symbols under their MIT/X11 notices), each in its own
+  folder under `testdata/third_party/` with its licence text and an entry in `NOTICE`. Layouts owned by the platform
+  (Apple's own layouts, files installed by an operating system) are read on the platform only and never committed.
+- Windows facts still come only from the reference specification and Microsoft's public documentation.
+
+The groundwork for 0.2 (version mechanics, position-table pattern, dead-key statement, these rules; D108 to D111)
+was written from this repository and the owner's decisions; no outside source was read for it.
+
+### macOS sources
+
+| source | read for | licence |
+|---|---|---|
+
+### Linux (XKB) sources
+
+| source | read for | licence |
+|---|---|---|

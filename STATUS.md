@@ -1,6 +1,6 @@
 # Status
 
-Format version: **0.1 preview**. Last update: 2026-11-27.
+Format version: **0.1 preview**; 0.2 (macOS, Linux XKB) in draft on the branch `spec-0.2`. Last update: 2026-11-28.
 
 ## In short
 
@@ -30,7 +30,8 @@ numbers refer to `targets/windows-vm-tests.md`, the D numbers to `DECISIONS.md`)
 | `SPEC.md` | complete first draft. **Stable**: file rules, Text / CodeUnits / MarkedText / Pattern, top-level shape, `metadata`, `settings`, `positions`, `forms`, modifier sets and matching, `keys`, `hardware` / `touch` layers and bindings, resolution (§9.3), `deadKeys` and the dead-key machine (§14.2), `variables` / `transforms` (CLDR verbatim), `tests`, `targets.*` field names, loss report and `onLoss` resolution. **May still grow**: the loss-kind list (§17.3: new kinds are added, existing ids keep their meaning) |
 | `targets/windows.md` | complete first draft, following the owner's rule D16 (simple, fixed defaults; each use reported as `windowsDefault.<rule>`). **Stable**: rule names, Table A, cell encoding, Caps Lock attributes, dead-key encoding incl. the multi-unit recipe, pinning, the four builds and where they go (§2.1, D45). **Settled**: Table A = `targets/windows-default-vk.tsv` (D29), LANGID required (D30). **Settled [VM]**: `arm64x` in yakbd's default build set (gate D44 passed, VM-6, D66). **Settled [VM]**: Caps Lock rows hold columns 0 and 1 only (D65, VM-8, D67) |
 | `targets/windows-install.md` | normative: fields and rules (`productCode`, `enableForUser`, `enableForSignInAndNewUsers`, `uninstallEntry`), machine kinds and refusals (D46), KLID / Layout Id allocation (D47), languages, enabling, upgrade, uninstall. **Stable for the tool**: everything; the custom-language route is confirmed for enabling (VM-5), settled with its uninstall (VM-5); the sign-in screen and new users (§7.1, D87, D94, D97–D99) verified on Windows 11 (VM-18 to VM-27). Container and signing settled by the owner (D76): unsigned `.exe` only, behaving like `msiexec`; no MSI |
-| `schema/0.1/kbl.schema.json` | stable (see above); closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
+| `schema/0.2/kbl.schema.json` | draft (D108); generated from the same source, holds 0.1 (`SPEC.md` §1.1) |
+| `schema/0.1/kbl.schema.json` | stable (see above); frozen, its hash pinned by `npm test`; closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
 | `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes); all validate |
 | `coverage/cldr-keyboard3.md`, `coverage/windows.md` | complete first drafts; `coverage/windows.md` §11 (DLL import conventions, D53–D55) |
 | `DECISIONS.md` D1–D107, `OPEN-QUESTIONS.md` Q1–Q15 closed | current |
@@ -87,6 +88,8 @@ Round 2: the installer per `targets/windows-install.md` (stable; VM-5 settled); 
 is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D67). Q11 (container) and Q12 (signing) closed by the owner (D76).
 
 ## Changelog
+
+- 2026-11-28 (branch `spec-0.2`, draft): version 0.2 opened (D108): `kbl` `"0.2"`, schema `schema/0.2/kbl.schema.json` generated next to the unchanged 0.1 schema from the one source `src/schema.ts`; a 0.2 reader also reads 0.1 files, tools write the lowest version that holds a file (SPEC §1.1). New in 0.2: `targets.macos` and `targets.xkb` (placeholders holding only `onLoss`, SPEC §16.4, §16.5), loss-kind families `macos.*`, `macosDefault.*`, `xkb.*`, `xkbDefault.*` (wildcards only so far), provenance formats `keylayout` and `xkb`. Position tables per target (D109, SPEC §16), one dead-key model for every target (D110, SPEC §14.2), clean-room rule for macOS and Linux (D111, `CLEAN-ROOM.md`). Stub pages `targets/macos.md`, `targets/xkb.md`, `coverage/macos.md`, `coverage/xkb.md`. Schema test cases now per version (`testdata/schema/<version>/`). No change to 0.1.
 
 - 2026-11-27: 0.1 preview. No change to the format's shape. `COMPATIBILITY.md` (0.x policy; `SPEC.md` wins over the schema, Q13 closed, D101); owner decisions D100 (public repository `yakbd/kbl-spec`, `$id` unchanged), D102 (no catalogue), D103 (other operating systems later), D104 (the tool's own setup program signed, layout installers unsigned); D105 (macOS and XKB targets fit 0.x, on paper); D107 (all layout formats: other operating systems' official formats next, then third-party formats such as Keyman; supersedes D103's "by demand"); contributing guide with the clean-room clause (organisation-wide, in `yakbd/.github`), issue templates.
 

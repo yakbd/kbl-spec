@@ -1,5 +1,8 @@
-// The .kbl.json schema, version 0.1, in zod 4. This file is the source of schema/0.1/kbl.schema.json
-// (`npm run gen` writes it; CI checks that the committed file is fresh). Normative text: SPEC.md.
+// The .kbl.json schema, versions 0.1 and 0.2, in zod 4. This file is the source of schema/0.1/kbl.schema.json and
+// schema/0.2/kbl.schema.json (`npm run gen` writes both; CI checks that both are fresh). Normative text: SPEC.md.
+// 0.2 adds to 0.1 only (targets.macos, targets.xkb, their loss kinds, provenance formats; COMPATIBILITY.md): the
+// parts that differ are built per version by kblFile() at the end, everything else is shared. 0.1 is frozen, and
+// tools/check pins the hash of its generated file, so an edit to a shared part that changes 0.1 fails `npm test`.
 //
 // Every object is a strictObject (JSON Schema `additionalProperties: false`), every exclusive choice a z.xor
 // (`oneOf`), and every schema carries a description. A schema with a metadata `id` becomes an entry of `$defs`.
@@ -158,142 +161,161 @@ export const Policy = z.enum(["error", "warning", "accept"]).meta({
   description: "error: the build or conversion fails; warning: reported; accept: reported as accepted.",
 });
 
-export const OnLoss = z
-  .strictObject({
-    default: Policy.meta({ description: "Policy for kinds not listed in `kinds`." }).optional(),
-    kinds: z
-      .partialRecord(
-        z
-          .enum([
-            "cldr.*",
-            "cldr.capsFallbackExpanded",
-            "cldr.customForm",
-            "cldr.customModifierDropped",
-            "cldr.keyIdGenerated",
-            "cldr.positionNotInForm",
-            "cldr.windowsOnlyDropped",
-            "dll.*",
-            "dll.architectureUnsupported",
-            "dll.capsCellUnexpressed",
-            "dll.containerIgnored",
-            "dll.dispatcherNotRead",
-            "dll.duplicateRow",
-            "dll.keyboardTypeNotTrusted",
-            "dll.ligatureMismatch",
-            "dll.malformed",
-            "dll.modifierDropped",
-            "dll.nlsUnreadable",
-            "dll.registrationMissing",
-            "dll.resourceDropped",
-            "dll.unknownFlags",
-            "dll.unreachableColumn",
-            "dll.unreachableData",
-            "dll.unusualShape",
-            "general.*",
-            "general.displayDropped",
-            "general.duplicateDeadKeyEntry",
-            "general.extensionDropped",
-            "general.importInlined",
-            "general.layerOverlap",
-            "general.metadataDropped",
-            "general.noLayers",
-            "general.normalizationNotApplied",
-            "general.outputNormalized",
-            "general.bindingOnModifier",
-            "general.codeUnitsAreText",
-            "general.duplicateScanCode",
-            "general.duplicateVariableId",
-            "general.longPressDefaultInvalid",
-            "general.modifierSetInvalid",
-            "general.multiTapSelf",
-            "general.touchBaseMissing",
-            "general.testsDropped",
-            "general.touchDropped",
-            "general.unresolvedReference",
-            "klc.*",
-            "klc.editorDropped",
-            "klc.impliedRows",
-            "klc.nameTooLong",
-            "klc.notRepresentable",
-            "windows.*",
-            "windows.altGrConflict",
-            "windows.altOnlyLayer",
-            "windows.architectureUnsupported",
-            "windows.bidiMarksConflict",
-            "windows.capsNotExpressible",
-            "windows.capsUnmatched",
-            "windows.ctrlLetterFallback",
-            "windows.deadCharacterCollision",
-            "windows.deadCharacterInvalid",
-            "windows.deadKeyBaseUnencodable",
-            "windows.deadKeyFirstUnitComposes",
-            "windows.deadKeyNoMatchExpanded",
-            "windows.deadKeyNoMatchNotExpressible",
-            "windows.deadKeyResultUnencodable",
-            "windows.dispatcherNotCompiled",
-            "windows.frameKeyWithoutText",
-            "windows.installerMachinesMissing",
-            "windows.kanaLockNotExpressible",
-            "windows.langIdMissing",
-            "windows.ligatureTooLong",
-            "windows.ligatureTruncatedTyped",
-            "windows.lockUnmapped",
-            "windows.markerNotCompiled",
-            "windows.modifierUnmapped",
-            "windows.nlsNotCompiled",
-            "windows.noHardwareLayers",
-            "windows.numpadShiftUnreachable",
-            "windows.outputUnencodable",
-            "windows.pinOverridesModel",
-            "windows.registrationInvalid",
-            "windows.scanCodeMissing",
-            "windows.scanCodeUnsupported",
-            "windows.sgcapsDeadKey",
-            "windows.sgcapsLigature",
-            "windows.sharedVkRowConflict",
-            "windows.sideModifierWidened",
-            "windows.sizeLimit",
-            "windows.stringLanguageUnmapped",
-            "windows.tooManyColumns",
-            "windows.transformNotCompiled",
-            "windows.unreachableState",
-            "windows.versionUnrepresentable",
-            "windows.vkDuplicate",
-            "windows.vkMissing",
-            "windows.wow64Missing",
-            "windowsDefault.*",
-            "windowsDefault.altGr",
-            "windowsDefault.attributes",
-            "windowsDefault.builds",
-            "windowsDefault.deadCharacter",
-            "windowsDefault.dllName",
-            "windowsDefault.enableForSignInAndNewUsers",
-            "windowsDefault.enableForUser",
-            "windowsDefault.kbdVersion",
-            "windowsDefault.keyboardType",
-            "windowsDefault.lrmRlm",
-            "windowsDefault.modNumber",
-            "windowsDefault.modifierBits",
-            "windowsDefault.productCode",
-            "windowsDefault.registration",
-            "windowsDefault.scanCodeFlags",
-            "windowsDefault.scanCodeTableSize",
-            "windowsDefault.shiftLock",
-            "windowsDefault.strings",
-            "windowsDefault.tables",
-            "windowsDefault.uninstallEntry",
-            "windowsDefault.versionInfo",
-            "windowsDefault.vk",
-          ])
-          .meta({ description: "A loss kind of SPEC §17.3, a prefix wildcard, or windowsDefault.<rule>." }),
-        Policy,
-      )
-      .meta({
-        description: "Policy per loss kind, per `<prefix>.*`, or per defaulted-choice kind `windowsDefault.<rule>`.",
-      })
-      .optional(),
-  })
-  .meta({ id: "OnLoss", description: "Loss policy (SPEC §17.2)." });
+/** The loss kinds of 0.1 (SPEC §17.3), prefix wildcards and windowsDefault.<rule> kinds. 0.1 is frozen: a kind
+ * added here is added to 0.1 and 0.2 alike, as COMPATIBILITY.md allows. */
+const lossKinds01 = [
+  "cldr.*",
+  "cldr.capsFallbackExpanded",
+  "cldr.customForm",
+  "cldr.customModifierDropped",
+  "cldr.keyIdGenerated",
+  "cldr.positionNotInForm",
+  "cldr.windowsOnlyDropped",
+  "dll.*",
+  "dll.architectureUnsupported",
+  "dll.capsCellUnexpressed",
+  "dll.containerIgnored",
+  "dll.dispatcherNotRead",
+  "dll.duplicateRow",
+  "dll.keyboardTypeNotTrusted",
+  "dll.ligatureMismatch",
+  "dll.malformed",
+  "dll.modifierDropped",
+  "dll.nlsUnreadable",
+  "dll.registrationMissing",
+  "dll.resourceDropped",
+  "dll.unknownFlags",
+  "dll.unreachableColumn",
+  "dll.unreachableData",
+  "dll.unusualShape",
+  "general.*",
+  "general.displayDropped",
+  "general.duplicateDeadKeyEntry",
+  "general.extensionDropped",
+  "general.importInlined",
+  "general.layerOverlap",
+  "general.metadataDropped",
+  "general.noLayers",
+  "general.normalizationNotApplied",
+  "general.outputNormalized",
+  "general.bindingOnModifier",
+  "general.codeUnitsAreText",
+  "general.duplicateScanCode",
+  "general.duplicateVariableId",
+  "general.longPressDefaultInvalid",
+  "general.modifierSetInvalid",
+  "general.multiTapSelf",
+  "general.touchBaseMissing",
+  "general.testsDropped",
+  "general.touchDropped",
+  "general.unresolvedReference",
+  "klc.*",
+  "klc.editorDropped",
+  "klc.impliedRows",
+  "klc.nameTooLong",
+  "klc.notRepresentable",
+  "windows.*",
+  "windows.altGrConflict",
+  "windows.altOnlyLayer",
+  "windows.architectureUnsupported",
+  "windows.bidiMarksConflict",
+  "windows.capsNotExpressible",
+  "windows.capsUnmatched",
+  "windows.ctrlLetterFallback",
+  "windows.deadCharacterCollision",
+  "windows.deadCharacterInvalid",
+  "windows.deadKeyBaseUnencodable",
+  "windows.deadKeyFirstUnitComposes",
+  "windows.deadKeyNoMatchExpanded",
+  "windows.deadKeyNoMatchNotExpressible",
+  "windows.deadKeyResultUnencodable",
+  "windows.dispatcherNotCompiled",
+  "windows.frameKeyWithoutText",
+  "windows.installerMachinesMissing",
+  "windows.kanaLockNotExpressible",
+  "windows.langIdMissing",
+  "windows.ligatureTooLong",
+  "windows.ligatureTruncatedTyped",
+  "windows.lockUnmapped",
+  "windows.markerNotCompiled",
+  "windows.modifierUnmapped",
+  "windows.nlsNotCompiled",
+  "windows.noHardwareLayers",
+  "windows.numpadShiftUnreachable",
+  "windows.outputUnencodable",
+  "windows.pinOverridesModel",
+  "windows.registrationInvalid",
+  "windows.scanCodeMissing",
+  "windows.scanCodeUnsupported",
+  "windows.sgcapsDeadKey",
+  "windows.sgcapsLigature",
+  "windows.sharedVkRowConflict",
+  "windows.sideModifierWidened",
+  "windows.sizeLimit",
+  "windows.stringLanguageUnmapped",
+  "windows.tooManyColumns",
+  "windows.transformNotCompiled",
+  "windows.unreachableState",
+  "windows.versionUnrepresentable",
+  "windows.vkDuplicate",
+  "windows.vkMissing",
+  "windows.wow64Missing",
+  "windowsDefault.*",
+  "windowsDefault.altGr",
+  "windowsDefault.attributes",
+  "windowsDefault.builds",
+  "windowsDefault.deadCharacter",
+  "windowsDefault.dllName",
+  "windowsDefault.enableForSignInAndNewUsers",
+  "windowsDefault.enableForUser",
+  "windowsDefault.kbdVersion",
+  "windowsDefault.keyboardType",
+  "windowsDefault.lrmRlm",
+  "windowsDefault.modNumber",
+  "windowsDefault.modifierBits",
+  "windowsDefault.productCode",
+  "windowsDefault.registration",
+  "windowsDefault.scanCodeFlags",
+  "windowsDefault.scanCodeTableSize",
+  "windowsDefault.shiftLock",
+  "windowsDefault.strings",
+  "windowsDefault.tables",
+  "windowsDefault.uninstallEntry",
+  "windowsDefault.versionInfo",
+  "windowsDefault.vk",
+] as const;
+
+// The loss kinds that 0.2 adds. Each platform target appends its own kinds to its own list, sorted, and its
+// defaulted-choice kinds `<target>Default.<rule>` (SPEC §17.1); the wildcards are there from the start.
+
+/** 0.2: the macOS target's kinds (targets/macos.md). */
+const lossKindsMacos = ["macos.*", "macosDefault.*"] as const;
+
+/** 0.2: the XKB target's kinds (targets/xkb.md). */
+const lossKindsXkb = ["xkb.*", "xkbDefault.*"] as const;
+
+/** The OnLoss schema of one version: the same shape, a different closed list of kinds. */
+function onLoss(kinds: readonly [string, ...string[]], defaultedKind: string) {
+  return z
+    .strictObject({
+      default: Policy.meta({ description: "Policy for kinds not listed in `kinds`." }).optional(),
+      kinds: z
+        .partialRecord(
+          z
+            .enum(kinds)
+            .meta({ description: `A loss kind of SPEC §17.3, a prefix wildcard, or ${defaultedKind}.` }),
+          Policy,
+        )
+        .meta({
+          description: `Policy per loss kind, per \`<prefix>.*\`, or per defaulted-choice kind \`${defaultedKind}\`.`,
+        })
+        .optional(),
+    })
+    .meta({ id: "OnLoss", description: "Loss policy (SPEC §17.2)." });
+}
+
+const OnLoss01 = onLoss(lossKinds01, "windowsDefault.<rule>");
+const OnLoss02 = onLoss([...lossKinds01, ...lossKindsMacos, ...lossKindsXkb], "<target>Default.<rule>");
 
 export const Version4 = z
   .string()
@@ -315,66 +337,69 @@ export const WinCell = z.xor([Text, CodeUnits, DeadKeyRef, z.null().meta({ descr
   description: "A Windows table cell of an extra row: Text, CodeUnits, a dead key, or null (WCH_NONE).",
 });
 
-const MetadataProvenance = z
-  .strictObject({
-    source: z.string().meta({ description: "Source file name or description." }).optional(),
-    format: z
-      .enum(["cldr", "klc", "windowsDll", "kbl", "other"])
-      .meta({ description: "Format of the source." })
-      .optional(),
-    cldrConformsTo: z.int().min(45).meta({ description: "conformsTo of the CLDR source." }).optional(),
-    cldrImports: z
-      .array(z.string().meta({ description: "One import path." }))
-      .meta({ description: "CLDR import paths that were inlined (cldr: prefix for base=cldr)." })
-      .optional(),
-    notes: Text.meta({ description: "Free text." }).optional(),
-  })
-  .meta({ description: "Informative record of where the data came from; never changes behaviour." });
+/** Where the data came from; the list of source formats grows with the importers of each version. */
+const metadataProvenance = (formats: readonly [string, ...string[]]) =>
+  z
+    .strictObject({
+      source: z.string().meta({ description: "Source file name or description." }).optional(),
+      format: z
+        .enum(formats)
+        .meta({ description: "Format of the source." })
+        .optional(),
+      cldrConformsTo: z.int().min(45).meta({ description: "conformsTo of the CLDR source." }).optional(),
+      cldrImports: z
+        .array(z.string().meta({ description: "One import path." }))
+        .meta({ description: "CLDR import paths that were inlined (cldr: prefix for base=cldr)." })
+        .optional(),
+      notes: Text.meta({ description: "Free text." }).optional(),
+    })
+    .meta({ description: "Informative record of where the data came from; never changes behaviour." });
 
-const Metadata = z
-  .strictObject({
-    id: z.string().min(1).meta({
-      description: "BCP 47 tag identifying this keyboard (CLDR keyboard3/@locale); its language is the primary locale.",
-    }),
-    locales: z
-      .array(z.string().min(1).meta({ description: "A BCP 47 tag." }))
-      .meta({ description: "Further BCP 47 tags of supported languages, in order (CLDR locales)." })
-      .optional(),
-    name: Text.meta({ description: "The keyboard's name (CLDR info/@name)." }),
-    localizedNames: z
-      .record(z.string(), Text)
-      .meta({ description: "The name in further languages, per BCP 47 tag." })
-      .optional(),
-    description: Text.meta({ description: "Free text." }).optional(),
-    authors: z
-      .array(
-        z
-          .strictObject({
-            name: Text.meta({ description: "Name." }),
-            email: z.string().meta({ description: "E-mail address." }).optional(),
-            url: z.string().meta({ description: "Web address." }).optional(),
-          })
-          .meta({ description: "An author." }),
-      )
-      .meta({ description: "Authors of the layout." })
-      .optional(),
-    attribution: Text.meta({ description: "Originating entity of the design (CLDR info/@attribution)." }).optional(),
-    layoutPattern: z.string().meta({ description: "Layout pattern such as QWERTY (CLDR info/@layout)." }).optional(),
-    indicator: z.string().meta({ description: "Short switcher label (CLDR info/@indicator)." }).optional(),
-    version: z
-      .string()
-      .meta({ description: "Version of the layout data; Semantic Versioning recommended (CLDR version/@number)." })
-      .optional(),
-    license: z.string().meta({ description: "SPDX licence expression for the layout data." }).optional(),
-    copyright: Text.meta({ description: "Copyright statement (.klc COPYRIGHT)." }).optional(),
-    organization: Text.meta({ description: "Publishing organisation (.klc COMPANY)." }).optional(),
-    draft: z
-      .enum(["approved", "contributed", "provisional", "unconfirmed"])
-      .meta({ description: "CLDR approval status (keyboard3/@draft)." })
-      .optional(),
-    provenance: MetadataProvenance.optional(),
-  })
-  .meta({ description: "Descriptive data (SPEC §4)." });
+const metadata = (formats: readonly [string, ...string[]]) =>
+  z
+    .strictObject({
+      id: z.string().min(1).meta({
+        description: "BCP 47 tag identifying this keyboard (CLDR keyboard3/@locale); its language is the primary locale.",
+      }),
+      locales: z
+        .array(z.string().min(1).meta({ description: "A BCP 47 tag." }))
+        .meta({ description: "Further BCP 47 tags of supported languages, in order (CLDR locales)." })
+        .optional(),
+      name: Text.meta({ description: "The keyboard's name (CLDR info/@name)." }),
+      localizedNames: z
+        .record(z.string(), Text)
+        .meta({ description: "The name in further languages, per BCP 47 tag." })
+        .optional(),
+      description: Text.meta({ description: "Free text." }).optional(),
+      authors: z
+        .array(
+          z
+            .strictObject({
+              name: Text.meta({ description: "Name." }),
+              email: z.string().meta({ description: "E-mail address." }).optional(),
+              url: z.string().meta({ description: "Web address." }).optional(),
+            })
+            .meta({ description: "An author." }),
+        )
+        .meta({ description: "Authors of the layout." })
+        .optional(),
+      attribution: Text.meta({ description: "Originating entity of the design (CLDR info/@attribution)." }).optional(),
+      layoutPattern: z.string().meta({ description: "Layout pattern such as QWERTY (CLDR info/@layout)." }).optional(),
+      indicator: z.string().meta({ description: "Short switcher label (CLDR info/@indicator)." }).optional(),
+      version: z
+        .string()
+        .meta({ description: "Version of the layout data; Semantic Versioning recommended (CLDR version/@number)." })
+        .optional(),
+      license: z.string().meta({ description: "SPDX licence expression for the layout data." }).optional(),
+      copyright: Text.meta({ description: "Copyright statement (.klc COPYRIGHT)." }).optional(),
+      organization: Text.meta({ description: "Publishing organisation (.klc COMPANY)." }).optional(),
+      draft: z
+        .enum(["approved", "contributed", "provisional", "unconfirmed"])
+        .meta({ description: "CLDR approval status (keyboard3/@draft)." })
+        .optional(),
+      provenance: metadataProvenance(formats).optional(),
+    })
+    .meta({ description: "Descriptive data (SPEC §4)." });
 
 const Settings = z
   .strictObject({
@@ -1089,96 +1114,133 @@ const TargetsWindowsDispatcher = z
   })
   .meta({ description: "Multi-table dispatcher data: carried, not compiled." });
 
-const TargetsWindows = z
-  .strictObject({
-    dllName: z
-      .string()
-      .regex(/^[A-Za-z][A-Za-z0-9_]{0,7}$/u)
-      .meta({ description: "DLL file name without .dll (rule dllName)." })
-      .optional(),
-    builds: unique(z.array(z.enum(["x86", "x64", "wow64", "arm64x"]).meta({ description: "One build." })).min(1))
-      .meta({ description: "DLL builds to make (rule builds)." })
-      .optional(),
-    useTableA: z
-      .boolean()
-      .meta({
-        description:
-          "false: rule vk uses no Table A at all, the file's VKs are exactly its pins (default true; targets/windows.md §5).",
-      })
-      .optional(),
-    localeFlags: z
-      .strictObject({
-        altGr: z.boolean().meta({ description: "KLLF_ALTGR (rule altGr)." }).optional(),
-        shiftLock: z.boolean().meta({ description: "KLLF_SHIFTLOCK (rule shiftLock)." }).optional(),
-        lrmRlm: z.boolean().meta({ description: "KLLF_LRM_RLM (rule lrmRlm)." }).optional(),
-      })
-      .meta({ description: "fLocaleFlags low word." })
-      .optional(),
-    kbdVersion: z
-      .int()
-      .min(0)
-      .max(65535)
-      .meta({ description: "High word of fLocaleFlags (rule kbdVersion)." })
-      .optional(),
-    keyboardType: z
-      .strictObject({
-        type: z.int().min(0).max(4294967295).meta({ description: "dwType." }),
-        subType: z.int().min(0).max(4294967295).meta({ description: "dwSubType." }),
-      })
-      .meta({ description: "dwType and dwSubType (rule keyboardType)." })
-      .optional(),
-    modifiers: TargetsWindowsModifiers.optional(),
-    keys: TargetsWindowsKeys.optional(),
-    scanCodeTableSize: z
-      .int()
-      .min(1)
-      .max(255)
-      .meta({ description: "bMaxVSCtoVK (rule scanCodeTableSize)." })
-      .optional(),
-    tables: z.array(TargetsWindowsTables).meta({ description: "Character tables in order (rule tables)." }).optional(),
-    extraRows: z.array(TargetsWindowsExtraRows).meta({ description: "Rows for VKs no position produces." }).optional(),
-    deadKeys: z
-      .record(
-        z.string(),
-        z
-          .strictObject({
-            character: TextOrUnits.meta({
-              description: "The dead character, one unit (rule deadCharacter).",
-            }).optional(),
-          })
-          .meta({ description: "Windows data of one dead key." }),
-      )
-      .meta({ description: "Windows data per dead key." })
-      .optional(),
-    strings: z
-      .strictObject({
-        layoutName: LangIdText.meta({ description: "String 1000 per LANGID." }).optional(),
-        languageName: LangIdText.meta({ description: "String 1100 per LANGID." }).optional(),
-        localeName: z.string().meta({ description: "String 1200, a locale name." }).optional(),
-      })
-      .meta({ description: "DLL strings (rule strings)." })
-      .optional(),
-    versionInfo: z
-      .strictObject({
-        fileVersion: Version4.meta({ description: "FileVersion." }).optional(),
-        productVersion: Version4.meta({ description: "ProductVersion." }).optional(),
-        companyName: Text.meta({ description: "CompanyName." }).optional(),
-        legalCopyright: Text.meta({ description: "LegalCopyright." }).optional(),
-        fileDescription: Text.meta({ description: "FileDescription." }).optional(),
-      })
-      .meta({ description: "Version resource (rule versionInfo)." })
-      .optional(),
-    registration: TargetsWindowsRegistration.optional(),
-    install: TargetsWindowsInstall.optional(),
-    nls: TargetsWindowsNls.optional(),
-    dispatcher: TargetsWindowsDispatcher.optional(),
-    onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
-  })
-  .meta({ description: "Windows build choices (SPEC §16.1, targets/windows.md)." });
+type OnLossSchema = ReturnType<typeof onLoss>;
 
-const Targets = z
+const targetsWindows = (OnLoss: OnLossSchema) =>
+  z
+    .strictObject({
+      dllName: z
+        .string()
+        .regex(/^[A-Za-z][A-Za-z0-9_]{0,7}$/u)
+        .meta({ description: "DLL file name without .dll (rule dllName)." })
+        .optional(),
+      builds: unique(z.array(z.enum(["x86", "x64", "wow64", "arm64x"]).meta({ description: "One build." })).min(1))
+        .meta({ description: "DLL builds to make (rule builds)." })
+        .optional(),
+      useTableA: z
+        .boolean()
+        .meta({
+          description:
+            "false: rule vk uses no Table A at all, the file's VKs are exactly its pins (default true; targets/windows.md §5).",
+        })
+        .optional(),
+      localeFlags: z
+        .strictObject({
+          altGr: z.boolean().meta({ description: "KLLF_ALTGR (rule altGr)." }).optional(),
+          shiftLock: z.boolean().meta({ description: "KLLF_SHIFTLOCK (rule shiftLock)." }).optional(),
+          lrmRlm: z.boolean().meta({ description: "KLLF_LRM_RLM (rule lrmRlm)." }).optional(),
+        })
+        .meta({ description: "fLocaleFlags low word." })
+        .optional(),
+      kbdVersion: z
+        .int()
+        .min(0)
+        .max(65535)
+        .meta({ description: "High word of fLocaleFlags (rule kbdVersion)." })
+        .optional(),
+      keyboardType: z
+        .strictObject({
+          type: z.int().min(0).max(4294967295).meta({ description: "dwType." }),
+          subType: z.int().min(0).max(4294967295).meta({ description: "dwSubType." }),
+        })
+        .meta({ description: "dwType and dwSubType (rule keyboardType)." })
+        .optional(),
+      modifiers: TargetsWindowsModifiers.optional(),
+      keys: TargetsWindowsKeys.optional(),
+      scanCodeTableSize: z
+        .int()
+        .min(1)
+        .max(255)
+        .meta({ description: "bMaxVSCtoVK (rule scanCodeTableSize)." })
+        .optional(),
+      tables: z.array(TargetsWindowsTables).meta({ description: "Character tables in order (rule tables)." }).optional(),
+      extraRows: z.array(TargetsWindowsExtraRows).meta({ description: "Rows for VKs no position produces." }).optional(),
+      deadKeys: z
+        .record(
+          z.string(),
+          z
+            .strictObject({
+              character: TextOrUnits.meta({
+                description: "The dead character, one unit (rule deadCharacter).",
+              }).optional(),
+            })
+            .meta({ description: "Windows data of one dead key." }),
+        )
+        .meta({ description: "Windows data per dead key." })
+        .optional(),
+      strings: z
+        .strictObject({
+          layoutName: LangIdText.meta({ description: "String 1000 per LANGID." }).optional(),
+          languageName: LangIdText.meta({ description: "String 1100 per LANGID." }).optional(),
+          localeName: z.string().meta({ description: "String 1200, a locale name." }).optional(),
+        })
+        .meta({ description: "DLL strings (rule strings)." })
+        .optional(),
+      versionInfo: z
+        .strictObject({
+          fileVersion: Version4.meta({ description: "FileVersion." }).optional(),
+          productVersion: Version4.meta({ description: "ProductVersion." }).optional(),
+          companyName: Text.meta({ description: "CompanyName." }).optional(),
+          legalCopyright: Text.meta({ description: "LegalCopyright." }).optional(),
+          fileDescription: Text.meta({ description: "FileDescription." }).optional(),
+        })
+        .meta({ description: "Version resource (rule versionInfo)." })
+        .optional(),
+      registration: TargetsWindowsRegistration.optional(),
+      install: TargetsWindowsInstall.optional(),
+      nls: TargetsWindowsNls.optional(),
+      dispatcher: TargetsWindowsDispatcher.optional(),
+      onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+    })
+    .meta({ description: "Windows build choices (SPEC §16.1, targets/windows.md)." });
+
+// ---- 0.2 targets ----
+// Placeholders: closed objects with only the loss policy. The macOS target fills `TargetsMacos` (SPEC §16.4,
+// targets/macos.md) and the XKB target fills `TargetsXkb` (SPEC §16.5, targets/xkb.md); each also appends its
+// loss kinds to its own list near OnLoss above. Nothing else in this file is per platform.
+
+/** 0.2: macOS `.keylayout` build choices. */
+const TargetsMacos = z
   .strictObject({
-    windows: TargetsWindows.optional(),
+    onLoss: OnLoss02.meta({ description: "Loss policy for this target." }).optional(),
+  })
+  .meta({ description: "macOS build choices (SPEC §16.4, targets/macos.md)." });
+
+/** 0.2: Linux XKB build choices. */
+const TargetsXkb = z
+  .strictObject({
+    onLoss: OnLoss02.meta({ description: "Loss policy for this target." }).optional(),
+  })
+  .meta({ description: "Linux XKB build choices (SPEC §16.5, targets/xkb.md)." });
+
+// ---- the file, per version ----
+
+/** The format versions this source generates, oldest first. Each schema accepts only its own `kbl` value. */
+export const versions = ["0.1", "0.2"] as const;
+export type Version = (typeof versions)[number];
+
+/** Where the generated JSON Schema of a version lives, and its `$id`. */
+export const schemaPath = (v: Version) => `schema/${v}/kbl.schema.json`;
+export const schemaId = (v: Version) => `https://yakbd.github.io/kbl-spec/schema/${v}/kbl.schema.json`;
+
+/** The source formats of `metadata.provenance.format` per version. */
+const formats01 = ["cldr", "klc", "windowsDll", "kbl", "other"] as const;
+const formats02 = ["cldr", "klc", "windowsDll", "kbl", "keylayout", "xkb", "other"] as const;
+
+function kblFile(v: Version) {
+  const OnLoss = v === "0.1" ? OnLoss01 : OnLoss02;
+  const targets = {
+    windows: targetsWindows(OnLoss).optional(),
     klc: z
       .strictObject({
         msklcEditorCompatible: z
@@ -1202,58 +1264,75 @@ const Targets = z
       })
       .meta({ description: "CLDR conversion choices (SPEC §16.3)." })
       .optional(),
-  })
-  .meta({ description: "Per-target choices (SPEC §16)." });
+  };
+  const Targets = (
+    v === "0.1"
+      ? z.strictObject(targets)
+      : z.strictObject({ ...targets, macos: TargetsMacos.optional(), xkb: TargetsXkb.optional() })
+  ).meta({ description: "Per-target choices (SPEC §16)." });
 
-export const KblFile = z
-  .strictObject({
-    $schema: z.string().meta({ description: "Schema URL; informative." }).optional(),
-    kbl: z.literal("0.1").meta({ description: "Format version." }),
-    metadata: Metadata,
-    settings: Settings.optional(),
-    positions: Positions.optional(),
-    forms: Forms.optional(),
-    customModifiers: CustomModifiers.optional(),
-    keys: Keys.optional(),
-    hardware: Hardware.optional(),
-    touch: z.array(Touch).meta({ description: "Touch layouts (SPEC §9.4)." }).optional(),
-    deadKeys: DeadKeys.optional(),
-    flicks: Flicks.optional(),
-    displays: Displays.optional(),
-    variables: z
-      .array(
-        z
-          .strictObject({
-            id: VariableId.meta({ description: "Unique id." }),
-            type: z.enum(["string", "set", "uset"]).meta({ description: "string, set or uset." }),
-            value: Pattern.meta({ description: "Value in CLDR syntax." }),
-          })
-          .meta({ description: "A CLDR variable (SPEC §13.1)." }),
-      )
-      .meta({ description: "CLDR variables in order (SPEC §13.1)." })
-      .optional(),
-    transforms: Transforms.optional(),
-    tests: z.array(Tests).meta({ description: "Test files (SPEC §15)." }).optional(),
-    targets: Targets.optional(),
-    onLoss: OnLoss.meta({ description: "Loss policy for every target (SPEC §17.2)." }).optional(),
-    extensions: z
-      .record(
-        z
-          .string()
-          .regex(/^([a-z][a-z0-9+.-]*:.+|[a-z0-9-]+(\.[a-z0-9-]+)+)$/u)
-          .meta({ description: "An absolute URI or reverse-DNS name." }),
-        z.unknown(),
-      )
-      .meta({ description: "Data of other tools, by URI or reverse-DNS name (SPEC §18)." })
-      .optional(),
-    cldrSpecial: cldrSpecial("keyboard3 (and keys, flicks, variables with a kbl:parent comment)").optional(),
-  })
-  .meta({
-    $id: "https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json",
-    title: ".kbl.json keyboard layout, version 0.1 (draft)",
-    description:
-      "A YAKBD keyboard-layout file. Normative text: SPEC.md; this schema checks structure only (SPEC §19 lists further rules).",
-  });
+  return z
+    .strictObject({
+      $schema: z.string().meta({ description: "Schema URL; informative." }).optional(),
+      kbl: z.literal(v).meta({ description: "Format version." }),
+      metadata: metadata(v === "0.1" ? formats01 : formats02),
+      settings: Settings.optional(),
+      positions: Positions.optional(),
+      forms: Forms.optional(),
+      customModifiers: CustomModifiers.optional(),
+      keys: Keys.optional(),
+      hardware: Hardware.optional(),
+      touch: z.array(Touch).meta({ description: "Touch layouts (SPEC §9.4)." }).optional(),
+      deadKeys: DeadKeys.optional(),
+      flicks: Flicks.optional(),
+      displays: Displays.optional(),
+      variables: z
+        .array(
+          z
+            .strictObject({
+              id: VariableId.meta({ description: "Unique id." }),
+              type: z.enum(["string", "set", "uset"]).meta({ description: "string, set or uset." }),
+              value: Pattern.meta({ description: "Value in CLDR syntax." }),
+            })
+            .meta({ description: "A CLDR variable (SPEC §13.1)." }),
+        )
+        .meta({ description: "CLDR variables in order (SPEC §13.1)." })
+        .optional(),
+      transforms: Transforms.optional(),
+      tests: z.array(Tests).meta({ description: "Test files (SPEC §15)." }).optional(),
+      targets: Targets.optional(),
+      onLoss: OnLoss.meta({ description: "Loss policy for every target (SPEC §17.2)." }).optional(),
+      extensions: z
+        .record(
+          z
+            .string()
+            .regex(/^([a-z][a-z0-9+.-]*:.+|[a-z0-9-]+(\.[a-z0-9-]+)+)$/u)
+            .meta({ description: "An absolute URI or reverse-DNS name." }),
+          z.unknown(),
+        )
+        .meta({ description: "Data of other tools, by URI or reverse-DNS name (SPEC §18)." })
+        .optional(),
+      cldrSpecial: cldrSpecial("keyboard3 (and keys, flicks, variables with a kbl:parent comment)").optional(),
+    })
+    .meta({
+      $id: schemaId(v),
+      title: `.kbl.json keyboard layout, version ${v} (draft)`,
+      description:
+        "A YAKBD keyboard-layout file. Normative text: SPEC.md; this schema checks structure only (SPEC §19 lists further rules).",
+    });
+}
 
-/** A parsed .kbl.json file. */
+/** The 0.1 schema. Frozen: tools/check pins the SHA-256 of its generated JSON Schema. */
+export const KblFile01 = kblFile("0.1");
+
+/** The 0.2 schema (draft until it is tagged). */
+export const KblFile02 = kblFile("0.2");
+
+/** The schema of each version. */
+export const schemas = { "0.1": KblFile01, "0.2": KblFile02 } as const;
+
+/** The newest version's schema. */
+export const KblFile = KblFile02;
+
+/** A parsed .kbl.json file of the newest version. */
 export type KblFile = z.infer<typeof KblFile>;

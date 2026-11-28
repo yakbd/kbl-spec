@@ -1,7 +1,8 @@
 # Compatibility of `.kbl.json` 0.x
 
-The format is released as **0.1 preview**. It is complete enough to implement and to write layouts in, and it is
-not frozen. This page says what you can rely on before 1.0.
+The format is released as **0.1 preview**; 0.2, which adds macOS and Linux (XKB) targets, is in draft. 0.1 is
+complete enough to implement and to write layouts in, and it is not frozen. This page says what you can rely on
+before 1.0.
 
 ## What 0.1 promises
 
@@ -14,6 +15,21 @@ not frozen. This page says what you can rely on before 1.0.
   `targets/windows-default-vk.tsv` keep their names and results within 0.1, except to fix a bug (a rule that does
   not do what its text says), recorded in `DECISIONS.md` and the changelog. A file that writes its defaults out
   (pinning, `targets/windows.md` §10) does not depend on them at all.
+
+## What 0.2 promises (draft)
+
+0.2 is being written. Until it is tagged it may still change in any way, and its schema path is not published.
+What it already promises, and keeps when it is released (D108):
+
+- **0.1 stays as it is.** `schema/0.1/kbl.schema.json` stays byte for byte as published (the repository's checker
+  pins its hash), and the 0.1 rules above still hold for 0.1 files.
+- **0.2 holds 0.1.** 0.2 only adds (`targets.macos`, `targets.xkb`, their loss kinds, two provenance formats). A
+  valid 0.1 file whose `kbl` (and `$schema`) is changed to `"0.2"` is a valid 0.2 file and means the same: the
+  Windows default rules and Table A do not change in 0.2.
+- **A 0.2 reader reads 0.1 files**, checking each file against the schema of the version it names. A 0.1 reader
+  rejects 0.2 files (below).
+- **Tools write the lowest version that holds the file** (`SPEC.md` §1.1), so a file that uses nothing new stays
+  readable by 0.1 tools.
 
 ## What may change in 0.x
 

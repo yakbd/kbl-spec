@@ -1,26 +1,46 @@
 // The repository checks of the .kbl.json specification. Run from the repository root: `npm run check`
-// (`npm test` also type-checks and checks that the generated schema is fresh). It checks that
+// (`npm test` also type-checks and checks that the generated schemas are fresh). For every version V of
+// src/schema.ts (0.1, 0.2) it checks that
 //
-//  1. schema/0.1/kbl.schema.json compiles as a JSON Schema draft 2020-12 schema (meta-schema validation included);
+//  1. schema/V/kbl.schema.json compiles as a JSON Schema draft 2020-12 schema (meta-schema validation included),
+//     has the $id of V, and, for 0.1, still has the pinned SHA-256 (0.1 is frozen; COMPATIBILITY.md);
 //  2. every property and every $defs entry of the schema has a description;
-//  3. the loss kinds of SPEC.md §17.3 equal the kinds the schema accepts in onLoss, the default rules of the
-//     "Rule index" sections of targets/windows.md and targets/windows-install.md equal the schema's
-//     windowsDefault.<rule> kinds, and every loss kind named in targets/*.md and coverage/*.md is defined in SPEC.md;
+//  3. the loss kinds of SPEC.md §17.3 equal the kinds the newest schema accepts in onLoss, and the 0.1 schema's
+//     kinds are exactly those outside the families that 0.2 adds; for every target of `targets` below, the default
+//     rules of its "Rule index" sections equal the schema's <target>Default.<rule> kinds; every loss kind named in
+//     targets/*.md and coverage/*.md is defined in SPEC.md;
 //  4. every property name of the schema is mentioned in SPEC.md;
-//  5. targets/windows-default-vk.tsv is well formed and uses only known virtual keys;
-//  6. every examples/*.kbl.json is accepted by the zod schema and by the JSON Schema, passes the reference checks
-//     of SPEC §19 item 1 (a subset), the layer-overlap rule of §7.3, and uses only known virtual keys;
-//  7. every testdata/schema/valid/*.kbl.json is accepted and every testdata/schema/invalid/*.kbl.json is rejected,
-//     by the zod schema and by the JSON Schema alike.
+//  5. each target's position table (SPEC §16, "Position tables") is well formed: Table A
+//     (targets/windows-default-vk.tsv) with its own columns and known virtual keys, the others in the common shape;
+//  6. every examples/*.kbl.json is accepted by the zod schema and by the JSON Schema of the version its `kbl` names,
+//     passes the reference checks of SPEC §19 item 1 (a subset), the layer-overlap rule of §7.3, and uses only
+//     known virtual keys;
+//  7. every testdata/schema/V/valid/*.kbl.json is accepted and every testdata/schema/V/invalid/*.kbl.json is
+//     rejected, by the zod schema and by the JSON Schema of V alike;
+//  8. 0.2 holds 0.1: every 0.1 example and valid 0.1 case, with `kbl` and `$schema` changed to 0.2, is accepted by
+//     both 0.2 schemas.
 //
 // The SPEC §19 rules are checked here, not in the schema: they relate parts of a file to each other.
-import { readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import * as z from "zod";
-import { KblFile } from "../../src/schema.ts";
+import { schemaId, schemaPath, schemas, versions, type Version } from "../../src/schema.ts";
 
-const schemaPath = "schema/0.1/kbl.schema.json";
-const schemaId = "https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json";
+/** SHA-256 of schema/0.1/kbl.schema.json as published. Change it only for a recorded 0.1 bug fix or new loss kind. */
+const frozen01 = "9011b8c6bfbe98801a54c98ad75392ca63f2aa07c500308d395cf88270e5ec3e";
+
+/** The build targets: the files of their rule indexes and their position tables (SPEC §16). A new target adds a
+ * line here. Its position table may be missing until the target writes it. */
+const targets = [
+  { name: "windows", ruleFiles: ["targets/windows.md", "targets/windows-install.md"] },
+  { name: "macos", ruleFiles: ["targets/macos.md"], table: "targets/macos-default-keycode.tsv" },
+  { name: "xkb", ruleFiles: ["targets/xkb.md"], table: "targets/xkb-default-keyname.tsv" },
+];
+
+/** The loss-kind families that 0.2 adds; 0.1 has every other kind. */
+const families02 = new Set(["macos", "macosDefault", "xkb", "xkbDefault"]);
+
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 type Obj = { [key: string]: Json };
@@ -113,7 +133,8 @@ function allVKs(node: Json, acc: string[]) {
 
 const implied = (id: string) => /^[0-9A-Za-z]$/.test(id) || id === "space" || id === "gap";
 const builtin = new Set(["shift", "ctrl", "ctrlL", "ctrlR", "alt", "altL", "altR", "caps", "other"]);
-const reKindInText = /(?:^|[^.\w])((?:general|windows|klc|cldr)\.[a-z][A-Za-z0-9]*)/g;
+// Loss kinds of every family SPEC §17.3 or the schema knows; set in main once the families are read.
+let reKindInText = /$^/g;
 
 function refs(doc: Obj, name: string, specKinds: Set<string>) {
   const keyBag = obj(doc.keys);
@@ -322,27 +343,72 @@ function checkDefaultTable() {
   }
 }
 
+// ---- position tables of the other targets (common shape, SPEC §16) ----
+
+function checkPositionTable(path: string) {
+  let header: string[] | undefined;
+  const seenPos = new Set<string>();
+  const seenCode = new Set<string>();
+  for (const line of read(path).split("\n")) {
+    if (line === "" || line.startsWith("#")) continue;
+    const f = line.split("\t");
+    if (header === undefined) {
+      header = f;
+      if (f[0] !== "position" || f.at(-1) !== "source" || f.length < 3)
+        errf(`${path}: header must be "position", the target's code, further columns, "source"`);
+      continue;
+    }
+    if (f.length !== header.length) {
+      errf(`${path}: bad line ${JSON.stringify(line)}`);
+      continue;
+    }
+    const [p, code] = f;
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(p) || seenPos.has(p)) errf(`${path}: bad or duplicate position ${p}`);
+    if (code === "" || seenCode.has(code)) errf(`${path}: empty or duplicate ${header[1]} ${code}`);
+    if (f.at(-1) === "") errf(`${path}: position ${p} has no source`);
+    seenPos.add(p);
+    seenCode.add(code);
+  }
+  if (header === undefined) errf(`${path}: no header line`);
+}
+
 // ---- main ----
 
-// 1. compile the schema (Ajv validates it against the draft 2020-12 meta-schema first)
-const schemaText = read(schemaPath);
-const schema = obj(decode(schemaText, schemaPath));
-if (schema.$id !== schemaId) errf(`schema: $id is ${JSON.stringify(schema.$id)}, want ${schemaId}`);
+const latest = versions[versions.length - 1];
 const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false }); // `required` under anyOf/not names properties of the parent;
-let validate: ReturnType<typeof ajv.compile>;
-try {
-  validate = ajv.compile(schema);
-} catch (e) {
-  console.error("schema:", (e as Error).message);
-  process.exit(1);
-}
-const verdicts = (doc: Json) => ({ json: validate(doc) === true, zod: KblFile.safeParse(doc).success });
+type Validator = ReturnType<typeof ajv.compile>;
+const validators = {} as Record<Version, Validator>;
+const jsonSchemas = {} as Record<Version, Obj>;
 
-// 2. descriptions
-checkDescriptions(schema, "#");
-for (const name of sorted(obj(schema.$defs))) {
-  if (!has(obj(obj(schema.$defs)[name]), "description")) errf(`schema: $defs/${name} without description`);
+// 1. compile each schema (Ajv validates it against the draft 2020-12 meta-schema first); 2. descriptions
+for (const v of versions) {
+  const path = schemaPath(v);
+  const text = read(path);
+  if (v === "0.1" && createHash("sha256").update(text).digest("hex") !== frozen01)
+    errf(`${path} changed: 0.1 is frozen (COMPATIBILITY.md); a change to a shared part of src/schema.ts reached 0.1`);
+  const schema = obj(decode(text, path));
+  if (schema.$id !== schemaId(v)) errf(`${path}: $id is ${JSON.stringify(schema.$id)}, want ${schemaId(v)}`);
+  try {
+    validators[v] = ajv.compile(schema);
+  } catch (e) {
+    console.error(`${path}:`, (e as Error).message);
+    process.exit(1);
+  }
+  jsonSchemas[v] = schema;
+  checkDescriptions(schema, `${path}#`);
+  for (const name of sorted(obj(schema.$defs))) {
+    if (!has(obj(obj(schema.$defs)[name]), "description")) errf(`${path}: $defs/${name} without description`);
+  }
 }
+/** The version a document names, if this checker knows it. */
+const versionOf = (doc: Json): Version | undefined => versions.find((v) => v === obj(doc).kbl);
+const verdicts = (v: Version, doc: Json) => ({
+  json: validators[v](doc) === true,
+  zod: schemas[v].safeParse(doc).success,
+});
+const onLossKinds = (v: Version) =>
+  arr(obj(obj(obj(obj(obj(jsonSchemas[v].$defs).OnLoss).properties).kinds).propertyNames).enum).map(str);
+const family = (k: string) => k.slice(0, k.indexOf("."));
 
 // 3. loss kinds and default rules
 const spec = read("SPEC.md");
@@ -352,70 +418,99 @@ for (const m of spec.matchAll(
 )) {
   specKinds.add(m[1]);
 }
-const onLossKinds = arr(obj(obj(obj(obj(obj(schema.$defs).OnLoss).properties).kinds).propertyNames).enum);
-const schemaKinds = new Set<string>();
-const rules = new Set<string>();
-for (const k of onLossKinds.map(str)) {
-  if (k.endsWith(".*")) continue;
-  if (k.startsWith("windowsDefault.")) rules.add(k.slice("windowsDefault.".length));
-  else schemaKinds.add(k);
-}
-{
-  const [a, b] = [diff(specKinds, schemaKinds), diff(schemaKinds, specKinds)];
-  if (a.length + b.length > 0)
-    errf(`loss kinds differ: only in SPEC [${a.join(" ")}]; only in schema [${b.join(" ")}]`);
-}
-const winRules = new Set<string>();
-for (const path of ["targets/windows.md", "targets/windows-install.md"]) {
-  const index = /\n## 1\. Rule index\n([\s\S]*?)\n## /.exec(read(path));
-  if (!index) {
-    errf(`${path}: no section "## 1. Rule index"`);
-    continue;
+const families = new Set([...specKinds].map(family));
+const rulesOf = new Map<string, Set<string>>(targets.map((t) => [t.name, new Set<string>()]));
+const kindsOf = (v: Version) => {
+  const kinds = new Set<string>();
+  for (const k of onLossKinds(v)) {
+    families.add(family(k));
+    if (k.endsWith(".*")) continue;
+    const t = targets.find((t) => family(k) === `${t.name}Default`);
+    if (t) {
+      if (v === latest) rulesOf.get(t.name)!.add(k.slice(k.indexOf(".") + 1));
+    } else kinds.add(k);
   }
-  for (const m of index[1].matchAll(/^\| (`[a-zA-Z]+`(?:, `[a-zA-Z]+`)*) \|/gm)) {
-    for (const t of m[1].matchAll(/`([a-zA-Z]+)`/g)) {
-      if (winRules.has(t[1])) errf(`${path}: rule ${t[1]} defined twice`);
-      winRules.add(t[1]);
+  return kinds;
+};
+{
+  const kinds = kindsOf(latest);
+  const [a, b] = [diff(specKinds, kinds), diff(kinds, specKinds)];
+  if (a.length + b.length > 0)
+    errf(`loss kinds differ: only in SPEC [${a.join(" ")}]; only in the ${latest} schema [${b.join(" ")}]`);
+  const want01 = new Set([...onLossKinds(latest)].filter((k) => !families02.has(family(k))));
+  const got01 = new Set(onLossKinds("0.1"));
+  const [c, d] = [diff(want01, got01), diff(got01, want01)];
+  if (c.length + d.length > 0)
+    errf(`0.1 loss kinds: missing [${c.join(" ")}]; not allowed in 0.1 [${d.join(" ")}] (families02 in tools/check)`);
+}
+reKindInText = new RegExp(`(?:^|[^.\\w])((?:${[...families].filter((f) => !f.endsWith("Default")).sort().join("|")})\\.[a-z][A-Za-z0-9]*)`, "g");
+for (const t of targets) {
+  const found = new Set<string>();
+  for (const path of t.ruleFiles) {
+    const index = /\n## 1\. Rule index\n([\s\S]*?)\n## /.exec(read(path));
+    if (!index) {
+      errf(`${path}: no section "## 1. Rule index"`);
+      continue;
+    }
+    for (const m of index[1].matchAll(/^\| (`[a-zA-Z]+`(?:, `[a-zA-Z]+`)*) \|/gm)) {
+      for (const r of m[1].matchAll(/`([a-zA-Z]+)`/g)) {
+        if (found.has(r[1])) errf(`${path}: rule ${r[1]} defined twice`);
+        found.add(r[1]);
+      }
     }
   }
-}
-{
-  const [a, b] = [diff(rules, winRules), diff(winRules, rules)];
+  const rules = rulesOf.get(t.name)!;
+  const [a, b] = [diff(rules, found), diff(found, rules)];
   if (a.length + b.length > 0)
-    errf(`default rules differ: only in schema [${a.join(" ")}]; only in the rule indexes [${b.join(" ")}]`);
+    errf(
+      `${t.name} default rules differ: only in the schema (${t.name}Default.*) [${a.join(" ")}]; only in the rule indexes [${b.join(" ")}]`,
+    );
 }
+// Defaulted-choice kinds (<target>Default.<rule>) are checked against the rule indexes above, not against SPEC.
+const lossFamilies = [...families].filter((f) => !f.endsWith("Default")).sort();
+const reKindInDocs = new RegExp(`\`((?:${lossFamilies.join("|")})\\.[a-z][A-Za-z0-9]*)\``, "g");
 for (const d of [...glob("targets", ".md"), ...glob("coverage", ".md")].sort()) {
-  for (const m of read(d).matchAll(/`((?:general|windows|klc|cldr|dll)\.[a-z][A-Za-z0-9]*)`/g)) {
+  for (const m of read(d).matchAll(reKindInDocs)) {
     if (!specKinds.has(m[1])) errf(`${d} names undefined loss kind ${m[1]}`);
   }
 }
 
-// 4. schema property names in SPEC.md
+// 4. schema property names in SPEC.md (SPEC.md describes the newest version, which holds every older one)
 const names = new Set<string>();
-propNames(schema, names);
+for (const v of versions) propNames(jsonSchemas[v], names);
 for (const n of [...names].sort()) {
   if (!spec.includes("`" + n + "`") && !spec.includes(`"${n}"`) && !spec.includes(n + "`") && !spec.includes("." + n)) {
     errf(`SPEC.md does not mention schema property ${n}`);
   }
 }
 
-// 5. virtual-key names and the default table
+// 5. virtual-key names and the position tables
 for (const line of read("targets/windows-vk-names.tsv").split("\n")) {
   if (line !== "" && !line.startsWith("#") && !line.startsWith("name\t"))
     vkNames.add(line.split("\t")[0].toUpperCase());
 }
 checkDefaultTable();
+for (const t of targets) if (t.table !== undefined && existsSync(t.table)) checkPositionTable(t.table);
 
 // 6. examples
 const examples = glob("examples", ".kbl.json");
 if (examples.length === 0) errf("no examples");
+const examples01: Json[] = [];
 for (const path of examples) {
   const raw = read(path);
   if (raw.startsWith("﻿")) errf(`${path}: byte-order mark`);
   const doc = decode(raw, path);
   if (doc === undefined) continue;
+  const v = versionOf(doc);
+  if (v === undefined) {
+    errf(`${path}: unknown kbl ${JSON.stringify(obj(doc).kbl)}`);
+    continue;
+  }
+  if (v === "0.1") examples01.push(doc);
+  if (obj(doc).$schema !== undefined && obj(doc).$schema !== schemaId(v)) errf(`${path}: $schema is not ${schemaId(v)}`);
+  const validate = validators[v];
   if (!validate(doc)) errf(`${path}: ${ajv.errorsText(validate.errors)}`);
-  const parsed = KblFile.safeParse(doc);
+  const parsed = schemas[v].safeParse(doc);
   if (!parsed.success) errf(`${path}: zod:\n${z.prettifyError(parsed.error)}`);
   refs(obj(doc), path, specKinds);
   overlap(obj(doc), path);
@@ -424,25 +519,41 @@ for (const path of examples) {
   for (const vk of vks) if (!vkOK(vk)) errf(`${path}: unknown virtual key ${vk}`);
 }
 
-// 7. schema test cases
-const cases = {
-  valid: glob("testdata/schema/valid", ".kbl.json"),
-  invalid: glob("testdata/schema/invalid", ".kbl.json"),
-};
-if (cases.valid.length === 0 || cases.invalid.length === 0) errf("no schema test cases in testdata/schema");
-for (const [kind, files] of Object.entries(cases)) {
-  for (const path of files) {
-    const doc = decode(read(path), path);
-    if (doc === undefined) continue;
-    const v = verdicts(doc);
-    const want = kind === "valid";
-    if (v.json !== want) errf(`${path}: the JSON Schema ${v.json ? "accepts" : "rejects"} it`);
-    if (v.zod !== want) errf(`${path}: the zod schema ${v.zod ? "accepts" : "rejects"} it`);
+// 7. schema test cases, per version
+let nValid = 0;
+let nInvalid = 0;
+const valid01: { path: string; doc: Json }[] = examples01.map((doc, i) => ({ path: `0.1 example ${i}`, doc }));
+for (const v of versions) {
+  const cases = {
+    valid: glob(`testdata/schema/${v}/valid`, ".kbl.json"),
+    invalid: glob(`testdata/schema/${v}/invalid`, ".kbl.json"),
+  };
+  if (cases.valid.length === 0 || cases.invalid.length === 0) errf(`no schema test cases in testdata/schema/${v}`);
+  nValid += cases.valid.length;
+  nInvalid += cases.invalid.length;
+  for (const [kind, files] of Object.entries(cases)) {
+    for (const path of files) {
+      const doc = decode(read(path), path);
+      if (doc === undefined) continue;
+      const r = verdicts(v, doc);
+      const want = kind === "valid";
+      if (r.json !== want) errf(`${path}: the ${v} JSON Schema ${r.json ? "accepts" : "rejects"} it`);
+      if (r.zod !== want) errf(`${path}: the ${v} zod schema ${r.zod ? "accepts" : "rejects"} it`);
+      if (want && v === "0.1") valid01.push({ path, doc });
+    }
   }
+}
+
+// 8. 0.2 holds 0.1
+for (const { path, doc } of valid01) {
+  const up: Obj = { ...obj(doc), kbl: "0.2" };
+  if (has(up, "$schema")) up.$schema = schemaId("0.2");
+  const r = verdicts("0.2", up);
+  if (!r.json || !r.zod) errf(`${path}: valid in 0.1 but, as 0.2, rejected by the 0.2 ${r.json ? "zod" : "JSON"} schema`);
 }
 
 for (const e of errs) console.log("ERROR", e);
 console.log(
-  `${examples.length} example(s), ${cases.valid.length} valid and ${cases.invalid.length} invalid schema case(s), ${errs.length} error(s)`,
+  `${versions.length} schema versions, ${examples.length} example(s), ${nValid} valid and ${nInvalid} invalid schema case(s), ${errs.length} error(s)`,
 );
 if (errs.length > 0) process.exit(1);
