@@ -1,6 +1,7 @@
 # The `.kbl.json` keyboard-layout format, version 0.3 (draft)
 
-Status: **0.3 draft**, not yet released; the released versions are 0.1 preview and 0.2 preview. What stays stable in 0.x is in
+Status: **0.3 draft**, not yet released; the released versions are 0.1 preview and 0.2 preview (tag
+`v0.2.0-preview`). What stays stable in 0.x is in
 `COMPATIBILITY.md`. Normative unless a section says "informative". The key words MUST, MUST NOT, SHOULD, SHOULD NOT
 and MAY are used as in RFC 2119. Decisions behind the rules are numbered in `DECISIONS.md` ("D7" = decision 7);
 questions put to the owner are in `OPEN-QUESTIONS.md` ("Q3"). The JSON Schema `schema/0.3/kbl.schema.json` checks
@@ -68,7 +69,8 @@ schemas `schema/0.1/kbl.schema.json` and `schema/0.2/kbl.schema.json` are not ch
   family (`macos`, `macosDefault`, `xkb`, `xkbDefault`) or a 0.2 provenance format; otherwise as 0.1. A tool MAY
   write a higher version when its user asks for one. Raising the version changes `kbl` and `$schema` and nothing
   else.
-- While 0.3 is a draft (until it is tagged, `COMPATIBILITY.md`), it may still change in any way; 0.1 and 0.2 do not.
+- What a 0.1 or 0.2 file can rely on, and what may still change in 0.x, is in `COMPATIBILITY.md`. While 0.3 is a
+  draft (until it is tagged), it may still change in any way; 0.1 and 0.2 do not.
 
 ## 2. Text values
 

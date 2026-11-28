@@ -7,8 +7,8 @@ other keyboard formats. The format is a superset of Unicode CLDR Keyboard 3.0.
 | target | in the format |
 |---|---|
 | Windows (layout DLL, `.klc`) | 0.1, released |
-| macOS (`.keylayout` bundle) | 0.2, draft |
-| Linux (XKB and Compose, Wayland and X11) | 0.2, draft |
+| macOS (`.keylayout` bundle) | 0.2 preview, released |
+| Linux (XKB and Compose, Wayland and X11) | 0.2 preview, released |
 | Android, iOS, ChromeOS, Keyman | planned |
 
 ## Documentation
@@ -23,9 +23,9 @@ The documentation is on the website:
   [status and changelog](https://yakbd.github.io/spec/status)
 - [Design decisions](https://yakbd.github.io/spec/decisions)
 
-The JSON Schema is in [`schema/`](schema/) (0.1 is published at
-`https://yakbd.github.io/kbl-spec/schema/0.1/kbl.schema.json`; 0.2 is a draft and not published yet), and
-[`examples/`](examples/) holds sample layouts.
+The JSON Schema is in [`schema/`](schema/), published at
+`https://yakbd.github.io/kbl-spec/schema/0.2/kbl.schema.json` (0.1 at `.../schema/0.1/`, the newest version also
+at `.../schema/latest/`), and [`examples/`](examples/) holds sample layouts.
 
 ## Contributing
 

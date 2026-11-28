@@ -1,23 +1,23 @@
 # Status
 
-Format version: **0.1 preview**, 0.2 (macOS, Linux XKB) preview; 0.3 (Android, iOS, ChromeOS, Keyman, touch geometry)
-in draft on the branch `spec-0.3`. Last update: 2026-11-28.
+Format version: **0.2 preview** (macOS, Linux XKB; tag `v0.2.0-preview`), holding the **0.1 preview**; 0.3 (Android,
+iOS, ChromeOS, Keyman, touch geometry) in draft on the branch `spec-0.3`. Last update: 2026-11-28.
 
 ## In short
 
-- **What it is**: version 0.1 of the `.kbl.json` format, released as a preview. The specification (`SPEC.md`), the
-  Windows target documents, the JSON Schema `schema/0.1/kbl.schema.json` and the examples are complete and agree with
-  each other; `npm test` checks that.
-- **What you can rely on**: within 0.1 a valid file stays valid and keeps its meaning. New minor versions get their
-  own schema path. The rules, and when 1.0 comes, are in [`COMPATIBILITY.md`](COMPATIBILITY.md).
-- **Targets**: in 0.1, Windows (layout DLLs for x86, x64, WOW64 and ARM64X, and their installation). In the 0.2
-  draft also macOS (`targets/macos.md`: a `.keylayout` file in a layout bundle) and Linux XKB (`targets/xkb.md`: a
+- **What it is**: version 0.2 of the `.kbl.json` format, released as a preview; it holds 0.1 (released as a preview
+  before it). The specification (`SPEC.md`), the target documents, the JSON Schemas `schema/0.1/` and `schema/0.2/`
+  and the examples are complete and agree with each other; `npm test` checks that.
+- **What you can rely on**: within 0.1 and within 0.2 a valid file stays valid and keeps its meaning. New minor
+  versions get their own schema path. The rules, and when 1.0 comes, are in [`COMPATIBILITY.md`](COMPATIBILITY.md).
+- **Targets**: in 0.1, Windows (layout DLLs for x86, x64, WOW64 and ARM64X, and their installation). In 0.2
+  also macOS (`targets/macos.md`: a `.keylayout` file in a layout bundle) and Linux XKB (`targets/xkb.md`: a
   symbols file, its registry entry and a Compose file, installed per user). Conversions to and from `.klc`, CLDR
   Keyboard 3.0 and, in 0.2, `.keylayout` and XKB symbols files are specified. Third-party formats such as Keyman
   come later (D107).
 - **Tested**: layouts built from these files load, type and install correctly on Windows 10 and Windows 11 virtual
   machines (x64, x86, ARM64 in an emulated guest); see "Verified on Windows" below. Not tested: a physical ARM64 PC.
-  0.2 draft: macOS layout bundles built by `yakbd` were installed, selected and typed on GitHub's macOS 15 and 26
+  0.2: macOS layout bundles built by `yakbd` were installed, selected and typed on GitHub's macOS 15 and 26
   runners (Apple silicon); the Linux behaviour the XKB target relies on was measured with test layouts in containers
   (Debian 13, Ubuntu 26.04, Fedora 45, Arch Linux; X11, weston, sway, KWin, mutter). Not tested: an Intel Mac, the
   steps in System Settings, a full GNOME Shell session, real keyboards (`targets/xkb.md` §8).
@@ -36,7 +36,7 @@ numbers refer to `targets/windows-vm-tests.md`, the D numbers to `DECISIONS.md`)
 | `SPEC.md` | complete first draft. **Stable**: file rules, Text / CodeUnits / MarkedText / Pattern, top-level shape, `metadata`, `settings`, `positions`, `forms`, modifier sets and matching, `keys`, `hardware` / `touch` layers and bindings, resolution (§9.3), `deadKeys` and the dead-key machine (§14.2), `variables` / `transforms` (CLDR verbatim), `tests`, `targets.*` field names, loss report and `onLoss` resolution. **May still grow**: the loss-kind list (§17.3: new kinds are added, existing ids keep their meaning) |
 | `targets/windows.md` | complete first draft, following the owner's rule D16 (simple, fixed defaults; each use reported as `windowsDefault.<rule>`). **Stable**: rule names, Table A, cell encoding, Caps Lock attributes, dead-key encoding incl. the multi-unit recipe, pinning, the four builds and where they go (§2.1, D45). **Settled**: Table A = `targets/windows-default-vk.tsv` (D29), LANGID required (D30). **Settled [VM]**: `arm64x` in yakbd's default build set (gate D44 passed, VM-6, D66). **Settled [VM]**: Caps Lock rows hold columns 0 and 1 only (D65, VM-8, D67) |
 | `targets/windows-install.md` | normative: fields and rules (`productCode`, `enableForUser`, `enableForSignInAndNewUsers`, `uninstallEntry`), machine kinds and refusals (D46), KLID / Layout Id allocation (D47), languages, enabling, upgrade, uninstall. **Stable for the tool**: everything; the custom-language route is confirmed for enabling (VM-5), settled with its uninstall (VM-5); the sign-in screen and new users (§7.1, D87, D94, D97–D99) verified on Windows 11 (VM-18 to VM-27). Container and signing settled by the owner (D76): unsigned `.exe` only, behaving like `msiexec`; no MSI |
-| `schema/0.2/kbl.schema.json` | draft (D108); generated from the same source, holds 0.1 (`SPEC.md` §1.1) |
+| `schema/0.2/kbl.schema.json` | preview, released (D108); generated from the same source, holds 0.1 (`SPEC.md` §1.1) |
 | `schema/0.1/kbl.schema.json` | stable (see above); frozen, its hash pinned by `npm test`; closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
 | `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes), (f) `macos-option-deadkeys` (0.2: Option layer, per-key Caps Lock, chained dead keys, ISO key, `targets.macos` pins), (g) `xkb-caps-deadkeys` (0.2: Caps Lock that leaves an AltGr letter alone through a yakbd key type, a dead key, `targets.xkb` pins), (h) `touch-qwerty` (0.3: the touch core: phone and tablet sets, row heights, one-shot shift and caps lock, next-keyboard key, hints, `systemRow`); all validate |
 | `coverage/cldr-keyboard3.md`, `coverage/windows.md` | complete first drafts; `coverage/windows.md` §11 (DLL import conventions, D53–D55) |
@@ -99,7 +99,7 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
   `returnLayerId`; touch sets `orientation`, `deviceClass`, `systemRow` (SPEC §8, §9.4, all 0.3); the touch resolution
   of SPEC §14.4 written out (set choice by the screen's shorter side and orientation, layout, press, long press,
   multi-tap across a layer switch); new loss kinds `cldr.touchDataDropped` (warning), `general.deviceClassDerived`
-  (accept), `general.rowHeightsMismatch` (error) (D152 to D156); example `touch-qwerty` (this commit).
+  (accept), `general.rowHeightsMismatch` (error) (D152 to D156); example `touch-qwerty` (26dc9a0).
 
 - 2026-11-28 (branch `spec-0.3`, draft, groundwork): version 0.3 (`kbl` `"0.3"`, `schema/0.3/kbl.schema.json`;
   0.1 and 0.2 frozen by hash, D150). New targets `targets.android`, `targets.androidime`, `targets.ios`,
@@ -107,7 +107,11 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
   `targets/<target>.md`); conversion formats and provenance formats `kcm`, `kbdgen`, `kmn`, `keymantouch` (SPEC
   §16.11, coverage stubs); loss-kind wildcards of the families `android`, `androidime`, `ios`, `chromeos`,
   `keyman` (each with `<target>Default.*`), `kbdgen`, `kmn`, `keymantouch`; touch-only targets have no position
-  table (D151) (this commit).
+  table (D151) (7674642).
+
+- 2026-11-28: 0.2 preview, tag `v0.2.0-preview` (branch `spec-0.2` merged into `main`). No change to the format's shape;
+  `COMPATIBILITY.md` now states what 0.2 promises, `schema/0.2/` and `schema/latest/` (= 0.2) are published.
+  `targets/macos.md` §8 item 8: `<when state="D" next="D"/>` measured for a dead key without a terminator.
 
 - 2026-11-28 (branch `spec-0.2`, owner): releases are not code-signed; D112 supersedes D104. No change to the format.
 

@@ -17,7 +17,7 @@ other majors).
 
 CI (`.github/workflows/validate.yml`) runs `npm ci && npm test` on push to `main` only when a filtered path changes
 (`src/`, `schema/`, `examples/`, `testdata/`, `tools/`, `targets/`, `coverage/`, `SPEC.md`, package files, the
-workflow); a push that touches none of them (root docs only), and every push to a `spec-*` branch, starts no run. Start
+workflow); a push that touches none of them (root docs only), and every push to another branch, starts no run. Start
 one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
 
 ## Which text wins
@@ -31,8 +31,9 @@ one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
   and committed.
 - Versions (SPEC §1.1, D108, D150): this branch writes **0.3** (draft: Android, iOS, ChromeOS, Keyman, touch
   geometry). 0.1 and 0.2 are released and frozen: the checker pins the hashes of their schema files. Work on 0.3
-  stays on the branch `spec-0.3` until the owner merges it; fixes to 0.2 arrive by merging `spec-0.2` (or `main`)
-  into `spec-0.3`, never by rebase. Pages publishes `main`, and `schema/latest/` must not move to an unfinished 0.3.
+  stays on the branch `spec-0.3` until the owner merges it; fixes to 0.2 arrive by merging `main` into `spec-0.3`, never by
+  rebase. Pages publishes `main`, and `schema/latest/` is the newest `schema/<version>/` there: it must not move to an
+  unfinished 0.3.
 - Record every format design decision as the next numbered entry of `DECISIONS.md`, with its reason; a later
   entry that changes an earlier one says so. Entries are never renumbered. Questions for the owner go to
   `OPEN-QUESTIONS.md`, each with a recommendation.
