@@ -1377,7 +1377,7 @@ const TargetsMacos = z
       .int()
       .min(1)
       .max(65535)
-      .meta({ description: "keyboard/@maxout: most UTF-16 units one key press emits (rule maxout)." })
+      .meta({ description: "keyboard/@maxout: most UTF-16 units of one output; a terminator and a key output count separately (rule maxout)." })
       .optional(),
     hardwareRanges: z
       .array(

@@ -840,6 +840,25 @@ so the importer takes the first `<layout>`'s modifier map and key map set and re
 would not give the same tables, and writes `capsLockFallback: false` so that Caps Lock layers mean exactly their key
 maps (`coverage/macos.md`). Range actions have no home and are dropped (`macos.rangeActionDropped`), as D105 said.
 
+**D128 (2026-11-28; measured; changes D120's rule `maxout`). `maxout` counts each output on its own.** Rule
+`maxout` gives the longest single output (a terminator, a key or a `when` output), no longer the longest terminator
+plus the longest output. Measured on macOS 15 and 26 (`targets/macos.md` §5, §8 item 7): with `maxout` 2 a
+terminator of one unit and a key output of two units are both typed in one key press, so macOS applies `maxout` to
+each output. `macos.outputBeyondMaxout` is reported when one output is longer than a pinned `maxout`.
+
+**D129 (2026-11-28; measured; changes D124 for `emitNothing`). An empty output is `output=""`.** A `when` that
+emits nothing is written `<when state="D" output=""/>`. Written as `<when state="D" next="none"/>`, the layout was
+rejected as a whole (never listed, no reason logged); a `when` whose only `next` names a state that no `when` or
+terminator defines was rejected too, and `output=""` was listed and typed nothing (`targets/macos.md` §4, §8 item 2).
+TN2056 allows either form; macOS does not.
+
+**D130 (2026-11-28; measured). Facts measured on the runners.** Right Shift and Right Option reach a layout as the
+left-hand state, so the "any" words are right and D122's widening (`macos.sideModifierWidened`) stays; this was
+measured with posted events carrying the right-hand device bit, not with real hardware. A localised name is read
+from a hyphenated `.lproj` folder (`en-US.lproj`) and from a UTF-8 `InfoPlist.strings`. A key with no output while a
+dead key is pending makes macOS emit the terminator and return to the base state, where the model (SPEC §14.2) keeps
+the dead key pending; the build does not yet compile around this (`targets/macos.md` §4, §8 item 1).
+
 **D135 (2026-11-28; carries out D105 and D109 for Linux). The XKB target: fields and default rules.** `targets.xkb`
 (SPEC §16.5) holds what a symbols file, its registry entry and its Compose file need beyond the general data: the
 names (`symbolsName`, `variant`, `description`, `shortDescription`, `languages`), how characters are written

@@ -119,8 +119,8 @@ A bundle may hold several layouts (TN2056); a `.kbl.json` file is one layout, so
    with normalisation would change them (`a` + U+0301 into U+00E1).
 3. The importer pins what the build would otherwise decide from defaults: `layoutName`, `group`, `id`,
    `hardwareRanges`, `commandMap`, `controlMap`, `deadKeys.<id>.state`, and `maxout` when the file's value is at
-   least what rule `maxout` gives (files with `maxout="1"` and terminators exist and work, so a smaller value is not
-   pinned; whether macOS counts the terminator against `maxout` is unmeasured, `targets/macos.md` §8).
+   least what rule `maxout` gives (macOS applies `maxout` to each output separately, `targets/macos.md` §5; a
+   smaller value would make the build report `macos.outputBeyondMaxout`, so it is not pinned).
 4. Positions get no `scanCode` (a `.keylayout` has none); a Windows build of the imported file needs them added.
 5. A file the importer writes and the build then turns back into a `.keylayout` gives the same key maps, actions and
    terminators up to the details of `macos.xmlDetailsIgnored`, except what the import reported as a loss.

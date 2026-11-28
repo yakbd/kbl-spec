@@ -134,3 +134,11 @@ No layout of a distribution was copied. The decisions D135 to D142 and the Linux
 |---|---|---|
 | xkeyboard-config 2.42 and 2.49 as installed in the check's containers (Debian 13, Arch Linux): `symbols/pc`, `symbols/keypad`, and the keymap `xkbcli compile-keymap` gives a layout without keys | which keys the system defines and with how many levels and which type (`CTRL+ALT` on F1 to F12 and the number-pad operators, four levels on `<LSGT>`), D146 | MIT/X11 notices; names and values only |
 | Measurements in those containers (libxkbcommon 1.7.0 and 1.13.2 `xkbcli`, Xvfb 21.1 with `setxkbmap` and `xkbcomp`) and `yakbd/yakbd-cli` `tools/xkb-check/` (MIT-0, this project) | `NoSymbol` levels filled from the system key, `VoidSymbol` kept, X11 refusals and what loads (D146); GTK 4 on X11 and Caps Lock (D148) | MIT-0, this project |
+
+### macOS follow-ups (D128 to D130)
+
+| source | read for | licence |
+|---|---|---|
+| Apple, TN2056 (as listed above), the `<when>` and `<terminators>` sections, read again 2026-11-28 | that a `<when>` needs `output` or `next`, that `next` defaults to the base state, that a terminator has only an output (D129) | Apple's archived documentation, read only |
+| `.keylayout` files that use an empty `output=""`: Kiimo's generated `Manoonchai.keylayout` (commit as above, MIT), `Deutsch (Programmieren).keylayout` of https://github.com/bitboxer/de-coding.keylayout (MIT), `old/AndreiRomanian.keylayout` of https://github.com/ysoftwareab/xkb-for-macos (Unlicense), read 2026-11-28 | that layouts in use write an empty output on keys and in a terminator (D129) | MIT, MIT, Unlicense; read only, nothing copied |
+| `yakbd/yakbd-cli` `tools/macos-check/` (README, the cases `sides`, `gen-pending`, `gen-maxout`, `gen-spacing`, `gen-lproj-*`, `twin-*`; MIT-0) and its runs 46117765009, 46119172899, 46126097229 | the measured facts of D128 to D130 and `targets/macos.md` §8 | MIT-0, this project |

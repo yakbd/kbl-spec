@@ -33,7 +33,7 @@ harness). Nothing here is taken from Apple's own layouts.
 | `bundleVersion` | the leading `a`, `a.b` or `a.b.c` digits of `metadata.version`; `1.0` if there are none | `bundleVersion` | 5 |
 | `group` | `126` (Unicode) | `group` | 5 |
 | `keyboardId` | −2 − (FNV-1a 32 of the UTF-8 input-source id, mod 32767): a number from −32768 to −2 | `id` | 5 |
-| `maxout` | the longest terminator output plus the longest key or `when` output, in UTF-16 units (at least 1) | `maxout` | 5 |
+| `maxout` | the longest single output in UTF-16 units: a terminator, a key or a `when` output (at least 1) | `maxout` | 5 |
 | `hardwareRanges` | one `<layout first="0" last="255">` | `hardwareRanges` | 3 |
 | `keyCode` | key code per position from `targets/macos-default-keycode.tsv` | `keys.<p>.keyCode` | 2 |
 | `isoKeys` | when a layer binds `IntlBackslash`: `Backquote` on 10 and `IntlBackslash` on 50 (the table's two codes swapped) | `keys.<p>.keyCode` of either | 2 |
@@ -92,8 +92,10 @@ every combination explicitly, so the order of `keyMapSelect` elements (later one
   `resolve()`. So Caps Lock behaviour per key, `capsLockFallback`, an explicit nothing (`{"output": ""}`) and
   Caps Lock layers of any shape are all expressed exactly; there is no Caps Lock loss (D122).
 - **`["other"]`** layers are compiled through `resolve()` like any other layer.
-- **Sides.** TN2056 has words for the right-hand keys (`rightShift`, `rightOption`, `rightControl`); whether macOS
-  delivers right-hand states to a layout is **unmeasured**, so the build uses only the "any" words. A layer with
+- **Sides.** TN2056 has words for the right-hand keys (`rightShift`, `rightOption`, `rightControl`), but macOS hands a
+  layout the right-hand modifiers as the left-hand state: Right Shift selects the key map of `shift`, Right Option that
+  of `option` **[MAC run 46117765009]** (posted events carrying the right-hand device bit, not real hardware; D130). A
+  layout cannot tell the sides apart, so the build uses only the "any" words. A layer with
   `ctrlL`, `ctrlR`, `altL` or `altR` is built for either side: its sets are read with `ctrl` and `alt` instead, and
   the build reports `macos.sideModifierWidened`. Where two layers then serve the same state, the earlier layer
   wins.
@@ -154,7 +156,7 @@ the key acts as in `none` (TN2056, its dead-key example).
 | `spacing` with `noMatch` `emitBoth` | `<terminators><when state="D" output="spacing"/>` |
 | `noMatch` `emitText` | no terminator for D: the machine returns to `none` and the key types its own output (TN2056) |
 | `noMatch` `emitSpacing` | terminator `spacing`, and every key that has an output in some key map gets `<when state="D" output="spacing"/>` in its action |
-| `noMatch` `emitNothing` | no terminator, and every such key gets `<when state="D" next="none"/>` (**unmeasured**) |
+| `noMatch` `emitNothing` | no terminator, and every such key gets `<when state="D" output=""/>`: it types nothing and the machine returns to `none` **[MAC run 46126097229]** (D129) |
 | dead key E pressed while D is pending, D has no entry for E | E's action gets `<when state="D" …>` with D's `noMatch` applied to T = `spacing(E)` (`emitBoth`: output `spacing(D)` + `spacing(E)`), and E does **not** become pending, as §14.2 says; without it macOS would emit D's terminator and make E pending (TN2056) |
 | the backspace action (U+0008) | the Delete key's output U+0008 is input like any other; `noMatch` applies to it |
 
@@ -164,8 +166,13 @@ the key acts as in `none` (TN2056, its dead-key example).
 - The rows that give keys extra `when` elements for `noMatch` (`emitSpacing`, `emitNothing`, a dead key pressed
   while another is pending) report one `macos.deadKeyNoMatchExpanded` per build, the dead keys in `detail`.
 - Two dead keys with the same state name, or a pinned state name `none` (the base state): `macos.stateNameDuplicate`.
-- **Unmeasured:** a key with no output while a state is pending. The model leaves D pending (§14.2, "nothing"); the
-  build writes nothing for such a key, and what macOS does then is to be measured (§8).
+- **Empty outputs.** Every empty output of a `when` (`emitNothing`, an empty spacing or result) is written as
+  `output=""`. A `when` with only `next="none"`, or with only a `next` that names a state no `when` or terminator
+  defines, makes the system reject the whole layout: it is never listed **[MAC run 46126097229]** (D129).
+- **A key with no output while a state is pending** (a key code without a key in that key map, as a position without
+  a binding or an explicit nothing gives): macOS emits D's terminator and returns to `none` **[MAC run 46126097229]**,
+  while the model leaves D pending (§14.2, "nothing"). The build writes nothing for such a key and so differs from
+  the model there (D130).
 - **Normalisation** (SPEC §5): macOS does not normalise while typing, so a build does what a Windows build does
   (`targets/windows.md` §6): with `normalization` `enabled` every output is NFC-normalised at build time, each changed
   output reports `general.outputNormalized`, and the build reports `general.normalizationNotApplied` once.
@@ -187,10 +194,11 @@ references (TN2056). U+0000 and CodeUnits that are not well-formed UTF-16 cannot
 - **`group`** 126 and a negative **`id`** mark a Unicode layout (TN2056; the system renumbers on a clash). Rule
   `keyboardId` hashes the input-source id with FNV-1a (32-bit, offset basis 2166136261, prime 16777619, over the
   UTF-8 bytes) so that the same file always gets the same id.
-- **`maxout`** counts what one key press can emit (TN2056): a terminator and then the key's own output
-  (TN2056's dead-key example), so the rule adds the longest terminator output (0 without terminators) to the
-  longest key or `when` output. Whether the system applies `maxout` to the terminator and the output together or
-  to each is **unmeasured** (§8); the rule is safe either way.
+- **`maxout`** bounds the outputs of the file (TN2056). One key press can emit a terminator and then the key's own
+  output (TN2056's dead-key example), but macOS applies `maxout` to each output separately: with `maxout` 2, a
+  terminator of one unit and a key output of two units are both typed in one press **[MAC runs 46119172899,
+  46126097229]** (D128). So the rule takes the longest single output (a terminator, a key or a `when` output), and
+  `macos.outputBeyondMaxout` is reported when one output is longer than a pinned `maxout`.
 
 **The bundle** (TN2056, "Localized XML Keyboard Bundle"; the `Info.plist` keys **[pub]** Kiimo, **[MAC run
 46105185134]**):
@@ -206,9 +214,9 @@ references (TN2056). U+0000 and CodeUnits that are not well-formed UTF-16 cannot
 `CFBundleShortVersionString` and `CFBundleVersion` = `bundleVersion`, and `KLInfo_<layoutName>`, a dictionary
 with `TISInputSourceID` = `inputSourceId`, `TISIntendedLanguage` = `language`, and `TISIconIsTemplate` =
 `icon.template` when there is an icon. Each `InfoPlist.strings` holds the one line
-`"<layoutName>" = "<localised name>";` (TN2056), with `"` and `\` escaped by `\`; the file is written in UTF-8, which
-is this specification's choice (**unmeasured**, §8). The `.icns` file is
-`icon.icns` decoded. Whether a hyphenated tag folder (`pt-BR.lproj`) is used for the name is **unmeasured**.
+`"<layoutName>" = "<localised name>";` (TN2056), with `"` and `\` escaped by `\`; the file is written in UTF-8. Both a
+hyphenated tag folder (`en-US.lproj`) and a UTF-8 `InfoPlist.strings` with letters outside ASCII are used for the
+shown name **[MAC run 46117765009]** (session language `en-US`; D130). The `.icns` file is `icon.icns` decoded.
 
 **Installation** (TN2056 for the folders):
 
@@ -248,12 +256,21 @@ part of a `.keylayout` (`general.touchDropped`, `general.displayDropped`, `gener
 `general.extensionDropped`); `metadata` beyond the names and the version reports `general.metadataDropped`. A file
 without hardware layers fails with `macos.noHardwareLayers`.
 
-## 8. Unmeasured (informative)
+## 8. Measured and unmeasured (informative)
 
-The rules marked **unmeasured** above, as cases for the macOS verification harness (`yakbd/yakbd-cli`,
-`tools/macos-check/`): (1) a key with no output pressed while a dead-key state is pending; (2) `<when state="D"
-next="none"/>` with no output; (3) whether right-hand modifier words reach a layout; (4) a localised name from a
-hyphenated `.lproj` folder and from a UTF-8 `InfoPlist.strings`; (5) adding the layout by hand in System Settings without signing out; (6) the ISO
-swap of codes 10 and 50, which needs real ISO hardware (a runner types by key code and cannot show it); (7) `maxout` with a dead key
-followed by a multi-unit key (terminator and output in one press). A measured
-result is recorded here with its run and, where it changes a rule, in `DECISIONS.md`.
+The cases of the macOS verification harness (`yakbd/yakbd-cli`, `tools/macos-check/`), with their results:
+
+1. A key with no output pressed while a dead-key state is pending: macOS emits the terminator and returns to the
+   base state, unlike the model (§4) **[MAC run 46126097229]**.
+2. `<when state="D" next="none"/>` with no output: the layout is rejected (not listed); `output=""` works (§4)
+   **[MAC runs 46117765009, 46119172899, 46126097229]**.
+3. Right-hand modifier words: right-hand keys reach the layout as the left-hand state (§3) **[MAC run
+   46117765009]**, measured with posted events, not real hardware.
+4. A localised name from a hyphenated `.lproj` folder and from a UTF-8 `InfoPlist.strings`: both used (§5) **[MAC
+   run 46117765009]**.
+5. Adding the layout by hand in System Settings without signing out: **unmeasured** (the UI path is not scripted).
+6. The ISO swap of codes 10 and 50: **unmeasured**; it needs real ISO hardware (a runner types by key code).
+7. `maxout` with a dead key followed by a multi-unit key: applied to each output, not to the terminator and the
+   output together (§5) **[MAC runs 46119172899, 46126097229]**.
+
+A measured result is recorded here with its run and, where it changes a rule, in `DECISIONS.md`.

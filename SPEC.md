@@ -627,7 +627,7 @@ use is reported as `macosDefault.<rule>`.
 | `icon` | `{ "icns": base64, "template"?: boolean }` | the layout's icon, `Resources/<layoutName>.icns`, held in the file (§1, self-contained); `template` is `TISIconIsTemplate`. No default: without it the system shows its generic icon |
 | `group` | integer 0–32767 | `keyboard/@group`, the script code; 126 is Unicode (rule `group`) |
 | `id` | integer (32-bit signed) | `keyboard/@id`; Unicode layouts use negative ids (rule `keyboardId`) |
-| `maxout` | integer 1–65535 | `keyboard/@maxout`, the most UTF-16 units one key press emits (rule `maxout`) |
+| `maxout` | integer 1–65535 | `keyboard/@maxout`, the most UTF-16 units of one output; a terminator and the key output that follows it count separately (rule `maxout`) |
 | `hardwareRanges` | array of `{ "first": 0–255, "last": 0–255 }` | the `<layout>` elements, in order, each selecting the one key map set for the hardware keyboard types `first` … `last` (rule `hardwareRanges`) |
 | `keys` | object PositionId → `{ "keyCode": integer 0–255 }` | the virtual key code of each position, `key/@code` (rules `keyCode`, `isoKeys`) |
 | `standardKeys` | boolean | `true`: standard keys the file leaves unbound in a state (Return, Tab, Delete, Escape, arrows, …) get the outputs of the position table (rule `standardKeys`, default `true`) |
