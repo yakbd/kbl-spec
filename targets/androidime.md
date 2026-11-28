@@ -158,8 +158,15 @@ flick paths of more than one direction (`androidime.flickPathDropped`); `tests` 
 
 ## 8. Measured and unmeasured (informative)
 
-Not yet measured, for the emulator cases of the runtime: the APK installs on API 34–36 and two such APKs with
-different package names install side by side; `ime enable` / `ime set` select it headless; taps at the rectangles
-the runtime reports type the expected text through the touch layers; physical key events from a `uinput` keyboard
-reach the runtime and type the hardware layers; the next-keyboard key follows
+Measured with a test input method built by `aapt2` (not yet the YAKBD runtime) on emulators of API 34, 35 and 36 by
+the Android layout check of `yakbd/yakbd-cli` (`tools/android-check/`, 2026-11-28): `ime enable` / `ime set`
+select an input method headless; `adb shell input tap` at key rectangles the input method reports itself types
+through its keys on all three (on API 36 the navigation bar once covered the bottom-right key: a runtime places its
+keys inside the window insets); right after install, API 34 may not
+yet know the input method (wait for it before enabling); key events of a physical keyboard reach the input method's
+`onKeyDown` with their character.
+
+Not yet measured, for the emulator cases of the runtime: the repackaged runtime APK installs, and two such APKs with
+different package names install side by side; the touch runtime file's keys type the expected text; physical keys
+type the hardware map of `targets/touch-runtime.md` §6; the next-keyboard key follows
 `shouldOfferSwitchingToNextInputMethod`.
