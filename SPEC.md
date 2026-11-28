@@ -60,7 +60,8 @@ schemas `schema/0.1/kbl.schema.json` and `schema/0.2/kbl.schema.json` are not ch
   0.2 files as well, and reads such a file exactly as the 0.3 file it becomes when its `kbl` is changed.
 - **Writing.** A tool SHOULD write the lowest version that holds what it writes, so that a file stays readable by
   older tools: a file is written as 0.3 when it uses a member or loss kind that only 0.3 has (`targets.android`,
-  `targets.androidime`, `targets.ios`, `targets.chromeos`, `targets.keyman`, a 0.3 touch member, a kind of a
+  `targets.androidime`, `targets.ios`, `targets.chromeos`, `targets.keyman`, a 0.3 touch member of §8 or §9.4
+  (the `function` value `nextKeyboard` included), a kind of a
   0.3 family (`android`, `androidDefault`, `androidime`, `androidimeDefault`, `ios`, `iosDefault`,
   `chromeos`, `chromeosDefault`, `keyman`, `keymanDefault`, `kbdgen`, `kmn`, `keymantouch`) or a 0.3 kind of
   §17.3, or a 0.3 provenance format); otherwise as 0.2 when it uses `targets.macos`, `targets.xkb`, a kind of a 0.2
@@ -274,7 +275,8 @@ Hardware layers may refer to keys (§9.2); touch rows always do.
 | `longPressKeyIds` | array of KeyId | long-press choices, in order (CLDR `key/@longPressKeyIds`) |
 | `longPressDefaultKeyId` | KeyId | the default long-press choice; MUST be in `longPressKeyIds` |
 | `multiTapKeyIds` | array of KeyId | key emitted by 2, 3, … quick taps (CLDR `key/@multiTapKeyIds`); MUST NOT contain the key itself |
-| `function` | `backspace`, `enter`, `tab`, `escape`, `shift`, `capsLock`, `space` | informative identity of a touch key that CLDR cannot express ("this key is Backspace"). A key with `function: "backspace"` and no `output` performs the backspace action (§14.3) |
+| `function` | `backspace`, `enter`, `tab`, `escape`, `shift`, `capsLock`, `space`; 0.3 also `nextKeyboard` | informative identity of a touch key that CLDR cannot express ("this key is Backspace"). A key with `function: "backspace"` and no `output` performs the backspace action (§14.3); what the other functions do without an `output` is in §14.4. `nextKeyboard` (0.3) is the key that switches to the next keyboard or input method of the system (the globe key) |
+| `hint` | Text | 0.3: a small secondary label on the touch key cap (in a corner, as phones show the long-press default or a digit); display only, never typed. No default: without it there is no hint |
 
 A key with none of `output`, `deadKey`, `gap`, `layerId`, `function` is an error (CLDR requires one of the first
 four).
@@ -347,18 +349,42 @@ for unlisted keys sets its `fallback` (or `settings.capsLockFallback`) to `false
 ### 9.4 `touch`
 
 Array of TouchLayerSet, each a touch layout for devices at least `minDeviceWidth` millimetres wide (CLDR
-`layers formId="touch"`). At most one set may omit `minDeviceWidth`; widths are distinct.
+`layers formId="touch"`). At most one set may omit `minDeviceWidth`; widths are distinct. In 0.3, where sets may
+name an `orientation`, the rule is per orientation: no two sets have the same `minDeviceWidth` (or both none) and
+the same `orientation` (or both none).
 
 | property | type | req. | meaning |
 |---|---|---|---|
-| `minDeviceWidth` | integer 1–999 | no | |
+| `minDeviceWidth` | integer 1–999 | no | the shorter side of the screen, in millimetres, from which the set applies (§14.4) |
 | `layers` | array of TouchLayer | **yes** | one of them has `id` `base` |
+| `orientation` | `portrait`, `landscape` | no | 0.3: the set is only for this screen orientation. Default: both |
+| `deviceClass` | `phone`, `tablet` | no | 0.3: a label naming the kind of device the set is for, for formats and targets that sort layouts by device class (kbdgen, Keyman). It never changes which set is chosen (§14.4). No default in the file; a writer that needs a class and finds none derives it (below) |
+| `systemRow` | boolean | no | 0.3: `true`: the layers' rows leave out the bottom row of next-keyboard, layer-switch, space and enter keys, and the target adds the platform's own bottom row below the rows of every layer (what that row holds: the target's document). Default `false`: the rows are the whole layout |
 | `cldrSpecial` | array of string | no | |
 
 TouchLayer: `id` (LayerId, **required**), `modifiers` (array of modifier set, optional), `rows` (**required**:
-array of rows, each an array of KeyId), `cldrSpecial`. Layer switching is by keys with `layerId`. When no touch set
-fits, an implementation MAY show the hardware layers as a touch layout, with the layer whose modifier set is empty
-as the base layer (CLDR rule).
+array of rows, each an array of KeyId), `cldrSpecial`, and in 0.3:
+
+| property | type | meaning |
+|---|---|---|
+| `rowHeights` | array of number 0.01–100 | the height of each row, in order, relative to the others (a row of height 2 is twice as tall as one of height 1). Exactly one entry per row (§19, `general.rowHeightsMismatch`). Default: every row 1 |
+| `returnLayerId` | LayerId of the same set | after a key of this layer that has no `layerId` of its own is pressed, the layout switches to this layer: a one-shot layer, such as the shift layer that returns to `base` after one letter (§14.4). Default: none, the layer stays |
+
+Layer switching is by keys with `layerId` (and, in 0.3, a layer's `returnLayerId`). Caps lock on a touch layout is
+written with what keys already have (§14.4): the shift key switches to the shift layer and lists, as its
+`multiTapKeyIds`, a key with `function: "capsLock"` whose `layerId` is a caps layer without `returnLayerId`.
+When no touch set fits, an implementation MAY show the hardware layers as a touch layout, with the layer whose
+modifier set is empty as the base layer (CLDR rule).
+
+**Key heights and widths** (0.3). Widths are in key units (§8). The widest row of a layer fills the width the
+keyboard has, so one key unit is that width divided by the widest row's total; in a shorter row the space left over
+goes to its `stretch` keys in proportion to their widths, or, when it has none, is split equally before and after
+the row. Heights are relative only: the target chooses the keyboard's height (the platform's own, or what the user
+set), and the rows share it in proportion to `rowHeights`. A key never spans several rows.
+
+**Device class** (0.3). Where a writer needs a device class and the set has no `deviceClass`, it takes `tablet`
+when `minDeviceWidth` is 90 or more, otherwise `phone` (90 mm is about the shorter side of a 7-inch tablet), and
+reports `general.deviceClassDerived`. The rule is knowingly simple; a file that cares sets `deviceClass`.
 
 ## 10. `deadKeys`
 
@@ -499,7 +525,37 @@ U+0008 to the application instead (Windows) is equivalent for applications that 
 ### 14.4 Touch
 
 A touch key press emits the Key's output or dead key, then switches layers if `layerId` is set. Flicks, long-presses
-and multi-taps emit the chosen Key the same way.
+and multi-taps emit the chosen Key the same way. In full (0.3; the first two sentences are the whole rule of 0.1 and
+0.2, which the rest spells out without changing it):
+
+1. **Choosing the set.** Let W be the shorter side of the screen in millimetres and O the current orientation. The
+   candidates are the sets whose `orientation` is O or absent and whose `minDeviceWidth` is at most W or absent.
+   The set with the largest `minDeviceWidth` wins (absent counts as 0); of two with the same width, the one that
+   names O wins. With no candidate, the hardware layers may be shown (§9.4). The set is chosen again when W or O
+   changes; the layer then starts again at `base`.
+2. **Layout.** The current layer starts as `base`. Its rows are laid out as §9.4 says; with `systemRow` the
+   target adds its bottom row. A `gap` key takes its width and does nothing. A key cap shows the key's display
+   (§12), else its output; a function key without either shows the target's own symbol; `hint` is drawn small.
+3. **A press** of key K (a tap; or the key chosen by a flick, long-press or multi-tap, whose own gestures are then
+   ignored, §11) does, in order:
+   - its input: K's `output`, or its dead key, goes into the dead-key machine of §14.2 and on to the transforms,
+     exactly as a hardware binding does. Without either, K's `function` acts: `backspace` is the backspace action
+     (§14.3); `enter`, `tab`, `escape` and `space` send the platform's Return (or the field's own action), Tab,
+     Escape and space; `nextKeyboard` switches to the next keyboard of the system and ends the press; `shift` and
+     `capsLock` give no input, only their layer switch;
+   - its layer switch: to K's `layerId` when it has one; otherwise to the current layer's `returnLayerId` when
+     that is set; otherwise the layer stays.
+4. **Long press** offers `longPressKeyIds` in order, with `longPressDefaultKeyId` preselected; releasing on a
+   choice presses that key (step 3); releasing outside presses nothing.
+5. **Multi-tap.** Quick taps on the same key form one sequence: the second tap presses `multiTapKeyIds[0]`, the third
+   `multiTapKeyIds[1]`, and so on, each replacing the text the previous tap of the sequence emitted. When the first
+   tap switched layers, a tap at the same place on the new layer still continues the sequence. So a shift key with
+   `layerId: "shift"` and `multiTapKeyIds: ["capsLock"]` gives one-shot shift on one tap (the shift layer has
+   `returnLayerId: "base"`) and caps lock on a double tap (the key `capsLock` has `function: "capsLock"` and
+   `layerId: "caps"`, a layer without `returnLayerId`). How quick a quick tap is, is the target's choice.
+6. **Touch layers and modifiers.** A touch layer's `modifiers` say which modifier state the layer stands for (as in
+   CLDR). They do not change what its keys emit, which is always the key's own output; a target may use them to
+   show the layer while a physical modifier is held.
 
 ## 15. `tests`
 
@@ -822,6 +878,8 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `general.normalizationNotApplied` | accept | `settings.normalization` is `enabled` and the target does not normalise while typing: each output was NFC-normalised at build time, but text that several keystrokes make together is not (D73) |
 | `general.outputNormalized` | accept | an output was changed by build-time NFC (D72, D73): one entry per changed output, its path and the text before and after in `detail`; a Windows limit the normalised output then exceeds reports its own kind |
 | `general.touchDropped` | accept | touch layer sets, flicks, long-press and multi-tap are not part of the output |
+| `general.deviceClassDerived` | accept | a writer needed a device class for a touch set without `deviceClass` and derived it from `minDeviceWidth` (§9.4; the class in `detail.value`) (0.3) |
+| `general.rowHeightsMismatch` | error | a touch layer's `rowHeights` does not have exactly one entry per row (0.3) |
 | `general.displayDropped` | accept | `displays` not part of the output |
 | `general.testsDropped` | accept | `tests` not part of the output |
 | `general.extensionDropped` | accept | `extensions` or `cldrSpecial` not part of the output |
@@ -896,6 +954,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `cldr.positionNotInForm` | error | a bound position has no place in the hardware form's rows |
 | `cldr.customForm` | warning | the form is not one of CLDR's implied forms (CLDR's repository refuses such files) |
 | `cldr.keyIdGenerated` | accept | key ids were invented for bindings that had none |
+| `cldr.touchDataDropped` | warning | touch data CLDR elements cannot hold: a key's `function` or `hint`, a layer's `rowHeights` or `returnLayerId`, a set's `orientation`, `deviceClass` or `systemRow`; carried in `<special>` when `carryInSpecial` (0.3) |
 | `macos.noHardwareLayers` | error | the file has no hardware layers (a touch-only keyboard): the layout would hold only the standard keys (0.2) |
 | `macos.keyCodeMissing` | error | a position with bindings has no key code (no pin, no row of `targets/macos-default-keycode.tsv`) and is not a position of another target's table (`macos.positionWithoutKey`) |
 | `macos.positionWithoutKey` | warning | a position with bindings that the position table of another target has (`Break`, `SysRq`, `PrintScreen`, media keys) and this target's table has not: the macOS build has no key for it, and its bindings are left out (`targets/macos.md` §2) |
@@ -992,7 +1051,9 @@ A validator MUST check, and report with the kinds given:
    `longPressDefaultKeyId` inside `longPressKeyIds` (`general.longPressDefaultInvalid`), a key not in its own
    `multiTapKeyIds` (`general.multiTapSelf`);
 4. no binding on a position that operates a modifier (`general.bindingOnModifier`);
-5. a touch set has a layer `base` (`general.touchBaseMissing`);
+5. a touch set has a layer `base` (`general.touchBaseMissing`); a layer's `returnLayerId` names a layer of the same
+   set (`general.unresolvedReference`); a layer's `rowHeights` has one entry per row (`general.rowHeightsMismatch`,
+   0.3);
 6. a CodeUnits value that is a valid sequence of whole characters should be a Text (`general.codeUnitsAreText`).
 
 ---

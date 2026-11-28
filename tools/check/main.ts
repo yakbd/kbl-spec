@@ -20,6 +20,7 @@
 //  8. each version holds the older ones: every example and valid case of a version, with `kbl` and `$schema`
 //     changed to a later version, is accepted by both schemas of that version.
 //
+// Check 6 also covers the 0.3 touch rules of §19 item 5 (returnLayerId in its set, one rowHeights entry per row).
 // The SPEC §19 rules are checked here, not in the schema: they relate parts of a file to each other.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -238,12 +239,19 @@ function refs(doc: Obj, name: string, specKinds: Set<string>) {
   }
   for (const t of arr(doc.touch)) {
     let hasBase = false;
+    const ids = new Set(arr(obj(t).layers).map((l) => str(obj(l).id)));
     for (const l of arr(obj(t).layers)) {
       const id = str(obj(l).id);
       hasBase ||= id === "base";
       for (const row of arr(obj(l).rows)) {
         for (const k of arr(row)) keyOK(str(k), `touch layer ${id}`);
       }
+      const back = obj(l).returnLayerId;
+      if (back !== undefined && !ids.has(str(back)))
+        errf(`${name}: touch layer ${id}: returnLayerId ${str(back)} is not a layer of its set`);
+      const heights = obj(l).rowHeights;
+      if (heights !== undefined && arr(heights).length !== arr(obj(l).rows).length)
+        errf(`${name}: touch layer ${id}: rowHeights has ${arr(heights).length} entries for ${arr(obj(l).rows).length} rows`);
     }
     if (!hasBase) errf(`${name}: touch set without layer base`);
   }

@@ -395,7 +395,11 @@ const lossKindsXkb = [
 // that 0.3 adds to the older families (`general`, `cldr`) for the touch core are in `lossKindsCore03`.
 
 /** 0.3: kinds of the touch core (SPEC §9.4, §14.4) in the families `general` and `cldr`. Owner: the spec core. */
-export const lossKindsCore03 = [] as const;
+export const lossKindsCore03 = [
+  "cldr.touchDataDropped",
+  "general.deviceClassDerived",
+  "general.rowHeightsMismatch",
+] as const;
 
 /** 0.3: the Android physical-keyboard target (`.kcm`; targets/android.md, coverage/kcm.md). Owner: the kcm work. */
 const lossKindsAndroid = ["android.*", "androidDefault.*"] as const;
@@ -628,48 +632,65 @@ const CustomModifiers = z
   )
   .meta({ description: "Custom modifier components (SPEC §7.2)." });
 
-const KeysEntry = z
-  .strictObject({
-    output: MarkedText.meta({ description: "Emitted text (CLDR key/@output)." }).optional(),
-    deadKey: Id.meta({ description: "The key is this dead key." }).optional(),
-    gap: z.literal(true).meta({ description: "The key is empty space (CLDR key/@gap)." }).optional(),
-    width: z
-      .number()
-      .min(0.01)
-      .max(100)
-      .meta({ description: "Width in key units, default 1 (CLDR key/@width)." })
-      .optional(),
-    stretch: z.literal(true).meta({ description: "May be stretched in a touch row (CLDR key/@stretch)." }).optional(),
-    layerId: Id.meta({ description: "Switches the touch layout to this layer (CLDR key/@layerId)." }).optional(),
-    flickId: Id.meta({ description: "The key's flicks (CLDR key/@flickId)." }).optional(),
-    longPressKeyIds: z.array(Id).min(1).meta({ description: "Long-press choices in order." }).optional(),
-    longPressDefaultKeyId: Id.meta({ description: "Default long-press choice." }).optional(),
-    multiTapKeyIds: z.array(Id).min(1).meta({ description: "Keys for 2, 3, … taps." }).optional(),
-    function: z
-      .enum(["backspace", "enter", "tab", "escape", "shift", "capsLock", "space"])
-      .meta({ description: "Informative identity of a touch key." })
-      .optional(),
-  })
-  .refine((key) => ["output", "deadKey", "gap", "layerId", "function"].some((k) => has(key, k)), {
-    error: "a key needs output, deadKey, gap, layerId or function",
-  })
-  .refine((key) => !(has(key, "output") && has(key, "deadKey")), {
-    error: "a key has output or deadKey, not both",
-    path: ["deadKey"],
-  })
-  .meta({
-    description: "A CLDR key: an output with gestures (SPEC §8).",
-    anyOf: [
-      { required: ["output"] },
-      { required: ["deadKey"] },
-      { required: ["gap"] },
-      { required: ["layerId"] },
-      { required: ["function"] },
-    ],
-    not: { required: ["output", "deadKey"] },
-  });
+/** Whether version `v` has the touch core of 0.3 (SPEC §8, §9.4, §14.4; D152). */
+const touchCore = (v: string) => v !== "0.1" && v !== "0.2";
 
-const Keys = z.record(Id, KeysEntry).meta({ description: "CLDR's bag of keys by KeyId (SPEC §8)." });
+/** The `function` values of a key: 0.3 adds `nextKeyboard` (D153). */
+const keyFunctions01 = ["backspace", "enter", "tab", "escape", "shift", "capsLock", "space"] as const;
+const keyFunctions03 = [...keyFunctions01, "nextKeyboard"] as const;
+
+/** A key of `keys` in version `v`; 0.3 adds `hint` and the `function` value `nextKeyboard`. */
+const keysEntry = (v: string) =>
+  z
+    .strictObject({
+      output: MarkedText.meta({ description: "Emitted text (CLDR key/@output)." }).optional(),
+      deadKey: Id.meta({ description: "The key is this dead key." }).optional(),
+      gap: z.literal(true).meta({ description: "The key is empty space (CLDR key/@gap)." }).optional(),
+      width: z
+        .number()
+        .min(0.01)
+        .max(100)
+        .meta({ description: "Width in key units, default 1 (CLDR key/@width)." })
+        .optional(),
+      stretch: z.literal(true).meta({ description: "May be stretched in a touch row (CLDR key/@stretch)." }).optional(),
+      layerId: Id.meta({ description: "Switches the touch layout to this layer (CLDR key/@layerId)." }).optional(),
+      flickId: Id.meta({ description: "The key's flicks (CLDR key/@flickId)." }).optional(),
+      longPressKeyIds: z.array(Id).min(1).meta({ description: "Long-press choices in order." }).optional(),
+      longPressDefaultKeyId: Id.meta({ description: "Default long-press choice." }).optional(),
+      multiTapKeyIds: z.array(Id).min(1).meta({ description: "Keys for 2, 3, … taps." }).optional(),
+      function: z
+        .enum(touchCore(v) ? keyFunctions03 : keyFunctions01)
+        .meta({ description: "Informative identity of a touch key." })
+        .optional(),
+      ...(touchCore(v)
+        ? {
+            hint: Text.meta({
+              description: "0.3: a small secondary label on the touch key cap, such as its long-press default.",
+            }).optional(),
+          }
+        : {}),
+    })
+    .refine((key) => ["output", "deadKey", "gap", "layerId", "function"].some((k) => has(key, k)), {
+      error: "a key needs output, deadKey, gap, layerId or function",
+    })
+    .refine((key) => !(has(key, "output") && has(key, "deadKey")), {
+      error: "a key has output or deadKey, not both",
+      path: ["deadKey"],
+    })
+    .meta({
+      description: "A CLDR key: an output with gestures (SPEC §8).",
+      anyOf: [
+        { required: ["output"] },
+        { required: ["deadKey"] },
+        { required: ["gap"] },
+        { required: ["layerId"] },
+        { required: ["function"] },
+      ],
+      not: { required: ["output", "deadKey"] },
+    });
+
+const keys = (v: string) =>
+  z.record(Id, keysEntry(v)).meta({ description: "CLDR's bag of keys by KeyId (SPEC §8)." });
 
 const HardwareLayers = z
   .strictObject({
@@ -696,25 +717,61 @@ const Hardware = z
   })
   .meta({ description: "The physical keyboard's layers (SPEC §9.1)." });
 
-const TouchLayers = z
-  .strictObject({
-    id: Id.meta({ description: "Layer id; one layer of a set is base." }),
-    modifiers: Modifiers.meta({ description: "Optional modifier sets." }).optional(),
-    rows: z
-      .array(z.array(Id).meta({ description: "One row." }))
-      .min(1)
-      .meta({ description: "Rows of KeyIds." }),
-    cldrSpecial: cldrSpecial("this layer").optional(),
-  })
-  .meta({ description: "A touch layer (SPEC §9.4)." });
+/** A touch layer in version `v`; 0.3 adds `rowHeights` and `returnLayerId`. */
+const touchLayers = (v: string) =>
+  z
+    .strictObject({
+      id: Id.meta({ description: "Layer id; one layer of a set is base." }),
+      modifiers: Modifiers.meta({ description: "Optional modifier sets." }).optional(),
+      rows: z
+        .array(z.array(Id).meta({ description: "One row." }))
+        .min(1)
+        .meta({ description: "Rows of KeyIds." }),
+      cldrSpecial: cldrSpecial("this layer").optional(),
+      ...(touchCore(v)
+        ? {
+            rowHeights: z
+              .array(
+                z.number().min(0.01).max(100).meta({ description: "Height of one row, relative to the others." }),
+              )
+              .min(1)
+              .meta({ description: "0.3: the height of each row, in order, relative to each other; default 1 each." })
+              .optional(),
+            returnLayerId: Id.meta({
+              description: "0.3: after a key of this layer without a layerId of its own, switch to this layer.",
+            }).optional(),
+          }
+        : {}),
+    })
+    .meta({ description: "A touch layer (SPEC §9.4)." });
 
-const Touch = z
-  .strictObject({
-    minDeviceWidth: z.int().min(1).max(999).meta({ description: "Minimum device width in millimetres." }).optional(),
-    layers: z.array(TouchLayers).min(1).meta({ description: "The layers." }),
-    cldrSpecial: cldrSpecial("this layers element").optional(),
-  })
-  .meta({ description: "A touch layer set." });
+/** A touch layer set in version `v`; 0.3 adds `orientation`, `deviceClass` and `systemRow`. */
+const touch = (v: string) =>
+  z
+    .strictObject({
+      minDeviceWidth: z.int().min(1).max(999).meta({ description: "Minimum device width in millimetres." }).optional(),
+      layers: z.array(touchLayers(v)).min(1).meta({ description: "The layers." }),
+      cldrSpecial: cldrSpecial("this layers element").optional(),
+      ...(touchCore(v)
+        ? {
+            orientation: z
+              .enum(["portrait", "landscape"])
+              .meta({ description: "0.3: the screen orientation this set is for; default both." })
+              .optional(),
+            deviceClass: z
+              .enum(["phone", "tablet"])
+              .meta({ description: "0.3: the device class this set is for, a label for formats that name one." })
+              .optional(),
+            systemRow: z
+              .boolean()
+              .meta({
+                description: "0.3: true: the rows leave out the bottom row and the target adds its own. Default false.",
+              })
+              .optional(),
+          }
+        : {}),
+    })
+    .meta({ description: "A touch layer set." });
 
 const DeadKeysEntry = z
   .strictObject({
@@ -1752,9 +1809,9 @@ function kblFile(v: Version) {
       positions: Positions.optional(),
       forms: Forms.optional(),
       customModifiers: CustomModifiers.optional(),
-      keys: Keys.optional(),
+      keys: keys(v).optional(),
       hardware: Hardware.optional(),
-      touch: z.array(Touch).meta({ description: "Touch layouts (SPEC §9.4)." }).optional(),
+      touch: z.array(touch(v)).meta({ description: "Touch layouts (SPEC §9.4)." }).optional(),
       deadKeys: DeadKeys.optional(),
       flicks: Flicks.optional(),
       displays: Displays.optional(),

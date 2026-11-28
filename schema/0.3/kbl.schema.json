@@ -396,9 +396,14 @@
               "escape",
               "shift",
               "capsLock",
-              "space"
+              "space",
+              "nextKeyboard"
             ],
             "description": "Informative identity of a touch key."
+          },
+          "hint": {
+            "description": "0.3: a small secondary label on the touch key cap, such as its long-press default.",
+            "$ref": "#/$defs/Text"
           }
         },
         "additionalProperties": false,
@@ -553,6 +558,21 @@
                     "description": "The XML text of one <special> element."
                   },
                   "description": "Complete XML text of each CLDR <special> element whose parent corresponds to this layer, in document order (SPEC §18)."
+                },
+                "rowHeights": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 100,
+                    "description": "Height of one row, relative to the others."
+                  },
+                  "description": "0.3: the height of each row, in order, relative to each other; default 1 each."
+                },
+                "returnLayerId": {
+                  "description": "0.3: after a key of this layer without a layerId of its own, switch to this layer.",
+                  "$ref": "#/$defs/Id"
                 }
               },
               "required": [
@@ -571,6 +591,26 @@
               "description": "The XML text of one <special> element."
             },
             "description": "Complete XML text of each CLDR <special> element whose parent corresponds to this layers element, in document order (SPEC §18)."
+          },
+          "orientation": {
+            "type": "string",
+            "enum": [
+              "portrait",
+              "landscape"
+            ],
+            "description": "0.3: the screen orientation this set is for; default both."
+          },
+          "deviceClass": {
+            "type": "string",
+            "enum": [
+              "phone",
+              "tablet"
+            ],
+            "description": "0.3: the device class this set is for, a label for formats that name one."
+          },
+          "systemRow": {
+            "type": "boolean",
+            "description": "0.3: true: the rows leave out the bottom row and the target adds its own. Default false."
           }
         },
         "required": [
@@ -3068,6 +3108,9 @@
               "xkbDefault.shortDescription",
               "xkbDefault.symbolsName",
               "xkbDefault.variant",
+              "cldr.touchDataDropped",
+              "general.deviceClassDerived",
+              "general.rowHeightsMismatch",
               "android.*",
               "androidDefault.*",
               "androidime.*",

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json",
+  "kbl": "0.3",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a",
+      "hint": "á",
+      "longPressKeyIds": [
+        "aa"
+      ]
+    },
+    "aa": {
+      "output": "á"
+    },
+    "shift": {
+      "function": "shift",
+      "layerId": "shift"
+    },
+    "globe": {
+      "function": "emoji"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "touch": [
+    {
+      "minDeviceWidth": 90,
+      "orientation": "portrait",
+      "deviceClass": "tablet",
+      "systemRow": true,
+      "layers": [
+        {
+          "id": "base",
+          "rows": [
+            [
+              "a",
+              "shift"
+            ],
+            [
+              "globe"
+            ]
+          ],
+          "rowHeights": [
+            1,
+            1.5
+          ]
+        },
+        {
+          "id": "shift",
+          "modifiers": [
+            [
+              "shift"
+            ]
+          ],
+          "rows": [
+            [
+              "a"
+            ]
+          ],
+          "rowHeights": [
+            1
+          ],
+          "returnLayerId": "base"
+        }
+      ]
+    }
+  ]
+}

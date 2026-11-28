@@ -222,6 +222,8 @@ What CLDR elements cannot hold is written, when `targets.cldr.carryInSpecial` is
 `<special>` element in the namespace `https://yakbd.github.io/kbl-spec/ns/0.1` with the JSON of the properties
 concerned (`settings.capsLockOffBy`, `settings.bidiMarksOnShiftBackspace`, `customModifiers` and the layers that use
 them, CodeUnits bindings, `positions` names and `numLock`, `metadata` fields beyond `info`, `targets`,
-`extensions`); a reader of `.kbl.json`-written CLDR files restores them. Report kinds: `cldr.windowsOnlyDropped`,
+`extensions`, and in 0.3 the touch data of `cldr.touchDataDropped`: `function`, `hint`, `rowHeights`, `returnLayerId`,
+`orientation`, `deviceClass`, `systemRow`); a reader of `.kbl.json`-written CLDR files restores them. Report kinds:
+`cldr.touchDataDropped` (0.3), `cldr.windowsOnlyDropped`,
 `cldr.customModifierDropped` (the layers themselves cannot be written as CLDR layers), `cldr.capsFallbackExpanded`,
 `cldr.positionNotInForm`, `cldr.customForm`, `cldr.keyIdGenerated`, `general.metadataDropped`.

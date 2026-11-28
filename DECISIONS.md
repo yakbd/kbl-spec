@@ -1024,3 +1024,50 @@ physical-key mode reuses the `android` table and the pins `targets.android.keys`
 map positions to key codes the same way. A target page or coverage page may be named after its native format where
 that has a name of its own (`coverage/kcm.md` for `android`). Reason: one mapping per kind of key code (D109);
 a second Android table would be a second source of truth for the same `KEYCODE_*` names.
+
+**D152 (2026-11-28). The touch core of 0.3: what two platforms share, nothing more.** Added, all optional and all
+0.3-only: on a key `hint`; on a touch layer `rowHeights` and `returnLayerId`; on a touch set `orientation`,
+`deviceClass` and `systemRow`; the `function` value `nextKeyboard` (D153). The test for a member was that at least
+two of the touch platforms and formats of this version carry the concept (Android's own keyboard and Divvun's
+keyboards, the iOS keyboard extension, Keyman touch layouts, kbdgen bundles): row heights (Android rows, iOS keys,
+Keyman rows implicitly equal), orientation (Android resource qualifiers, iOS), device classes (kbdgen, Keyman),
+corner hints (Android, Keyman, kbdgen), one-shot layers (Keyman's next layer, Android's one-shot shift), the
+runtime's bottom row (iOS, kbdgen templates). Left to the targets: return-key labels per input field, popup
+column counts, fonts, themes, sounds, number-row hints. Not added: a per-key height (one platform; a key never
+spans rows), a shift-state field (D155), `symbols` and `spacer` functions (a layer switch key is a key with
+`layerId`; a spacer is a `gap`), an `emoji` function (no shared behaviour: one platform's emoji keyboard is the
+system's, another's is the app's own). Every addition is exportable: CLDR keyboard 3.0 has no element for any of
+them, so the CLDR writer carries them in its `<special>` element and reports `cldr.touchDataDropped`, and 0.3 stays
+a superset of CLDR. Defaults are the plain ones (rows equal, no return, both orientations, no system row, no hint),
+which are what a 0.2 file means, so no default is reported except the derived device class (D154). Reason: the
+format holds what a build needs across platforms; one platform's detail belongs in its own target section.
+
+**D153 (2026-11-28). One new key function: `nextKeyboard`.** The key that switches to the system's next keyboard
+or input method (the globe key) has no output and no layer, and every touch platform needs to know it: iOS requires
+it when the system asks for one, Android and Keyman have the same action. It is the only new `function` value.
+Reason: D152's test; the other candidate kinds are already expressible or not shared.
+
+**D154 (2026-11-28). `minDeviceWidth` is the screen's shorter side; the device class is a label.** CLDR gives the
+minimum device width in millimetres without saying in which orientation. 0.3 states it: the shorter side of the
+screen, so a phone turned to landscape keeps its phone layout (as Android's smallest-width qualifier does), and a
+set for one orientation is chosen with `orientation`. Selection (SPEC §14.4): candidates fit W and the orientation;
+the largest `minDeviceWidth` wins, the set naming the orientation wins a tie. Sets are distinct per width and
+orientation. `deviceClass` (`phone`, `tablet`) never changes the selection; a writer of a format that sorts layouts
+by device class derives a missing class (`tablet` from 90 mm, about a 7-inch tablet's shorter side) and reports
+`general.deviceClassDerived`. Reason: the selection stays one numeric rule, as in CLDR; the label exists only for
+formats that need it, and the derivation is deliberately crude and reported.
+
+**D155 (2026-11-28). Shift and caps lock on touch keyboards: one-shot layers and multi-tap, no shift state.** A
+layer with `returnLayerId` is left after one key that has no `layerId` of its own; that is one-shot shift. Caps
+lock is a double tap of the shift key, written with the existing `multiTapKeyIds`: the second tap presses a
+`capsLock` key that switches to a caps layer which does not return. For that, SPEC §14.4 says that a multi-tap
+sequence continues on the same place after the first tap switched layers (Keyman's touch layouts do caps lock this
+way). Reason: no new state machine; the file says exactly which layer each tap reaches, and a layout that wants no
+caps lock, or a different one, writes that.
+
+**D156 (2026-11-28). The system bottom row is the target's when the file says so.** `systemRow: true` on a touch set
+means its rows leave out the bottom row (next keyboard, layer switch, space, enter) and the target adds its
+platform's own; the default `false` means the rows are the whole layout, as in CLDR and in every 0.2 file. What the
+added row holds, and what a target does when the file has no next-keyboard key that the platform requires, is the
+target's (its document, reported as its default). Reason: kbdgen bundles and iOS templates leave that row to the app,
+CLDR files include it; the flag lets both import without inventing keys.
