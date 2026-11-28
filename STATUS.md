@@ -94,6 +94,8 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 ## Changelog
 
+- 2026-11-28 (branch `spec-0.2`, owner): releases are not code-signed; D112 supersedes D104. No change to the format.
+
 - 2026-11-28 (branch `spec-0.2`, draft, macOS pending dead key): new loss kind `macos.deadKeyEndedByEmptyKey` (warning):
   a key without output ends a pending dead key on macOS, where the model keeps it pending (D131, `targets/macos.md`
   §4, §8 items 1 and 8).
@@ -117,7 +119,7 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 - 2026-11-28 (branch `spec-0.2`, draft): version 0.2 opened (D108): `kbl` `"0.2"`, schema `schema/0.2/kbl.schema.json` generated next to the unchanged 0.1 schema from the one source `src/schema.ts`; a 0.2 reader also reads 0.1 files, tools write the lowest version that holds a file (SPEC §1.1). New in 0.2: `targets.macos` and `targets.xkb` (placeholders holding only `onLoss`, SPEC §16.4, §16.5), loss-kind families `macos.*`, `macosDefault.*`, `xkb.*`, `xkbDefault.*` (wildcards only so far), provenance formats `keylayout` and `xkb`. Position tables per target (D109, SPEC §16), one dead-key model for every target (D110, SPEC §14.2), clean-room rule for macOS and Linux (D111, `CLEAN-ROOM.md`). Stub pages `targets/macos.md`, `targets/xkb.md`, `coverage/macos.md`, `coverage/xkb.md`. Schema test cases now per version (`testdata/schema/<version>/`). No change to 0.1.
 
-- 2026-11-27: 0.1 preview. No change to the format's shape. `COMPATIBILITY.md` (0.x policy; `SPEC.md` wins over the schema, Q13 closed, D101); owner decisions D100 (public repository `yakbd/kbl-spec`, `$id` unchanged), D102 (no catalogue), D103 (other operating systems later), D104 (the tool's own setup program signed, layout installers unsigned); D105 (macOS and XKB targets fit 0.x, on paper); D107 (all layout formats: other operating systems' official formats next, then third-party formats such as Keyman; supersedes D103's "by demand"); contributing guide with the clean-room clause (organisation-wide, in `yakbd/.github`), issue templates.
+- 2026-11-27: 0.1 preview. No change to the format's shape. `COMPATIBILITY.md` (0.x policy; `SPEC.md` wins over the schema, Q13 closed, D101); owner decisions D100 (public repository `yakbd/kbl-spec`, `$id` unchanged), D102 (no catalogue), D103 (other operating systems later), D104 (the tool's own setup program signed, layout installers unsigned; superseded by D112); D105 (macOS and XKB targets fit 0.x, on paper); D107 (all layout formats: other operating systems' official formats next, then third-party formats such as Keyman; supersedes D103's "by demand"); contributing guide with the clean-room clause (organisation-wide, in `yakbd/.github`), issue templates.
 
 - 2026-11-26 (round 5, S5, end): VM-27 (D98 LocalSystem route, 7/7); D99. Round 5 in sum: field `install.enableForSignInAndNewUsers` with rule and `SIGNIN` (D87, D94, D97, D98), loss kind `windows.noHardwareLayers` (D89), CLDR marker dead keys over sets (D88, D95), test files on hardware targets (D92, D95), VK names up to 32 characters (D96); VM-18 to VM-27.
 
