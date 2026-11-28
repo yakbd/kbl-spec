@@ -12,7 +12,7 @@ A `.kbl.json` file holds one keyboard layout: a platform-neutral part that can h
 Keyboard 3.0 keyboard holds, and one section per target in `targets` (§16) with the choices only that target's
 build needs. This version defines three build targets, Windows (`targets.windows`, `targets/windows.md`), macOS
 (`targets.macos`, `targets/macos.md`) and Linux XKB (`targets.xkb`, `targets/xkb.md`), plus the conversion sections
-`klc` and `cldr`. The macOS and XKB sections are being written; until they are, their objects hold only `onLoss`.
+`klc` and `cldr`. The XKB section is being written; until it is, its object holds only `onLoss`.
 Sections for the official formats of further operating systems, and later for third-party formats such as Keyman,
 are planned (D107) and come with later minor versions.
 
@@ -634,7 +634,7 @@ use is reported as `macosDefault.<rule>`.
 | `commandMap` | `withoutCommand`, `base` | what a state with Command that no layer serves types: the same state without Command, or the base table (rule `commandMap`) |
 | `controlMap` | `controlCharacters`, `withoutControl`, `nothing` | what a state with Control that no layer serves types: the state without Control with the letters `A`–`Z`, `a`–`z` turned into U+0001–U+001A, that state unchanged, or nothing (rule `controlMap`) |
 | `modifiers` | `{ "command"?: component }` | the custom `held` component (§7.2) that is the Command key; no default (without it no layer is reached with Command, rule `commandMap` applies) |
-| `deadKeys` | object DeadKeyId → `{ "state"?: string }` | the `.keylayout` state name of each dead key, an XML NMTOKEN of 1–64 characters other than `none` (rule `stateName`) |
+| `deadKeys` | object DeadKeyId → `{ "state"?: string }` | the `.keylayout` state name of each dead key, an XML NMTOKEN of 1–64 characters (rule `stateName`; `none` is the base state, so a pin of `none` reports `macos.stateNameDuplicate`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.5 `targets.xkb` (0.2)
@@ -794,7 +794,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `macos.markerNotCompiled` | warning | a binding emits a marker; the output is built without it |
 | `macos.transformNotCompiled` | warning | a transform, reorder or backspace transform; a macOS build compiles `deadKeys` only |
 | `macos.deadKeyNoMatchExpanded` | accept | `noMatch` other than `emitBoth`, or a dead key pressed while another one is pending, was compiled by giving keys an explicit `when` for the pending state (`targets/macos.md` §4) |
-| `macos.stateNameDuplicate` | error | two dead keys get the same state name (rule `stateName`) |
+| `macos.stateNameDuplicate` | error | two dead keys get the same state name (rule `stateName`), or a dead key gets the name `none` of the base state |
 | `macos.malformed` | **fatal** | the input is not a readable `.keylayout`: not well-formed XML, a missing required element or attribute, a reference (`modifiers`, `mapSet`, `action`, `baseMapSet`/`baseIndex`) that resolves to nothing, a loop of `baseMapSet` references (`coverage/macos.md` §2) |
 | `macos.xmlDetailsIgnored` | accept | XML details that are not layout data (declaration, DOCTYPE, comments, white space, attribute order, character references against literal characters, action and table numbering) are not kept |
 | `macos.keyCodeUnknown` | accept | an imported key code that no row of the position table names became the position `MacKey<code>` with a `keys.<p>.keyCode` pin |
@@ -827,7 +827,7 @@ A validator MUST check, and report with the kinds given:
 
 1. every reference resolves (`general.unresolvedReference`): `{"key"}`, `{"deadKey"}`, `layerId`, `flickId`,
    `longPress*`, `multiTapKeyIds`, `displays.entries[].keyId`, forms' and bindings' PositionIds, components in
-   modifier sets, `{"variable"}` items, `hardware.formId`, `targets.windows.keys`/`tables`/`deadKeys` keys;
+   modifier sets, `{"variable"}` items, `hardware.formId`, `targets.windows.keys`/`tables`/`deadKeys` keys, `targets.macos.keys`/`deadKeys` keys and `targets.macos.modifiers.command` (0.2);
 2. no layer overlap (§7.3) (`general.layerOverlap`) and no modifier set mixing `ctrl` with `ctrlL`/`ctrlR`, `alt`
    with `altL`/`altR`, left with right, or `none`/`other` with anything (`general.modifierSetInvalid`);
 3. unique `scanCode`s (`general.duplicateScanCode`), unique variable ids (`general.duplicateVariableId`),

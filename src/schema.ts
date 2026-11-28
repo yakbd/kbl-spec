@@ -1253,14 +1253,14 @@ const targetsWindows = (OnLoss: OnLossSchema) =>
 /** 0.2: a `.keylayout` state name (TN2056 `when/@state`, an XML NMTOKEN); `none` is the base state. */
 const MacosStateName = z
   .string()
-  .regex(/^(?!none$)[A-Za-z0-9._:-]{1,64}$/u)
-  .meta({ description: "A .keylayout state name: an XML NMTOKEN of 1–64 characters, not none." });
+  .regex(/^[A-Za-z0-9._:-]{1,64}$/u)
+  .meta({ description: "A .keylayout state name: an XML NMTOKEN of 1–64 characters; none is the base state (macos.stateNameDuplicate)." });
 
 /** 0.2: a reverse-DNS name (bundle identifier, input-source id). */
 const MacosReverseDns = z.string().regex(/^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/u).max(255);
 
 /** 0.2: a name used as a file name inside the bundle (no slash, colon or control character). */
-const MacosFileName = z.string().regex(/^[^/:\u0000-\u001f\u007f]{1,128}$/u);
+const MacosFileName = z.string().regex(/^[^/:\x00-\x1f\x7f]{1,128}$/u);
 
 /** 0.2: macOS `.keylayout` build choices. */
 const TargetsMacos = z

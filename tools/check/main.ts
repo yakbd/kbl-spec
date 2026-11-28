@@ -236,6 +236,12 @@ function refs(doc: Obj, name: string, specKinds: Set<string>) {
   const win = obj(obj(doc.targets).windows);
   for (const p of sorted(obj(win.keys))) posOK(p, "targets.windows.keys");
   for (const d of sorted(obj(win.deadKeys))) dkOK(d, "targets.windows.deadKeys");
+  const mac = obj(obj(doc.targets).macos);
+  for (const p of sorted(obj(mac.keys))) posOK(p, "targets.macos.keys");
+  for (const d of sorted(obj(mac.deadKeys))) dkOK(d, "targets.macos.deadKeys");
+  const cmd = obj(mac.modifiers).command;
+  if (cmd !== undefined && obj(customs[str(cmd)]).kind !== "held")
+    errf(`${name}: targets.macos.modifiers.command ${str(cmd)} is not a held custom modifier`);
   const seen = new Set<string>();
   for (const p of sorted(pos)) {
     const sc = obj(pos[p]).scanCode;

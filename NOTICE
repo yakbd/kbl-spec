@@ -109,3 +109,14 @@ Third-party material
 
    Its evals/, v3/ (Zod 3 forms), AGENTS.md (a compiled copy of the rules) and .github/ folders
    are not copied.
+
+7. macOS names and values (targets/macos-default-keycode.tsv, targets/macos.md, coverage/macos.md)
+
+   The .keylayout element and attribute names, the modifier words and the Info.plist keys come from
+   Apple's Technical Note TN2056 and from Kiimo (MIT, https://github.com/Manoonchai/kiimo, commit
+   c51da722b9d95ed579b47939209c5c96d7888e60; Copyright (c) 2021 Manassarn Manoonchai), the kVK_*
+   constant names and values from Apple's Carbon HIToolbox Events.h, the key code per W3C code value
+   from Chromium's ui/events/keycodes/dom/dom_code_data.inc (BSD-3-Clause; Copyright 2013 The
+   Chromium Authors), and the standard key outputs from a layout Kiimo generated. Only names and
+   values are used; no code or text is copied. macOS and Apple are trademarks of Apple Inc.; this
+   project is not affiliated with or endorsed by Apple.

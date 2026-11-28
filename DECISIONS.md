@@ -778,3 +778,64 @@ are never copied; text and code are written from understanding. Every source rea
 in the subsection of its platform (URL, what for, licence). Fixtures come only from openly licensed corpora; layouts
 owned by the platform are read on the platform and never committed. The Windows rules are unchanged (the reference
 specification and Microsoft's public documentation only).
+
+**D120 (2026-11-28; carries out D105 and D109 for macOS). The macOS target: fields and default rules.**
+`targets.macos` (SPEC §16.4) holds what a `.keylayout` and its bundle need beyond the general data: the names and
+ids of the bundle (`layoutName`, `bundleName`, `bundleId`, `inputSourceId`, `language`, `localizedNames`,
+`bundleVersion`, `icon`), the `keyboard` attributes D105 named (`group`, `id`, `maxout`), the hardware ranges, a key
+code per position (`keys.<p>.keyCode`, D105's name), the choices for states no layer serves (`standardKeys`,
+`commandMap`, `controlMap`), which custom component is Command (`modifiers.command`, as D105 proposed) and a
+state name per dead key. Seventeen default rules (`targets/macos.md` §1), each one line, reported as
+`macosDefault.<rule>`; 21 loss kinds `macos.*` (SPEC §17.3). The icon is held in the file as base64 because a file
+is self-contained (SPEC §1, D2). Reason: the Windows pattern (D16) has worked; the file carries the complexity, the
+rules stay knowingly simple.
+
+**D121 (2026-11-28). The macOS position table and the ISO keys.** `targets/macos-default-keycode.tsv` takes its 119
+key codes from the Mac column of Chromium's table of W3C code values, each checked against the `kVK_*` constant of
+the same value in Apple's `Events.h`, and the standard outputs of Return, Tab, the arrows, the number pad and the
+function keys from an MIT-licensed generated layout (Kiimo); sources per row. macOS delivers codes 10 and 50 swapped
+from ISO keyboards (SDL's table, Mozilla bug 1263302), so rule `isoKeys` swaps the two codes of `Backquote` and
+`IntlBackslash` when the file binds `IntlBackslash`, and leaves the table's (ANSI) codes otherwise. Rejected: one key
+map set per hardware type (ANSI, ISO, JIS), which would make every build carry three sets for one key pair; a file
+that needs exact codes on both kinds of keyboard pins them. Not measurable on the runners (they type by key code).
+
+**D122 (2026-11-28). One key map per distinct state; Caps Lock per key is not a loss.** The build enumerates the
+32 combinations of `anyShift`, `anyOption`, `anyControl`, `command`, `caps`, resolves every key in each (SPEC §9.3)
+and lets equal tables share a key map, each state written as an explicit `<modifier>`. A Caps Lock state has its
+own key map filled key by key, so the planned loss "Caps Lock can only select a whole table" never happens: Caps Lock
+on one key and not another, `capsLockFallback` and explicit nothings are all exact. Sides (`ctrlL`, `altR`, …) are
+built with the "any" words and reported (`macos.sideModifierWidened`) because whether right-hand states reach a
+layout is not measured; Option is `alt`, so a Windows AltGr layer (`altR`) becomes the Option layer.
+
+**D123 (2026-11-28). Command and Control states no layer serves.** Without rules, a layout drawn without Control or
+Command layers would type nothing with those keys held, which breaks shortcuts and control characters. Rule
+`commandMap` (default `withoutCommand`: the same state without Command) and rule `controlMap` (default
+`controlCharacters`: the state without Control, letters turned into U+0001–U+001A, as Windows does) fill exactly the
+states no layer serves; a layer that serves a state always wins. Rule `standardKeys` gives unbound standard keys
+their table outputs (as Table A rows do on Windows, D86).
+
+**D124 (2026-11-28; carries out D110 for macOS). Dead keys become one `.keylayout` state machine.** Each dead key is a
+state; an entry is a `when` in the action of every key whose output is its base; a chained result is `next`; the
+terminator is the spacing under `emitBoth` and `emitSpacing`. Where macOS would act differently from SPEC §14.2 (a
+second dead key while one is pending starts the second one; `emitSpacing` and `emitNothing` would still type the
+key), the build writes explicit `when`s that give the model's result (`macos.deadKeyNoMatchExpanded`). Files are
+written as XML 1.1, because the C0 controls of standard keys are character references that XML 1.0 forbids.
+
+**D125 (2026-11-28). Bundle names and ids by rule.** Bundle id `org.yakbd.keyboardlayout.` + slug of `metadata.id`,
+input-source id = bundle id + slug of the layout name (a source id that extends the bundle id, as the measured
+check bundles and Kiimo do), `group` 126 and a negative `id` from an FNV-1a hash of the input-source id (TN2056:
+Unicode layouts are group 126 with negative ids; the hash keeps it the same on every build). An author who owns a
+domain pins `bundleId`.
+
+**D126 (owner, 2026-11-28; measured). macOS release form and installation.** The release form is a zip with the
+bundle and a README (owner); an installer package may follow. Measured on GitHub's macOS 15 and 26 runners
+(`targets/macos.md` §5): no sign-out is needed for a scripted install (register, then the `AppleEnabledInputSources`
+entry, then select from a new process), and an unsigned bundle is not blocked. The by-hand path through System
+Settings is not measured yet; the README tells the user to sign out and in if the layout does not appear.
+
+**D127 (2026-11-28). `.keylayout` import keeps one key map set.** One `.kbl.json` file is one hardware layer set,
+so the importer takes the first `<layout>`'s modifier map and key map set and reports the others
+(`macos.keyMapSetDropped`); it evaluates modifier maps over all combinations, folds right-hand states into the left
+(`macos.sideModifierDropped`), writes Command and Control layers only where rules `commandMap` and `controlMap`
+would not give the same tables, and writes `capsLockFallback: false` so that Caps Lock layers mean exactly their key
+maps (`coverage/macos.md`). Range actions have no home and are dropped (`macos.rangeActionDropped`), as D105 said.

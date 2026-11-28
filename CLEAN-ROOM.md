@@ -94,6 +94,15 @@ the embedded copy is compared); no other source was read for it.
 
 | source | read for | licence |
 |---|---|---|
+| Apple, Technical Note TN2056 "Installable Keyboard Layouts" (2009-10-02), https://developer.apple.com/library/archive/technotes/tn2056/_index.html, read 2026-11-28 | every `.keylayout` element and attribute and the DTD (`coverage/macos.md`), modifier words and matching, key maps and `baseMapSet`, actions, states, terminators, the dead-key example, bundle shapes, install folders, group 126 and negative ids | Apple documentation; facts only |
+| Chromium, `ui/events/keycodes/dom/dom_code_data.inc` (branch `main`, fetched 2026-11-28), https://chromium.googlesource.com/chromium/src/+/refs/heads/main/ui/events/keycodes/dom/dom_code_data.inc | the Mac key code of each W3C code value (`targets/macos-default-keycode.tsv`, column `keyCode`) | BSD-3-Clause; names and values only |
+| Apple, Carbon `HIToolbox/Events.h` of the macOS 10.15 SDK, read through the public mirror https://github.com/phracker/MacOSX-SDKs (commit `041600eda65c6a668f66cb7d56b7d1da3e8bcc93`), 2026-11-28 | the `kVK_*` virtual-key constants and their values (column `constant`), the ISO-only and JIS-only key codes | Apple SDK header (the mirror states no licence); names and values only |
+| Kiimo (https://github.com/Manoonchai/kiimo, commit `c51da722b9d95ed579b47939209c5c96d7888e60`), `generator/generateMacBundle.ts` and `output/Manoonchai/Manoonchai.bundle/Contents/Resources/Manoonchai.keylayout`, read 2026-11-28 | the `Info.plist` keys of a layout bundle (`KLInfo_<name>`, `TISInputSourceID`, `TISIntendedLanguage`, `TISIconIsTemplate`), `InfoPlist.strings` lines; the standard outputs of Return, Tab, Delete, Escape, the arrows, Home/End/Page keys, Help, Forward Delete, the function keys and the number pad in its base key map (column `output`); XML 1.1 | MIT; key names and output values only |
+| SDL, `src/events/scancodes_darwin.h` (https://github.com/libsdl-org/SDL, commit `4c60f49b6b4bc7df1a97755ac63fba39641bfe96`), read 2026-11-28 | that macOS delivers key codes 10 and 50 swapped from ISO keyboards (rule `isoKeys`) | zlib; a fact only |
+| Web search result snippets, not opened: Mozilla bug 1263302 and 1755096, WebKit bug 244202, QEMU keycodemapdb (2026-11-28) | the same ISO swap, as a second source | facts only |
+| `yakbd/yakbd-cli` `tools/macos-check/` (README, the two check bundles, MIT-0) and its runs 46102612485, 46102900903, 46103925085, 46104372309, 46104797718, 46105185134 | the measured install, enable and select order, no sign-out, unsigned bundles not blocked, XML 1.1 working (`targets/macos.md` §5) | MIT-0, this project |
+
+No Apple layout was opened. The decisions D120 to D127 and the macOS pages (`targets/macos.md`, `coverage/macos.md`, the position table) were written from these sources in our own words.
 
 ### Linux (XKB) sources
 
