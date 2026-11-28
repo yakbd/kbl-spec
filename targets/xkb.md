@@ -4,7 +4,8 @@ How a `.kbl.json` file becomes a Linux keyboard layout for Wayland and X11, an X
 entry and a Compose file, when `targets.xkb` (SPEC §16.5) is silent. Facts about Linux are cited by source:
 **[LXC]** = libxkbcommon's documentation and source (commit `15b2b4e`, 2026-11-11); **[XKC]** = xkeyboard-config
 (commit `f4d3ed8`, 2026-11-06); **[LNX]** = measured in containers by the layout check of `yakbd/yakbd-cli`
-(`tools/xkb-check/`, its README "Results", commit `efb2a00`), with the stack named; **[LAB]** = tried once with
+(`tools/xkb-check/`, its README "Results", commit `efb2a00`; the generated cases, among them the X11 refusal of
+several keysyms per level, commit `8e3b3d9`), with the stack named; **[LAB]** = tried once with
 libxkbcommon 1.13.2 and `xkbcomp` (Arch Linux, no display), not yet part of that check; **unmeasured** = this
 specification's choice, with the Linux behaviour behind it not yet measured (§8 lists these for the verification
 harness). Every source is listed in `CLEAN-ROOM.md` ("Linux (XKB) sources"). Nothing here is taken from a
@@ -390,5 +391,7 @@ Compose handling; fcitx5; (7) Compose blocks appended to an existing `~/.config/
 `xkb_utf32_to_keysym`; (10) the `KEYPAD` type with Shift and Num Lock, and in xkeyboard-config 2.42 (Debian 13);
 (11) the X11 section of a build with levels of several keysyms, loaded on X11 (expected: it loads, those levels type
 nothing); (12) two variants of one layout installed side by side and one of them removed: both listed by the
-settings apps, the other still selectable. A measured result is recorded here with its run and, where it changes a rule, in
-`DECISIONS.md`.
+settings apps, the other still selectable; the registry keeps the description and languages of the first `layout`
+element of a name **[LXC]**, so a variant installed before the default section of the same layout leaves that
+layout without its description in the settings apps (expected; rare). A measured result is recorded here with its
+run and, where it changes a rule, in `DECISIONS.md`.
