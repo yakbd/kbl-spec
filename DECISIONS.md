@@ -992,3 +992,35 @@ variant hides the system's N: libxkbcommon 1.7.0 and 1.13.1 then give the varian
 layout). No file in the user path can include the system's N (the name resolves to the user file), so the build
 reports `xkb.systemLayoutShadowed` for a variant whose symbols name does not begin with `yakbd-`. The build also
 accepts a real U+FFFD (keysym `UFFFD`); only code units that are not well-formed UTF-16 are `xkb.outputUnencodable`.
+
+**D150 (2026-11-28; carries out D101, D107 and D108 for Android, iOS, ChromeOS and Keyman). Version 0.3: own `kbl`,
+own schema, holds 0.2; the names of five targets and four formats.** Android (physical and on-screen), iOS, ChromeOS,
+Keyman and the touch geometry they share come together in one minor version, 0.3: `kbl` `"0.3"`, schema
+`schema/0.3/kbl.schema.json`, `$id` `https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json`, the same rules as
+D108 (each schema accepts only its own `kbl`, a reader rejects a version it does not implement and reads every older
+one as the newer file it becomes, a writer writes the lowest version that holds the file). 0.2 is now frozen like
+0.1: the checker pins the SHA-256 of both generated files, and every example and valid case of a version is checked
+again as each later version. The names are a public contract from now on: targets `android` (a `.kcm` key character
+map for physical keyboards, in an APK without code), `androidime` (an on-screen input-method APK), `ios` (an app with
+one keyboard extension), `chromeos` (a `chrome.input.ime` extension), `keyman` (a `.kmp` package); conversion
+formats `kcm`, `kbdgen`, `kmn`, `keymantouch` (SPEC §16.11), which are also their `metadata.provenance.format`
+values. Each target is a closed object of its own in `targets` that starts with only `onLoss`; loss-kind families
+`android`, `androidime`, `ios`, `chromeos`, `keyman` with their `<target>Default` kinds, and `kbdgen`, `kmn`,
+`keymantouch` for the formats (the `.kcm` importer reports under `android`, as the `.keylayout` importer does under
+`macos`); every wildcard is accepted from the start so that a file can set a policy before the kinds exist. One
+`.kbl.json` file is one layout: a target builds exactly one installable keyboard from it, and an importer of a
+bundle or package that holds several layouts writes one file and one report per layout. Reason: two Android targets,
+not one, because the two builds have different inputs (hardware layers by key code, touch layers by KeyId), different
+default rules and different loss kinds, and both APKs of one layout install side by side; `androidime` reads as
+"Android input method" and does not collide with Android's own term for physical layouts. Format names follow the
+file suffix (`kcm`, `kmn`) or the tool's own name (`kbdgen`); `keymantouch` names the `.keyman-touch-layout` file, a
+format of its own next to `.kmn`.
+
+**D151 (2026-11-28; extends D109). Touch-only targets have no position table.** An on-screen keyboard names keys by
+KeyId in the rows of `touch`; positions name physical keys only (D8). So `androidime` and `ios` have no position
+table and no position-keyed `keys` member, and no coverage page of their own (the build writes an app, not a file of
+a native format; the compiled form the runtimes read is documented with those targets). The Android input method's
+physical-key mode reuses the `android` table and the pins `targets.android.keys`, so both Android builds of one file
+map positions to key codes the same way. A target page or coverage page may be named after its native format where
+that has a name of its own (`coverage/kcm.md` for `android`). Reason: one mapping per kind of key code (D109);
+a second Android table would be a second source of truth for the same `KEYCODE_*` names.

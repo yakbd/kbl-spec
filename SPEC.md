@@ -1,20 +1,21 @@
-# The `.kbl.json` keyboard-layout format, version 0.2 (draft)
+# The `.kbl.json` keyboard-layout format, version 0.3 (draft)
 
-Status: **0.2 draft**, not yet released; the released version is 0.1 preview. What stays stable in 0.x is in
+Status: **0.3 draft**, not yet released; the released versions are 0.1 preview and 0.2 preview. What stays stable in 0.x is in
 `COMPATIBILITY.md`. Normative unless a section says "informative". The key words MUST, MUST NOT, SHOULD, SHOULD NOT
 and MAY are used as in RFC 2119. Decisions behind the rules are numbered in `DECISIONS.md` ("D7" = decision 7);
-questions put to the owner are in `OPEN-QUESTIONS.md` ("Q3"). The JSON Schema `schema/0.2/kbl.schema.json` checks
-the structure of a 0.2 file, `schema/0.1/kbl.schema.json` that of a 0.1 file (§1.1); this document also states the
+questions put to the owner are in `OPEN-QUESTIONS.md` ("Q3"). The JSON Schema `schema/0.3/kbl.schema.json` checks
+the structure of a 0.3 file, `schema/0.2/kbl.schema.json` that of a 0.2 file and `schema/0.1/kbl.schema.json` that
+of a 0.1 file (§1.1); this document also states the
 rules a schema cannot check (§17). When this document and the schema accept different files, this document wins
 (D101).
 
 A `.kbl.json` file holds one keyboard layout: a platform-neutral part that can hold every piece of data a CLDR
 Keyboard 3.0 keyboard holds, and one section per target in `targets` (§16) with the choices only that target's
-build needs. This version defines three build targets, Windows (`targets.windows`, `targets/windows.md`), macOS
-(`targets.macos`, `targets/macos.md`) and Linux XKB (`targets.xkb`, `targets/xkb.md`), plus the conversion sections
-`klc` and `cldr`.
-Sections for the official formats of further operating systems, and later for third-party formats such as Keyman,
-are planned (D107) and come with later minor versions.
+build needs. This version defines eight build targets, Windows (`targets.windows`, `targets/windows.md`), macOS
+(`targets.macos`, `targets/macos.md`), Linux XKB (`targets.xkb`, `targets/xkb.md`), Android physical keyboards
+(`targets.android`), Android on-screen keyboards (`targets.androidime`), iOS (`targets.ios`), ChromeOS
+(`targets.chromeos`) and Keyman (`targets.keyman`), plus the conversion sections `klc` and `cldr` (§16).
+Further formats and targets come with later minor versions (D107).
 
 Contents: 1 File · 2 Text values · 3 Top level · 4 `metadata` · 5 `settings` · 6 `positions` and `forms` ·
 7 Modifiers · 8 `keys` · 9 Layers and bindings · 10 `deadKeys` · 11 Gestures · 12 `displays` · 13 `variables` and
@@ -35,30 +36,38 @@ Appendix A position names and scan codes.
 - A file is **self-contained**: it never refers to another file, to CLDR import data or to a tool's built-in data
   other than what this specification and its target documents (`targets/*.md` and the tables they name) define
   (D2).
-- The property `kbl` gives the format version, `"0.2"` for this document.
+- The property `kbl` gives the format version, `"0.3"` for this document.
 
 ### 1.1 Versions
 
 Each minor version has its own `kbl` value and its own JSON Schema, at `schema/<version>/kbl.schema.json` with the
-`$id` `https://yakbd.github.io/kbl-spec/schema/<version>/kbl.schema.json` (D101, D108). This document defines
-**0.2**: `kbl` `"0.2"`, schema `schema/0.2/kbl.schema.json`. Version 0.1 is the released 0.1 preview; its schema
-`schema/0.1/kbl.schema.json` is not changed by 0.2 (only by what `COMPATIBILITY.md` allows within 0.1).
+`$id` `https://yakbd.github.io/kbl-spec/schema/<version>/kbl.schema.json` (D101, D108, D150). This document defines
+**0.3**: `kbl` `"0.3"`, schema `schema/0.3/kbl.schema.json`. Versions 0.1 and 0.2 are released previews; their
+schemas `schema/0.1/kbl.schema.json` and `schema/0.2/kbl.schema.json` are not changed by 0.3 (only by what
+`COMPATIBILITY.md` allows within each version).
 
-- **A file is valid against the version it names.** A 0.1 file is checked with the 0.1 schema and a 0.2 file with
-  the 0.2 schema; each schema accepts only its own `kbl` value. A `$schema` member, when present, SHOULD be the
-  `$id` of that version.
-- **0.2 holds 0.1.** 0.2 only adds: `targets.macos` and `targets.xkb` (§16), their loss kinds (§17.3) and the
-  provenance formats `keylayout` and `xkb` (§4). A valid 0.1 file with `kbl` (and `$schema`) changed to 0.2 is a
-  valid 0.2 file and **means the same**: the Windows default rules and Table A are those of 0.1.
+- **A file is valid against the version it names.** A 0.1 file is checked with the 0.1 schema, a 0.2 file with the
+  0.2 schema and a 0.3 file with the 0.3 schema; each schema accepts only its own `kbl` value. A `$schema` member,
+  when present, SHOULD be the `$id` of that version.
+- **Each version holds the ones before it.** 0.2 only adds `targets.macos` and `targets.xkb` (§16), their loss kinds
+  (§17.3) and the provenance formats `keylayout` and `xkb` (§4). 0.3 only adds `targets.android`,
+  `targets.androidime`, `targets.ios`, `targets.chromeos` and `targets.keyman` (§16), the touch members of §8 and
+  §9.4 marked "0.3", their loss kinds (§17.3) and the provenance formats `kcm`, `kbdgen`, `kmn` and `keymantouch`
+  (§4). A valid file of an older version with `kbl` (and `$schema`) changed to a newer one is a valid file of that
+  version and **means the same**: the Windows, macOS and XKB default rules and position tables do not change.
 - **Reading.** A reader MUST reject a file whose `kbl` names a version it does not implement; it never guesses (D3).
-  So a 0.1 reader rejects every 0.2 file. A 0.2 reader MUST accept 0.1 files as well, and reads a 0.1 file exactly
-  as the 0.2 file it becomes when its `kbl` is changed.
-- **Writing.** A tool SHOULD write the lowest version that holds what it writes, so that a file without any
-  0.2-only member stays readable by 0.1 tools: a file is written as 0.2 only when it uses `targets.macos`,
-  `targets.xkb`, a loss kind of a 0.2-only family (`macos`, `macosDefault`, `xkb`, `xkbDefault`) or a 0.2
-  provenance format. A tool MAY write a higher version when its user asks for one. Raising the version changes
-  `kbl` and `$schema` and nothing else.
-- While 0.2 is a draft (until it is tagged, `COMPATIBILITY.md`), it may still change in any way; 0.1 does not.
+  So a 0.1 reader rejects every 0.2 and 0.3 file, and a 0.2 reader every 0.3 file. A 0.3 reader MUST accept 0.1 and
+  0.2 files as well, and reads such a file exactly as the 0.3 file it becomes when its `kbl` is changed.
+- **Writing.** A tool SHOULD write the lowest version that holds what it writes, so that a file stays readable by
+  older tools: a file is written as 0.3 when it uses a member or loss kind that only 0.3 has (`targets.android`,
+  `targets.androidime`, `targets.ios`, `targets.chromeos`, `targets.keyman`, a 0.3 touch member, a kind of a
+  0.3 family (`android`, `androidDefault`, `androidime`, `androidimeDefault`, `ios`, `iosDefault`,
+  `chromeos`, `chromeosDefault`, `keyman`, `keymanDefault`, `kbdgen`, `kmn`, `keymantouch`) or a 0.3 kind of
+  §17.3, or a 0.3 provenance format); otherwise as 0.2 when it uses `targets.macos`, `targets.xkb`, a kind of a 0.2
+  family (`macos`, `macosDefault`, `xkb`, `xkbDefault`) or a 0.2 provenance format; otherwise as 0.1. A tool MAY
+  write a higher version when its user asks for one. Raising the version changes `kbl` and `$schema` and nothing
+  else.
+- While 0.3 is a draft (until it is tagged, `COMPATIBILITY.md`), it may still change in any way; 0.1 and 0.2 do not.
 
 ## 2. Text values
 
@@ -113,7 +122,7 @@ escaping: the CLDR text `\u{300}` is written `"\\u{300}"` in the file.
 | property | type | req. | meaning |
 |---|---|---|---|
 | `$schema` | string | no | the schema URL; informative |
-| `kbl` | `"0.2"` | **yes** | format version (§1.1; `"0.1"` for a 0.1 file) |
+| `kbl` | `"0.3"` | **yes** | format version (§1.1; `"0.1"` or `"0.2"` for a file of those versions) |
 | `metadata` | object | **yes** | §4 |
 | `settings` | object | no | §5 |
 | `positions` | object PositionId → Position | no | §6.1, the physical keys |
@@ -154,7 +163,7 @@ example a dead-key library under construction) but every build reports `general.
 | `copyright` | Text | no | copyright statement (`.klc` `COPYRIGHT`) |
 | `organization` | Text | no | publishing organisation (`.klc` `COMPANY`) |
 | `draft` | `approved`, `contributed`, `provisional`, `unconfirmed` | no | CLDR `keyboard3/@draft` |
-| `provenance` | object | no | informative record of where the data came from: `source` (string, e.g. a file name), `format` (`cldr`, `klc`, `windowsDll`, `kbl`, `keylayout` (macOS, 0.2), `xkb` (0.2), `other`), `cldrConformsTo` (integer), `cldrImports` (array of string: the CLDR import paths that were inlined), `notes` (Text). Never changes behaviour |
+| `provenance` | object | no | informative record of where the data came from: `source` (string, e.g. a file name), `format` (`cldr`, `klc`, `windowsDll`, `kbl`, `keylayout` (macOS, 0.2), `xkb` (0.2), `kcm` (Android, 0.3), `kbdgen` (0.3), `kmn` (Keyman, 0.3), `keymantouch` (Keyman touch layout, 0.3), `other`), `cldrConformsTo` (integer), `cldrImports` (array of string: the CLDR import paths that were inlined), `notes` (Text). Never changes behaviour |
 
 ## 5. `settings`
 
@@ -530,11 +539,18 @@ so that the build no longer depends on those rules (`targets/windows.md` §10).
 | `cldr` | §16.3 |
 | `macos` | §16.4 (fields) and `targets/macos.md` (default rules); 0.2 |
 | `xkb` | §16.5 (fields) and `targets/xkb.md` (default rules); 0.2 |
+| `android` | §16.6 (fields) and `targets/android.md` (default rules); 0.3 |
+| `androidime` | §16.7 (fields) and `targets/androidime.md` (default rules); 0.3 |
+| `ios` | §16.8 (fields) and `targets/ios.md` (default rules); 0.3 |
+| `chromeos` | §16.9 (fields) and `targets/chromeos.md` (default rules); 0.3 |
+| `keyman` | §16.10 (fields) and `targets/keyman.md` (default rules); 0.3 |
 
 Every build target follows the same pattern (D16, D109): a document `targets/<target>.md` with its default rules
 (a `## 1. Rule index` table, rules reported as `<target>Default.<rule>`, §17.1), its loss kinds in §17.3 under the
-family `<target>`, a coverage page `coverage/<target>.md` that gives every element of the native format a home,
-and a position table.
+family `<target>`, a coverage page that gives every element of the native format a home (`coverage/<target>.md`, or named after
+the native format where it has a name of its own: `coverage/kcm.md` for `android`), and a position table. A
+target without a native file format (`androidime`, `ios`: the build writes an app that reads the touch model)
+has no coverage page of its own, and a touch-only target has no position table (below).
 
 **Position tables** (D109). Position names (§6.1) are the format's one way to name a physical key. A target whose
 native format names keys by its own codes has one fixed **default table** from position names to those codes,
@@ -546,6 +562,17 @@ used where the file does not pin a code for a position (`targets.<target>.keys.<
 | `windows` | `targets/windows-default-vk.tsv` (Table A) | virtual key, scan-code flags |
 | `macos` | `targets/macos-default-keycode.tsv` | `.keylayout` key code |
 | `xkb` | `targets/xkb-default-keyname.tsv` | XKB key name |
+| `android` | `targets/android-default-keycode.tsv` (0.3) | Android `KEYCODE_*` name |
+| `chromeos` | `targets/chromeos-default-code.tsv` (0.3) | DOM `KeyboardEvent.code` |
+| `keyman` | the target's own, if its native form needs one (`targets/keyman.md` §2; 0.3) | Keyman key name |
+| `androidime`, `ios` | none: touch keys are KeyIds (below) | — |
+
+**Touch-only targets** (D151). An on-screen keyboard names its keys by KeyId (§8) in the rows of `touch` (§9.4),
+never by position, so `androidime` and `ios` have no position table and no `keys` member keyed by position. Where
+such a target also handles a physical keyboard (the Android input method's physical-key mode, `targets/androidime.md`
+§3), it maps hardware key events to positions with the table of `android` and its pins `targets.android.keys`, so
+one layout file gives the same position → key code mapping to both Android builds. iOS has no third-party
+hardware layouts; the `ios` target compiles only the touch layers.
 
 Every table is a tab-separated text file in this repository, normative over any summary of it, with `#` comment
 lines first that cite its sources, then a header line whose first column is `position`, second column the target's
@@ -659,6 +686,78 @@ rules are few and mechanical, every one can be overridden by the field it names,
 | `compose` | `{ "write"?: boolean, "includeLocale"?: boolean }` | whether the build writes a Compose file (default: when the file has dead keys) and whether it begins with `include "%L"`, which keeps the system's sequences (default `true`) (rule `compose`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
+### 16.6 `targets.android` (0.3)
+
+Android physical keyboards: a `.kcm` key character map in an APK without code, which the system lists under its physical-keyboard settings (`targets/android.md`, `coverage/kcm.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `androidDefault.<rule>`. Its fields are written by the work on this target; until
+then the object holds only `onLoss`.
+
+| property | type | meaning (default rule in `targets/android.md`) |
+|---|---|---|
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
+
+### 16.7 `targets.androidime` (0.3)
+
+An Android on-screen keyboard: one input-method APK for this one layout, built from the touch layers (§9.4) and, for a physical keyboard used with it, the hardware layers (`targets/androidime.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `androidimeDefault.<rule>`. Its fields are written by the work on this target; until
+then the object holds only `onLoss`. It has no position table (§16).
+
+| property | type | meaning (default rule in `targets/androidime.md`) |
+|---|---|---|
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
+
+### 16.8 `targets.ios` (0.3)
+
+An iOS on-screen keyboard: one app with one keyboard extension for this one layout, built from the touch layers (§9.4; `targets/ios.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `iosDefault.<rule>`. Its fields are written by the work on this target; until
+then the object holds only `onLoss`. It has no position table (§16).
+
+| property | type | meaning (default rule in `targets/ios.md`) |
+|---|---|---|
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
+
+### 16.9 `targets.chromeos` (0.3)
+
+ChromeOS: a Manifest V3 extension using `chrome.input.ime`, built from the hardware layers by DOM `code` (`targets/chromeos.md`, `coverage/chromeos.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `chromeosDefault.<rule>`. Its fields are written by the work on this target; until
+then the object holds only `onLoss`.
+
+| property | type | meaning (default rule in `targets/chromeos.md`) |
+|---|---|---|
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
+
+### 16.10 `targets.keyman` (0.3)
+
+Keyman: a keyboard package (`.kmp`) holding this one keyboard, compiled by Keyman's own compiler from a source the build writes (`targets/keyman.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `keymanDefault.<rule>`. Its fields are written by the work on this target; until
+then the object holds only `onLoss`.
+
+| property | type | meaning (default rule in `targets/keyman.md`) |
+|---|---|---|
+| `onLoss` | OnLoss | loss policy for this target (§17.2) |
+
+### 16.11 Conversion formats
+
+The formats a tool converts from and to have fixed names, used by tools on the command line, in reports and in
+`metadata.provenance.format` (§4). Each has a coverage page (every element with its home or loss kind) and, where it
+loses data, a loss-kind family of its own (§17.3).
+
+| name | format | coverage | loss family | since |
+|---|---|---|---|---|
+| `kbl` | `.kbl.json` (this document) | — | — | 0.1 |
+| `cldr` | CLDR keyboard 3.0 XML | `coverage/cldr-keyboard3.md` | `cldr` | 0.1 |
+| `klc` | MSKLC source `.klc` | `coverage/windows.md` | `klc` | 0.1 |
+| `dll` | Windows layout DLL (`windowsDll` in `provenance.format`) | `coverage/windows.md` | `dll` | 0.1 |
+| `keylayout` | macOS `.keylayout` | `coverage/macos.md` | `macos` | 0.2 |
+| `xkb` | XKB symbols file with Compose | `coverage/xkb.md` | `xkb` | 0.2 |
+| `kcm` | Android key character map `.kcm` | `coverage/kcm.md` | `android` | 0.3 |
+| `kbdgen` | kbdgen bundle (`.kbdgen` folder), one layout of it per `.kbl.json` | `coverage/kbdgen.md` | `kbdgen` | 0.3 |
+| `kmn` | Keyman keyboard source `.kmn` | `coverage/kmn.md` | `kmn` | 0.3 |
+| `keymantouch` | Keyman touch layout `.keyman-touch-layout` | `coverage/keymantouch.md` | `keymantouch` | 0.3 |
+
+An importer of a file or bundle that holds several layouts (a kbdgen bundle, a Keyman package with several keyboards)
+writes one `.kbl.json` file and one loss report per layout; a writer writes exactly one layout (D150).
+
 ## 17. Losses
 
 ### 17.1 Loss reports
@@ -672,7 +771,9 @@ Every conversion and build returns a **loss report**: a list of entries
 
 Besides losses, a build reports every **defaulted choice**: an entry whose kind is `<target>Default.<rule>`
 (for Windows `windowsDefault.dllName`, …, the rule names of `targets/windows.md`; for macOS `macosDefault.<rule>` and
-for XKB `xkbDefault.<rule>`, the rule indexes of `targets/macos.md` and `targets/xkb.md`), with the chosen value in
+for XKB `xkbDefault.<rule>`, the rule indexes of `targets/macos.md` and `targets/xkb.md`; for the 0.3 targets
+`androidDefault.<rule>`, `androidimeDefault.<rule>`, `iosDefault.<rule>`, `chromeosDefault.<rule>` and
+`keymanDefault.<rule>`, the rule indexes of their `targets/<target>.md`), with the chosen value in
 `detail.value`. Defaulted entries follow the same policy mechanism; their default policy is `accept`, so a file
 can turn them into warnings or errors (`"windowsDefault.*": "error"`).
 
@@ -703,6 +804,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `windowsDefault.<rule>` | accept | a Windows build used the default rule `<rule>` of `targets/windows.md` (one entry per rule, the affected items in `detail`) |
 | `macosDefault.<rule>` | accept | a macOS build used the default rule `<rule>` of `targets/macos.md` (0.2; as for Windows) |
 | `xkbDefault.<rule>` | accept | an XKB build used the default rule `<rule>` of `targets/xkb.md` (0.2; as for Windows) |
+| `androidDefault.<rule>`, `androidimeDefault.<rule>`, `iosDefault.<rule>`, `chromeosDefault.<rule>`, `keymanDefault.<rule>` | accept | a build of that target used the default rule `<rule>` of its `targets/<target>.md` (0.3; as for Windows) |
 | `general.noLayers` | warning | the file has neither `hardware` nor `touch` |
 | `general.layerOverlap` | **fatal** | two layers of one set match the same state (§7.3) |
 | `general.unresolvedReference` | **fatal** | a KeyId, DeadKeyId, FlickId, FormId, PositionId, VariableId or component is used but not defined (and not implied) |
@@ -858,8 +960,11 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 
 A tool MUST NOT invent kinds outside this list for its version; a loss that fits none is reported as the closest kind with
 an explanatory `message`, and the gap is a defect of this specification. The kinds of the families `macos` and
-`xkb` (0.2) are the two blocks of rows at the end of the table; a 0.1 file cannot name them, and the 0.1 schema
-does not accept them (§1.1).
+`xkb` (0.2) are the two blocks of rows after the `cldr` rows; a 0.1 file cannot name them, and the 0.1 schema
+does not accept them (§1.1). The 0.3 families (`android`, `androidime`, `ios`, `chromeos`, `keyman`, `kbdgen`,
+`kmn`, `keymantouch`, and their `<target>Default` kinds) follow, one block per family, each written by the work on
+that target or format; rows marked "0.3" in an older family are 0.3 kinds too. Neither a 0.1 nor a 0.2 file can name
+them (§1.1); `onLoss` accepts the wildcard `<family>.*` of every 0.3 family from the start.
 
 ## 18. Extensions and CLDR `special`
 

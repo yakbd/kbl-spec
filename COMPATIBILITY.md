@@ -1,8 +1,8 @@
 # Compatibility of `.kbl.json` 0.x
 
-The format is released as **0.1 preview**; 0.2, which adds macOS and Linux (XKB) targets, is in draft. 0.1 is
-complete enough to implement and to write layouts in, and it is not frozen. This page says what you can rely on
-before 1.0.
+The format is released as **0.1 preview** and **0.2 preview** (macOS and Linux XKB); 0.3, which adds Android,
+iOS, ChromeOS and Keyman targets and touch geometry, is in draft. 0.1 and 0.2 are complete enough to implement and to
+write layouts in. This page says what you can rely on before 1.0.
 
 ## What 0.1 promises
 
@@ -16,10 +16,10 @@ before 1.0.
   not do what its text says), recorded in `DECISIONS.md` and the changelog. A file that writes its defaults out
   (pinning, `targets/windows.md` §10) does not depend on them at all.
 
-## What 0.2 promises (draft)
+## What 0.2 promises
 
-0.2 is being written. Until it is tagged it may still change in any way, and its schema path is not published.
-What it already promises, and keeps when it is released (D108):
+What 0.2 promised as a draft, and keeps now that it is released (D108); "What 0.1 promises" holds for 0.2 files
+as well, and `schema/0.2/` is pinned like `schema/0.1/`:
 
 - **0.2 does not change 0.1.** `schema/0.1/kbl.schema.json` changes only as "What 0.1 promises" allows (the
   repository's checker pins its hash, so no other change slips in), and those rules still hold for 0.1 files.
@@ -30,6 +30,22 @@ What it already promises, and keeps when it is released (D108):
   rejects 0.2 files (below).
 - **Tools write the lowest version that holds the file** (`SPEC.md` §1.1), so a file that uses nothing new stays
   readable by 0.1 tools.
+
+## What 0.3 promises (draft)
+
+0.3 is being written. Until it is tagged it may still change in any way, and its schema path is not published.
+What it already promises, and keeps when it is released (D150):
+
+- **0.3 does not change 0.1 or 0.2.** Their schema files change only as "What 0.1 promises" allows for each (the
+  checker pins both hashes), and those rules still hold for 0.1 and 0.2 files.
+- **0.3 holds 0.2.** 0.3 only adds (five targets, touch members, their loss kinds, four provenance formats). A valid
+  0.1 or 0.2 file whose `kbl` (and `$schema`) is changed to `"0.3"` is a valid 0.3 file and means the same: the
+  default rules and position tables of Windows, macOS and XKB do not change in 0.3, and a touch member 0.3 adds,
+  when absent, means what the file meant before.
+- **A 0.3 reader reads 0.1 and 0.2 files**, checking each file against the schema of the version it names. Older
+  readers reject 0.3 files.
+- **The names of the 0.3 targets and formats are fixed**: `android`, `androidime`, `ios`, `chromeos`, `keyman`;
+  `kcm`, `kbdgen`, `kmn`, `keymantouch` (`SPEC.md` §16, §16.11).
 
 ## What may change in 0.x
 

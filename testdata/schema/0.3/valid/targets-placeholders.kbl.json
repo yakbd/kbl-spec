@@ -1,0 +1,93 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json",
+  "kbl": "0.3",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case",
+    "provenance": {
+      "format": "kbdgen"
+    }
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "targets": {
+    "android": {
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "android.*": "error",
+          "androidDefault.*": "accept"
+        }
+      }
+    },
+    "androidime": {
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "androidime.*": "error",
+          "androidimeDefault.*": "accept"
+        }
+      }
+    },
+    "ios": {
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "ios.*": "error",
+          "iosDefault.*": "accept"
+        }
+      }
+    },
+    "chromeos": {
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "chromeos.*": "error",
+          "chromeosDefault.*": "accept"
+        }
+      }
+    },
+    "keyman": {
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "keyman.*": "error",
+          "keymanDefault.*": "accept"
+        }
+      }
+    }
+  },
+  "onLoss": {
+    "kinds": {
+      "kbdgen.*": "warning",
+      "kmn.*": "warning",
+      "keymantouch.*": "accept"
+    }
+  }
+}

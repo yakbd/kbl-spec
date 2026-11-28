@@ -1,12 +1,12 @@
 // The repository checks of the .kbl.json specification. Run from the repository root: `npm run check`
 // (`npm test` also type-checks and checks that the generated schemas are fresh). For every version V of
-// src/schema.ts (0.1, 0.2) it checks that
+// src/schema.ts (0.1, 0.2, 0.3) it checks that
 //
 //  1. schema/V/kbl.schema.json compiles as a JSON Schema draft 2020-12 schema (meta-schema validation included),
-//     has the $id of V, and, for 0.1, still has the pinned SHA-256 (0.1 is frozen; COMPATIBILITY.md);
+//     has the $id of V, and, for 0.1 and 0.2, still has the pinned SHA-256 (both are frozen; COMPATIBILITY.md);
 //  2. every property and every $defs entry of the schema has a description;
-//  3. the loss kinds of SPEC.md §17.3 equal the kinds the newest schema accepts in onLoss, and the 0.1 schema's
-//     kinds are exactly those outside the families that 0.2 adds; for every target of `targets` below, the default
+//  3. the loss kinds of SPEC.md §17.3 equal the kinds the newest schema accepts in onLoss, and each older schema's
+//     kinds are exactly those outside the families and kinds that later versions add; for every target of `targets` below, the default
 //     rules of its "Rule index" sections equal the schema's <target>Default.<rule> kinds; every loss kind named in
 //     targets/*.md and coverage/*.md is defined in SPEC.md;
 //  4. every property name of the schema is mentioned in SPEC.md;
@@ -17,18 +17,22 @@
 //     known virtual keys;
 //  7. every testdata/schema/V/valid/*.kbl.json is accepted and every testdata/schema/V/invalid/*.kbl.json is
 //     rejected, by the zod schema and by the JSON Schema of V alike;
-//  8. 0.2 holds 0.1: every 0.1 example and valid 0.1 case, with `kbl` and `$schema` changed to 0.2, is accepted by
-//     both 0.2 schemas.
+//  8. each version holds the older ones: every example and valid case of a version, with `kbl` and `$schema`
+//     changed to a later version, is accepted by both schemas of that version.
 //
 // The SPEC §19 rules are checked here, not in the schema: they relate parts of a file to each other.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import * as z from "zod";
-import { schemaId, schemaPath, schemas, versions, type Version } from "../../src/schema.ts";
+import { lossKindsCore03, schemaId, schemaPath, schemas, versions, type Version } from "../../src/schema.ts";
 
-/** SHA-256 of schema/0.1/kbl.schema.json as published. Change it only for a recorded 0.1 bug fix or new loss kind. */
-const frozen01 = "9011b8c6bfbe98801a54c98ad75392ca63f2aa07c500308d395cf88270e5ec3e";
+/** SHA-256 of the frozen schema files as published. Change one only for a recorded bug fix of that version, or a new
+ * loss kind COMPATIBILITY.md allows within it. */
+const frozen: Partial<Record<Version, string>> = {
+  "0.1": "9011b8c6bfbe98801a54c98ad75392ca63f2aa07c500308d395cf88270e5ec3e",
+  "0.2": "b3a9c236925beb301d1c569c24a7264a4727a923ce6ca0bc81f5c800acd4f992",
+};
 
 /** The build targets: the files of their rule indexes and their position tables (SPEC §16). A new target adds a
  * line here. Its position table may be missing until the target writes it. */
@@ -36,10 +40,34 @@ const targets = [
   { name: "windows", ruleFiles: ["targets/windows.md", "targets/windows-install.md"] },
   { name: "macos", ruleFiles: ["targets/macos.md"], table: "targets/macos-default-keycode.tsv" },
   { name: "xkb", ruleFiles: ["targets/xkb.md"], table: "targets/xkb-default-keyname.tsv" },
+  { name: "android", ruleFiles: ["targets/android.md"], table: "targets/android-default-keycode.tsv" },
+  { name: "androidime", ruleFiles: ["targets/androidime.md"] },
+  { name: "ios", ruleFiles: ["targets/ios.md"] },
+  { name: "chromeos", ruleFiles: ["targets/chromeos.md"], table: "targets/chromeos-default-code.tsv" },
+  { name: "keyman", ruleFiles: ["targets/keyman.md"] },
 ];
 
-/** The loss-kind families that 0.2 adds; 0.1 has every other kind. */
-const families02 = new Set(["macos", "macosDefault", "xkb", "xkbDefault"]);
+/** The loss-kind families each version adds; 0.1 has every other family. */
+const familiesSince: Partial<Record<Version, Set<string>>> = {
+  "0.2": new Set(["macos", "macosDefault", "xkb", "xkbDefault"]),
+  "0.3": new Set([
+    "android",
+    "androidDefault",
+    "androidime",
+    "androidimeDefault",
+    "chromeos",
+    "chromeosDefault",
+    "ios",
+    "iosDefault",
+    "kbdgen",
+    "keyman",
+    "keymanDefault",
+    "keymantouch",
+    "kmn",
+  ]),
+};
+/** The kinds a version adds to older families (the touch core of 0.3 in `general` and `cldr`). */
+const kindsSince: Partial<Record<Version, Set<string>>> = { "0.3": new Set<string>(lossKindsCore03) };
 
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
@@ -398,8 +426,9 @@ const jsonSchemas = {} as Record<Version, Obj>;
 for (const v of versions) {
   const path = schemaPath(v);
   const text = read(path);
-  if (v === "0.1" && createHash("sha256").update(text).digest("hex") !== frozen01)
-    errf(`${path} changed: 0.1 is frozen (COMPATIBILITY.md); a change to a shared part of src/schema.ts reached 0.1`);
+  const pin = frozen[v];
+  if (pin !== undefined && createHash("sha256").update(text).digest("hex") !== pin)
+    errf(`${path} changed: ${v} is frozen (COMPATIBILITY.md); a change to a shared part of src/schema.ts reached ${v}`);
   const schema = obj(decode(text, path));
   if (schema.$id !== schemaId(v)) errf(`${path}: $id is ${JSON.stringify(schema.$id)}, want ${schemaId(v)}`);
   try {
@@ -451,11 +480,18 @@ const kindsOf = (v: Version) => {
   const [a, b] = [diff(specKinds, kinds), diff(kinds, specKinds)];
   if (a.length + b.length > 0)
     errf(`loss kinds differ: only in SPEC [${a.join(" ")}]; only in the ${latest} schema [${b.join(" ")}]`);
-  const want01 = new Set([...onLossKinds(latest)].filter((k) => !families02.has(family(k))));
-  const got01 = new Set(onLossKinds("0.1"));
-  const [c, d] = [diff(want01, got01), diff(got01, want01)];
-  if (c.length + d.length > 0)
-    errf(`0.1 loss kinds: missing [${c.join(" ")}]; not allowed in 0.1 [${d.join(" ")}] (families02 in tools/check)`);
+  for (const [i, v] of versions.entries()) {
+    const later = versions.slice(i + 1);
+    const want = new Set(
+      onLossKinds(latest).filter(
+        (k) => !later.some((w) => familiesSince[w]?.has(family(k)) || kindsSince[w]?.has(k)),
+      ),
+    );
+    const got = new Set(onLossKinds(v));
+    const [c, d] = [diff(want, got), diff(got, want)];
+    if (c.length + d.length > 0)
+      errf(`${v} loss kinds: missing [${c.join(" ")}]; not allowed in ${v} [${d.join(" ")}] (familiesSince in tools/check)`);
+  }
 }
 reKindInText = new RegExp(`(?:^|[^.\\w])((?:${[...families].filter((f) => !f.endsWith("Default")).sort().join("|")})\\.[a-z][A-Za-z0-9]*)`, "g");
 for (const t of targets) {
@@ -509,7 +545,11 @@ for (const t of targets) if (t.table !== undefined && existsSync(t.table)) check
 // 6. examples
 const examples = glob("examples", ".kbl.json");
 if (examples.length === 0) errf("no examples");
-const examples01: Json[] = [];
+/** The examples and valid cases of each version, checked again as every later version (check 8). */
+const validOf = Object.fromEntries(versions.map((v) => [v, [] as { path: string; doc: Json }[]])) as Record<
+  Version,
+  { path: string; doc: Json }[]
+>;
 for (const path of examples) {
   const raw = read(path);
   if (raw.startsWith("﻿")) errf(`${path}: byte-order mark`);
@@ -520,7 +560,7 @@ for (const path of examples) {
     errf(`${path}: unknown kbl ${JSON.stringify(obj(doc).kbl)}`);
     continue;
   }
-  if (v === "0.1") examples01.push(doc);
+  validOf[v].push({ path, doc });
   if (obj(doc).$schema !== undefined && obj(doc).$schema !== schemaId(v)) errf(`${path}: $schema is not ${schemaId(v)}`);
   const validate = validators[v];
   if (!validate(doc)) errf(`${path}: ${ajv.errorsText(validate.errors)}`);
@@ -536,7 +576,6 @@ for (const path of examples) {
 // 7. schema test cases, per version
 let nValid = 0;
 let nInvalid = 0;
-const valid01: { path: string; doc: Json }[] = examples01.map((doc, i) => ({ path: `0.1 example ${i}`, doc }));
 for (const v of versions) {
   const cases = {
     valid: glob(`testdata/schema/${v}/valid`, ".kbl.json"),
@@ -553,17 +592,22 @@ for (const v of versions) {
       const want = kind === "valid";
       if (r.json !== want) errf(`${path}: the ${v} JSON Schema ${r.json ? "accepts" : "rejects"} it`);
       if (r.zod !== want) errf(`${path}: the ${v} zod schema ${r.zod ? "accepts" : "rejects"} it`);
-      if (want && v === "0.1") valid01.push({ path, doc });
+      if (want) validOf[v].push({ path, doc });
     }
   }
 }
 
-// 8. 0.2 holds 0.1
-for (const { path, doc } of valid01) {
-  const up: Obj = { ...obj(doc), kbl: "0.2" };
-  if (has(up, "$schema")) up.$schema = schemaId("0.2");
-  const r = verdicts("0.2", up);
-  if (!r.json || !r.zod) errf(`${path}: valid in 0.1 but, as 0.2, rejected by the 0.2 ${r.json ? "zod" : "JSON"} schema`);
+// 8. each version holds the older ones
+for (const [i, v] of versions.entries()) {
+  for (const w of versions.slice(i + 1)) {
+    for (const { path, doc } of validOf[v]) {
+      const up: Obj = { ...obj(doc), kbl: w };
+      if (has(up, "$schema")) up.$schema = schemaId(w);
+      const r = verdicts(w, up);
+      if (!r.json || !r.zod)
+        errf(`${path}: valid in ${v} but, as ${w}, rejected by the ${w} ${r.json ? "zod" : "JSON"} schema`);
+    }
+  }
 }
 
 for (const e of errs) console.log("ERROR", e);

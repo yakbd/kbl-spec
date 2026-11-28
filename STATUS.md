@@ -1,6 +1,7 @@
 # Status
 
-Format version: **0.1 preview**; 0.2 (macOS, Linux XKB) in draft on the branch `spec-0.2`. Last update: 2026-11-28.
+Format version: **0.1 preview**, 0.2 (macOS, Linux XKB) preview; 0.3 (Android, iOS, ChromeOS, Keyman, touch geometry)
+in draft on the branch `spec-0.3`. Last update: 2026-11-28.
 
 ## In short
 
@@ -93,6 +94,14 @@ Round 2: the installer per `targets/windows-install.md` (stable; VM-5 settled); 
 is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D67). Q11 (container) and Q12 (signing) closed by the owner (D76).
 
 ## Changelog
+
+- 2026-11-28 (branch `spec-0.3`, draft, groundwork): version 0.3 (`kbl` `"0.3"`, `schema/0.3/kbl.schema.json`;
+  0.1 and 0.2 frozen by hash, D150). New targets `targets.android`, `targets.androidime`, `targets.ios`,
+  `targets.chromeos`, `targets.keyman` (placeholders holding `onLoss`; SPEC §16.6 to §16.10, stubs
+  `targets/<target>.md`); conversion formats and provenance formats `kcm`, `kbdgen`, `kmn`, `keymantouch` (SPEC
+  §16.11, coverage stubs); loss-kind wildcards of the families `android`, `androidime`, `ios`, `chromeos`,
+  `keyman` (each with `<target>Default.*`), `kbdgen`, `kmn`, `keymantouch`; touch-only targets have no position
+  table (D151) (this commit).
 
 - 2026-11-28 (branch `spec-0.2`, owner): releases are not code-signed; D112 supersedes D104. No change to the format.
 

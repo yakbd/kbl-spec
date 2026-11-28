@@ -1,8 +1,10 @@
-// The .kbl.json schema, versions 0.1 and 0.2, in zod 4. This file is the source of schema/0.1/kbl.schema.json and
-// schema/0.2/kbl.schema.json (`npm run gen` writes both; CI checks that both are fresh). Normative text: SPEC.md.
-// 0.2 adds to 0.1 only (targets.macos, targets.xkb, their loss kinds, provenance formats; COMPATIBILITY.md): the
-// parts that differ are built per version by kblFile() at the end, everything else is shared. 0.1 is frozen, and
-// tools/check pins the hash of its generated file, so an edit to a shared part that changes 0.1 fails `npm test`.
+// The .kbl.json schema, versions 0.1, 0.2 and 0.3, in zod 4. This file is the source of
+// schema/<version>/kbl.schema.json (`npm run gen` writes all three; CI checks that they are fresh). Normative text:
+// SPEC.md. Each version adds to the one before only (0.2: targets.macos, targets.xkb; 0.3: five more targets, the
+// touch core, their loss kinds, provenance formats; COMPATIBILITY.md): the parts that differ are built per version
+// by kblFile() at the end (and by the factories it calls), everything else is shared. 0.1 and 0.2 are frozen, and
+// tools/check pins the hashes of their generated files, so an edit to a shared part that changes them fails
+// `npm test`.
 //
 // Every object is a strictObject (JSON Schema `additionalProperties: false`), every exclusive choice a z.xor
 // (`oneOf`), and every schema carries a description. A schema with a metadata `id` becomes an entry of `$defs`.
@@ -388,6 +390,34 @@ const lossKindsXkb = [
   "xkbDefault.variant",
 ] as const;
 
+// The loss kinds that 0.3 adds (D150). As in 0.2, each new target or format appends its own kinds to its own list,
+// sorted, with its defaulted-choice kinds `<target>Default.<rule>`; the wildcards are there from the start. The kinds
+// that 0.3 adds to the older families (`general`, `cldr`) for the touch core are in `lossKindsCore03`.
+
+/** 0.3: kinds of the touch core (SPEC §9.4, §14.4) in the families `general` and `cldr`. Owner: the spec core. */
+export const lossKindsCore03 = [] as const;
+
+/** 0.3: the Android physical-keyboard target (`.kcm`; targets/android.md, coverage/kcm.md). Owner: the kcm work. */
+const lossKindsAndroid = ["android.*", "androidDefault.*"] as const;
+
+/** 0.3: the Android on-screen keyboard target (targets/androidime.md). Owner: the touch-target work. */
+const lossKindsAndroidime = ["androidime.*", "androidimeDefault.*"] as const;
+
+/** 0.3: the iOS on-screen keyboard target (targets/ios.md). Owner: the touch-target work. */
+const lossKindsIos = ["ios.*", "iosDefault.*"] as const;
+
+/** 0.3: the ChromeOS input-method target (targets/chromeos.md). Owner: the ChromeOS work. */
+const lossKindsChromeos = ["chromeos.*", "chromeosDefault.*"] as const;
+
+/** 0.3: the Keyman target (targets/keyman.md). Owner: the Keyman package work. */
+const lossKindsKeyman = ["keyman.*", "keymanDefault.*"] as const;
+
+/** 0.3: the conversion formats `kbdgen` (coverage/kbdgen.md), `kmn` (coverage/kmn.md) and `keymantouch`
+ * (coverage/keymantouch.md). Each owner appends to its own family. */
+const lossKindsKbdgen = ["kbdgen.*"] as const;
+const lossKindsKmn = ["kmn.*"] as const;
+const lossKindsKeymantouch = ["keymantouch.*"] as const;
+
 /** The OnLoss schema of one version: the same shape, a different closed list of kinds. */
 function onLoss(kinds: readonly [string, ...string[]], defaultedKind: string) {
   return z
@@ -410,6 +440,23 @@ function onLoss(kinds: readonly [string, ...string[]], defaultedKind: string) {
 
 const OnLoss01 = onLoss(lossKinds01, "windowsDefault.<rule>");
 const OnLoss02 = onLoss([...lossKinds01, ...lossKindsMacos, ...lossKindsXkb], "<target>Default.<rule>");
+const OnLoss03 = onLoss(
+  [
+    ...lossKinds01,
+    ...lossKindsMacos,
+    ...lossKindsXkb,
+    ...lossKindsCore03,
+    ...lossKindsAndroid,
+    ...lossKindsAndroidime,
+    ...lossKindsIos,
+    ...lossKindsChromeos,
+    ...lossKindsKeyman,
+    ...lossKindsKbdgen,
+    ...lossKindsKmn,
+    ...lossKindsKeymantouch,
+  ],
+  "<target>Default.<rule>",
+);
 
 export const Version4 = z
   .string()
@@ -1315,8 +1362,9 @@ const MacosReverseDns = z.string().regex(/^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/u).m
 /** 0.2: a name used as a file name inside the bundle (no slash, colon or control character). */
 const MacosFileName = z.string().regex(/^[^/:\x00-\x1f\x7f]{1,128}$/u);
 
-/** 0.2: macOS `.keylayout` build choices. */
-const TargetsMacos = z
+/** 0.2: macOS `.keylayout` build choices; `OnLoss` is that of the file's version. */
+const targetsMacos = (OnLoss: OnLossSchema) =>
+  z
   .strictObject({
     layoutName: MacosFileName.meta({
       description:
@@ -1445,7 +1493,7 @@ const TargetsMacos = z
       )
       .meta({ description: "macOS data per dead key." })
       .optional(),
-    onLoss: OnLoss02.meta({ description: "Loss policy for this target." }).optional(),
+    onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
   })
   .meta({ description: "macOS build choices (SPEC §16.4, targets/macos.md)." });
 
@@ -1483,8 +1531,9 @@ const XkbKeyType = z
 /** 0.2: a modifier component that drives an XKB level shift (a built-in Alt component or a custom held one). */
 const XkbLevelComponent = z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,31}$/u);
 
-/** 0.2: Linux XKB build choices. */
-const TargetsXkb = z
+/** 0.2: Linux XKB build choices; `OnLoss` is that of the file's version. */
+const targetsXkb = (OnLoss: OnLossSchema) =>
+  z
   .strictObject({
     symbolsName: XkbFileName.meta({
       description: "The symbols file name and the layout name in rules/evdev.xml (rule symbolsName).",
@@ -1577,14 +1626,59 @@ const TargetsXkb = z
       })
       .meta({ description: "The Compose file of the build (rule compose)." })
       .optional(),
-    onLoss: OnLoss02.meta({ description: "Loss policy for this target." }).optional(),
+    onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
   })
   .meta({ description: "Linux XKB build choices (SPEC §16.5, targets/xkb.md)." });
+
+// ---- 0.3 targets ----
+// Five new targets, each a closed object of its own (D150). Each starts as a placeholder holding only `onLoss`; the
+// work on that target adds its fields here (SPEC §16.6–§16.10, its targets/<name>.md) and nowhere else. The touch
+// model they read (SPEC §8, §9.4, §14.4) is shared and edited only by the spec core.
+
+/** 0.3: Android physical keyboards, a `.kcm` key character map in a code-free APK (SPEC §16.6). */
+const targetsAndroid = (OnLoss: OnLossSchema) =>
+  z
+    .strictObject({
+      onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+    })
+    .meta({ description: "Android physical-keyboard build choices (SPEC §16.6, targets/android.md)." });
+
+/** 0.3: an Android on-screen keyboard, one input-method APK for this layout (SPEC §16.7). */
+const targetsAndroidime = (OnLoss: OnLossSchema) =>
+  z
+    .strictObject({
+      onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+    })
+    .meta({ description: "Android on-screen keyboard build choices (SPEC §16.7, targets/androidime.md)." });
+
+/** 0.3: an iOS on-screen keyboard, one app with one keyboard extension for this layout (SPEC §16.8). */
+const targetsIos = (OnLoss: OnLossSchema) =>
+  z
+    .strictObject({
+      onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+    })
+    .meta({ description: "iOS keyboard build choices (SPEC §16.8, targets/ios.md)." });
+
+/** 0.3: ChromeOS, a Manifest V3 input-method extension (SPEC §16.9). */
+const targetsChromeos = (OnLoss: OnLossSchema) =>
+  z
+    .strictObject({
+      onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+    })
+    .meta({ description: "ChromeOS input-method build choices (SPEC §16.9, targets/chromeos.md)." });
+
+/** 0.3: Keyman, a keyboard package `.kmp` with this one keyboard (SPEC §16.10). */
+const targetsKeyman = (OnLoss: OnLossSchema) =>
+  z
+    .strictObject({
+      onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
+    })
+    .meta({ description: "Keyman package build choices (SPEC §16.10, targets/keyman.md)." });
 
 // ---- the file, per version ----
 
 /** The format versions this source generates, oldest first. Each schema accepts only its own `kbl` value. */
-export const versions = ["0.1", "0.2"] as const;
+export const versions = ["0.1", "0.2", "0.3"] as const;
 export type Version = (typeof versions)[number];
 
 /** Where the generated JSON Schema of a version lives, and its `$id`. */
@@ -1594,9 +1688,22 @@ export const schemaId = (v: Version) => `https://yakbd.github.io/kbl-spec/schema
 /** The source formats of `metadata.provenance.format` per version. */
 const formats01 = ["cldr", "klc", "windowsDll", "kbl", "other"] as const;
 const formats02 = ["cldr", "klc", "windowsDll", "kbl", "keylayout", "xkb", "other"] as const;
+const formats03 = [
+  "cldr",
+  "klc",
+  "windowsDll",
+  "kbl",
+  "keylayout",
+  "xkb",
+  "kcm",
+  "kbdgen",
+  "kmn",
+  "keymantouch",
+  "other",
+] as const;
 
 function kblFile(v: Version) {
-  const OnLoss = v === "0.1" ? OnLoss01 : OnLoss02;
+  const OnLoss = { "0.1": OnLoss01, "0.2": OnLoss02, "0.3": OnLoss03 }[v];
   const targets = {
     windows: targetsWindows(OnLoss).optional(),
     klc: z
@@ -1623,17 +1730,24 @@ function kblFile(v: Version) {
       .meta({ description: "CLDR conversion choices (SPEC §16.3)." })
       .optional(),
   };
-  const Targets = (
-    v === "0.1"
-      ? z.strictObject(targets)
-      : z.strictObject({ ...targets, macos: TargetsMacos.optional(), xkb: TargetsXkb.optional() })
-  ).meta({ description: "Per-target choices (SPEC §16)." });
+  const targets02 = { ...targets, macos: targetsMacos(OnLoss).optional(), xkb: targetsXkb(OnLoss).optional() };
+  const targets03 = {
+    ...targets02,
+    android: targetsAndroid(OnLoss).optional(),
+    androidime: targetsAndroidime(OnLoss).optional(),
+    ios: targetsIos(OnLoss).optional(),
+    chromeos: targetsChromeos(OnLoss).optional(),
+    keyman: targetsKeyman(OnLoss).optional(),
+  };
+  const Targets = z
+    .strictObject({ "0.1": targets, "0.2": targets02, "0.3": targets03 }[v])
+    .meta({ description: "Per-target choices (SPEC §16)." });
 
   return z
     .strictObject({
       $schema: z.string().meta({ description: "Schema URL; informative." }).optional(),
       kbl: z.literal(v).meta({ description: "Format version." }),
-      metadata: metadata(v === "0.1" ? formats01 : formats02),
+      metadata: metadata({ "0.1": formats01, "0.2": formats02, "0.3": formats03 }[v]),
       settings: Settings.optional(),
       positions: Positions.optional(),
       forms: Forms.optional(),
@@ -1683,14 +1797,17 @@ function kblFile(v: Version) {
 /** The 0.1 schema. Frozen: tools/check pins the SHA-256 of its generated JSON Schema. */
 export const KblFile01 = kblFile("0.1");
 
-/** The 0.2 schema (draft until it is tagged). */
+/** The 0.2 schema. Frozen as published: tools/check pins the SHA-256 of its generated JSON Schema. */
 export const KblFile02 = kblFile("0.2");
 
+/** The 0.3 schema (draft until it is tagged). */
+export const KblFile03 = kblFile("0.3");
+
 /** The schema of each version. */
-export const schemas = { "0.1": KblFile01, "0.2": KblFile02 } as const;
+export const schemas = { "0.1": KblFile01, "0.2": KblFile02, "0.3": KblFile03 } as const;
 
 /** The newest version's schema. */
-export const KblFile = KblFile02;
+export const KblFile = KblFile03;
 
 /** A parsed .kbl.json file of the newest version. */
 export type KblFile = z.infer<typeof KblFile>;

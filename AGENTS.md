@@ -11,13 +11,13 @@ other majors).
 
     npm ci                           # exact pins from package-lock.json
     npm test                         # tsc + schema freshness + tools/check; this is what CI runs
-    npm run gen                      # after editing src/schema.ts: rewrite schema/<version>/kbl.schema.json (0.1, 0.2)
+    npm run gen                      # after editing src/schema.ts: rewrite schema/<version>/kbl.schema.json (0.1–0.3)
     npm run check                    # checker only (examples, schema cases, cross-document checks)
     npx tsx tools/gen-schema.ts --check   # schema freshness only
 
 CI (`.github/workflows/validate.yml`) runs `npm ci && npm test` on push to `main` only when a filtered path changes
 (`src/`, `schema/`, `examples/`, `testdata/`, `tools/`, `targets/`, `coverage/`, `SPEC.md`, package files, the
-workflow); a push that touches none of them (root docs only), and every push to `spec-0.2`, starts no run. Start
+workflow); a push that touches none of them (root docs only), and every push to a `spec-*` branch, starts no run. Start
 one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
 
 ## Which text wins
@@ -27,11 +27,12 @@ one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
   normative over the summary in `targets/windows.md`. The same holds for each other target's `targets/<target>.md`
   and its position table (SPEC §16, D109).
 - The schema checks structure only; the cross-field rules of SPEC §19 live in prose and partly in `tools/check`.
-- `src/schema.ts` is the only edited schema source; `schema/0.1/` and `schema/0.2/kbl.schema.json` are generated
-  from it and committed.
-- Versions (SPEC §1.1, D108): this branch writes **0.2** (draft, macOS and XKB). 0.1 is released and frozen: the
-  checker pins the hash of `schema/0.1/kbl.schema.json`. Work on 0.2 stays on the branch `spec-0.2` until the owner
-  merges it; Pages publishes `main`, and `schema/latest/` must not move to an unfinished 0.2.
+- `src/schema.ts` is the only edited schema source; every `schema/<version>/kbl.schema.json` is generated from it
+  and committed.
+- Versions (SPEC §1.1, D108, D150): this branch writes **0.3** (draft: Android, iOS, ChromeOS, Keyman, touch
+  geometry). 0.1 and 0.2 are released and frozen: the checker pins the hashes of their schema files. Work on 0.3
+  stays on the branch `spec-0.3` until the owner merges it; fixes to 0.2 arrive by merging `spec-0.2` (or `main`)
+  into `spec-0.3`, never by rebase. Pages publishes `main`, and `schema/latest/` must not move to an unfinished 0.3.
 - Record every format design decision as the next numbered entry of `DECISIONS.md`, with its reason; a later
   entry that changes an earlier one says so. Entries are never renumbered. Questions for the owner go to
   `OPEN-QUESTIONS.md`, each with a recommendation.
@@ -44,12 +45,12 @@ one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
   the source and the generated file together.
 - Added or renamed a loss kind or a default rule -> update all of: SPEC §17.3, the schema's `onLoss` kinds (0.2
   kinds in the target's own list, `lossKindsMacos` / `lossKindsXkb`), and the "Rule index" of the target's document
-  (`targets/windows.md` / `targets/windows-install.md`, `targets/macos.md`, `targets/xkb.md`); `tools/check` fails
-  on any mismatch. A loss kind named in `targets/` or `coverage/` must be defined in SPEC. A new 0.2-only family
-  also goes into `families02` in `tools/check/main.ts`.
-- `npm test` fails "0.1 is frozen" -> an edit to a shared part of `src/schema.ts` changed the 0.1 schema. Build the
-  change per version in `kblFile()` instead; only a recorded 0.1 bug fix or a new loss kind for both versions may
-  change 0.1 (then update the pinned hash in `tools/check/main.ts`).
+  (`targets/<target>.md`); `tools/check` fails on any mismatch. A loss kind named in `targets/` or `coverage/`
+  must be defined in SPEC. A new family goes into `familiesSince` in `tools/check/main.ts`; a 0.3 kind of an old
+  family (`general`, `cldr`) into `lossKindsCore03`.
+- `npm test` fails "0.1 is frozen" (or 0.2) -> an edit to a shared part of `src/schema.ts` changed an older schema.
+  Build the change per version in `kblFile()` (or a factory it calls) instead; only a recorded bug fix of that
+  version may change it (then update the pinned hash `frozen` in `tools/check/main.ts`).
 - The checker reads those tables and headings by their text shape: reformatting a loss-kind row of SPEC §17.3 or
   the `## 1. Rule index` heading breaks `npm test` (formats in `tools/AGENTS.md`).
 - Added a schema property -> mention its name in `SPEC.md` (checked) and give it a description (checked).
@@ -59,7 +60,9 @@ one by hand with `gh workflow run validate.yml --ref <branch>`. Push in batches.
 - The schema `$id`s (`https://yakbd.github.io/kbl-spec/schema/<version>/kbl.schema.json`) serve the copies that
   `.github/workflows/pages.yml` last published; it publishes only `schema/` plus a generated `schema/latest/` (D106),
   so never commit `schema/latest/`. Validate against the local files. Keep the `$id`s as they are (D100).
-- Examples are 0.1 files except those that need 0.2 (`macos-option-deadkeys`, `xkb-caps-deadkeys`: `targets.macos`, `targets.xkb`); the tool repository copies them, and reads both versions. 0.2 shapes are also tested by `testdata/schema/0.2/`.
+- Examples are 0.1 files except those that need a later version (0.2: `macos-option-deadkeys`, `xkb-caps-deadkeys`;
+  0.3: the touch examples); the tool repository copies them, and reads every version. Each version's shapes are also
+  tested by `testdata/schema/<version>/`.
 - A change that would make a valid 0.1 file invalid or change its meaning is not a 0.1 change: it waits for a new
   minor version with its own schema path (`COMPATIBILITY.md`). This includes the default rules and Table A.
   Bug fixes (a schema that follows SPEC, a rule that follows its text) are the exception.

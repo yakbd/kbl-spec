@@ -142,3 +142,38 @@ No layout of a distribution was copied. The decisions D135 to D142 and the Linux
 | Apple, TN2056 (as listed above), the `<when>` and `<terminators>` sections, read again 2026-11-28 | that a `<when>` needs `output` or `next`, that `next` defaults to the base state, that a terminator has only an output (D129) | Apple's archived documentation, read only |
 | `.keylayout` files that use an empty `output=""`: Kiimo's generated `Manoonchai.keylayout` (commit as above, MIT), `Deutsch (Programmieren).keylayout` of https://github.com/bitboxer/de-coding.keylayout (MIT), `old/AndreiRomanian.keylayout` of https://github.com/ysoftwareab/xkb-for-macos (Unlicense), read 2026-11-28 | that layouts in use write an empty output on keys and in a terminator (D129) | MIT, MIT, Unlicense; read only, nothing copied |
 | `yakbd/yakbd-cli` `tools/macos-check/` (README, the cases `sides`, `gen-pending`, `gen-maxout`, `gen-spacing`, `gen-lproj-*`, `twin-*`; MIT-0) and its runs 46117765009, 46119172899, 46126097229 | the measured facts of D128 to D130 and `targets/macos.md` §8 | MIT-0, this project |
+
+## Android, iOS, ChromeOS, Keyman and kbdgen (version 0.3)
+
+The rule for these platforms and formats is the owner's (2026-11-28; recorded with D150) and is the macOS and Linux
+rule of D111 carried over. The Windows rule above is unchanged.
+
+- **Any public source may be read** for Android, iOS, ChromeOS, Keyman and kbdgen facts: documentation,
+  specifications, public repositories and source code of any licence (GPL included), for example the Android Open
+  Source Project, Chromium, Keyman, Divvun's kbdgen and its keyboard apps, Apple's developer documentation.
+- **Nothing is copied.** No code and no long prose from any source; code and text here are written from
+  understanding. Short names and values a format requires (attribute names, `KEYCODE_*` names, DOM codes, Keyman
+  key names) are facts and may be used.
+- **Every source read is recorded** below, in the subsection of its platform or format: URL (with a version, tag or
+  commit where there is one), what it was read for, and its licence. Each piece of work adds its own subsection or
+  rows and never rewrites another's.
+- **Fixtures** come only from material whose licence allows it (for example AOSP `.kcm` files under Apache-2.0,
+  giellalt kbdgen bundles and Keyman's keyboards repository under MIT), each in its own folder under
+  `testdata/third_party/` with its licence text and an entry in `NOTICE`. Platform-owned material without such a
+  licence (Apple's keyboards, Google's proprietary keyboard data, store apps) is never committed.
+- Windows facts still come only from the reference specification and Microsoft's public documentation.
+
+The groundwork for 0.3 (version mechanics, target and format names, the position-table rule for touch-only targets,
+these rules; D150, D151) was written from this repository and the owner's decisions; no other source was read for it.
+
+### Android sources
+
+### iOS sources
+
+### ChromeOS sources
+
+### Keyman sources
+
+### kbdgen sources
+
+### Touch model sources
