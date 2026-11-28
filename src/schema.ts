@@ -465,6 +465,7 @@ const lossKindsChromeos = [
   "chromeos.markerNotCompiled",
   "chromeos.modifierUnmapped",
   "chromeos.noHardwareLayers",
+  "chromeos.outputUnencodable",
   "chromeos.positionWithoutCode",
   "chromeos.reorderNotCompiled",
   "chromeos.settingNotCompiled",

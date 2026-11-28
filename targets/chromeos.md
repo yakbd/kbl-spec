@@ -79,15 +79,15 @@ and Alt layers of the file are compiled like any other, since `commitText` types
 nothing more with it) or passes it through (returns `false`: the system types or acts on it with its own layout)
 **[CRX]**:
 
-1. A press whose state has Control, or an Alt component, that **no layer of the file names** in a modifier set
-   (`["other"]` does not count) is a shortcut: passed through, so the system's shortcuts work. Their letters are the
-   system layout's: where the base layer types another ASCII letter than `us` has at the position (`KeyQ` types `a`),
-   a shortcut follows the key cap of `us`, not of the layout (`chromeos.shortcutsFollowSystemLayout`, a warning
-   listing those positions, reported only with the system layout `us`).
-2. A position **the layout owns** (one with a binding in some compiled layer) is handled, also when it resolves to
-   nothing in this state (an explicit nothing or no binding): the system layout must not type its own character
-   there. Exceptions: the backspace action with nothing to delete in the context (§4), and a control character on
-   its own key (below).
+1. A position **the layout owns** (one with a binding in some compiled layer) is handled when it resolves to text, a
+   dead key or the backspace action (also in a state with Control or Alt: the file's Control and Alt layers type).
+2. Where it resolves to nothing (an explicit nothing, no binding, no layer): in a state with Control or an Alt
+   component the press is a **shortcut** and is passed through, so the system's shortcuts work; in any other state
+   it is handled, so the system layout never types its own character on the layout's keys. Shortcut letters are the
+   system layout's: where the base layer types another ASCII letter than `us` has at the position (`KeyQ` types
+   `a`), a shortcut follows the key cap of `us`, not of the layout (`chromeos.shortcutsFollowSystemLayout`, a
+   warning listing those positions, reported only with the system layout `us`). Exceptions to "handled": the
+   backspace action with nothing to delete in the context (§4), and a control character on its own key (below).
 3. Every other key (arrows, function keys, the modifier keys themselves) is passed through.
 
 **Number pad** (`numLock` positions, SPEC §14.1). The event carries no Num Lock flag; the runtime takes Num Lock as on
@@ -95,10 +95,12 @@ when the event's `key` is one character, the one place it reads `key` (unmeasure
 the key is passed through (navigation); otherwise it resolves as usual.
 
 **Control characters.** A binding whose text is U+0008 is the backspace action (§4). A binding that is exactly U+000D
-on `Enter` or `NumpadEnter`, U+0009 on `Tab` or U+001B on `Escape` is passed through, after the dead-key machine has
-taken it as input (SPEC §14.2), so the system does Return, Tab and Escape. Any other output with a control character
+or U+000A on `Enter` or `NumpadEnter`, U+0009 on `Tab`, U+001B on `Escape` or U+007F on `Backspace` is passed through, after the dead-key machine has
+taken it as input (SPEC §14.2), so the system does Return, Tab and Escape. In a state with Control, an output that is one control character is nothing, so the press is the system's
+shortcut (U+0003 on `KeyC` is what Control+C means), without a loss. Any other output with a control character
 (U+0000–U+001F, U+007F–U+009F) is built as nothing (`chromeos.controlCharacterDropped`): `commitText` has no defined
-meaning for it (unmeasured).
+meaning for it (unmeasured). CodeUnits that are not text (a lone surrogate) are built as nothing
+(`chromeos.outputUnencodable`).
 
 **Settings.** `bidiMarksOnShiftBackspace` is compiled: a press of a position whose base-layer binding is the
 backspace action, with Shift held, types U+200E (left Shift) or U+200F (right Shift only) and leaves a pending dead key

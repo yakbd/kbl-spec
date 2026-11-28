@@ -1065,8 +1065,9 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `chromeos.positionWithoutCode` | warning | a position with bindings that another target's position table has (`Break`, `SysRq`) and this target's has not; its bindings are left out (0.3) |
 | `chromeos.codeDuplicate` | error | two positions get the same DOM code (rule `code`) (0.3) |
 | `chromeos.modifierUnmapped` | warning | a modifier set needs a fifth or later custom component; the runtime tracks four, so the set is left out (`targets/chromeos.md` §3) (0.3) |
-| `chromeos.shortcutsFollowSystemLayout` | warning | Control and Alt shortcuts are passed through to the system layout `us`, and the base layer types another ASCII letter than `us` at some positions: there a shortcut follows the `us` letter, not the layout's; one entry per build listing the positions (0.3) |
-| `chromeos.controlCharacterDropped` | warning | an output with a control character other than the backspace action and Return, Tab or Escape on their own keys; it is built as nothing (0.3) |
+| `chromeos.shortcutsFollowSystemLayout` | warning | Control and Alt presses that type nothing are passed through as shortcuts to the system layout `us`, and the base layer types another ASCII letter than `us` at some positions: there a shortcut follows the `us` letter, not the layout's; one entry per build listing the positions (0.3) |
+| `chromeos.controlCharacterDropped` | warning | an output with a control character other than the backspace action, Return, Tab, Escape and Delete on their own keys and one control character with Control (a shortcut); it is built as nothing (0.3) |
+| `chromeos.outputUnencodable` | warning | an output or dead-key value that is not text (CodeUnits with a lone surrogate); it is built as nothing, the entry left out (0.3) |
 | `chromeos.settingNotCompiled` | warning | `capsLockOffBy` `shift`: Caps Lock is the system's (0.3) |
 | `chromeos.markerNotCompiled` | warning | a binding emits a marker; the output is built without it (0.3) |
 | `chromeos.transformNotCompiled` | warning | a transform that cannot be expanded into literal rules (`targets/touch-runtime.md` §5) or that has a marker; left out (0.3) |

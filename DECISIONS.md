@@ -1175,9 +1175,9 @@ program to review; data in a fixed runtime keeps the runtime checkable once, and
 depend on the system layout.
 
 **D181 (2026-11-28). ChromeOS: the runtime owns the layout's keys; shortcuts go to the system layout.** A position with
-a binding in some compiled layer is always handled, also where it resolves to nothing, so the system layout never types
-its own character there; a press with Control or Alt that no layer of the file names is passed through, so the
-system's shortcuts work, with the letters of the system layout (`systemLayout`, default `us`), which the build reports
+a binding in some compiled layer is handled when it types, and also where it resolves to nothing without Control and
+Alt, so the system layout never types its own character there; a press with Control or Alt that resolves to nothing
+(a Control layer of control characters included) is passed through, so the system's shortcuts work, with the letters of the system layout (`systemLayout`, default `us`), which the build reports
 where they differ from the layout (`chromeos.shortcutsFollowSystemLayout`). Control and Alt layers of the file are
 compiled, since `commitText` types in every state. Reason: the only alternative for shortcuts, sending synthetic key
 events, is meant for virtual keyboards and untested; the US letters are what a ChromeOS user gets from most input
