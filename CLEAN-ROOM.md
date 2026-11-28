@@ -168,13 +168,32 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 
 ### Android sources
 
+| source | read for | licence |
+|---|---|---|
+| Android Developers, "Configure the app module", section "Set the application ID" (https://developer.android.com/build/configure-app-module), read 2026-11-28 (on-screen targets work) | the grammar of an application id (`targets/androidime.md` §1, rule `packageName`) | documentation; facts only |
+
 ### iOS sources
+
+| source | read for | licence |
+|---|---|---|
+| Apple, App Extension Programming Guide, "Custom Keyboard" and "Creating an App Extension" (developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/), read 2026-11-28 (on-screen targets work) | the next-keyboard requirement and `needsInputModeSwitchKey`; the `NSExtensionAttributes` keys of a keyboard extension (`targets/ios.md` §2, §4); that guide does not state the bundle-id prefix rule (left unmeasured) | documentation; facts only |
 
 ### ChromeOS sources
 
 ### Keyman sources
 
+| source | read for | licence |
+|---|---|---|
+| keymanapp/keyman `common/schemas/keyman-touch-layout/README.md` and `keyman-touch-layout.spec.json` at commit `1e0a9dd113dd4ee52f09dc583060324a63eb4467`, read 2026-11-28 (on-screen targets work) | every member of a touch layout and its meaning (`coverage/keymantouch.md`) | MIT; nothing copied |
+| keymanapp/keyboards at commit `46980ce`, the `.keyman-touch-layout` files (counts of members, ids and special labels only) | which members and `K_` ids real layouts use (`coverage/keymantouch.md` §3) | MIT; nothing copied |
+
 ### kbdgen sources
+
+| source | read for | licence |
+|---|---|---|
+| divvun/kbdgen at commit `7a93e952849295a8bd4e9b21f57e6d43028289cf` (3.0.0-beta.5): `src/bundle/project.rs`, `src/bundle/target/mod.rs`, `src/bundle/layout/*.rs`, `src/util/mod.rs`, `src/util/iso_key.rs`, `src/build/chromeos/keymap.rs`, the special-key handling of `src/build/android/generate_android.rs`; read 2026-11-28 (on-screen targets work) | the bundle model and the hardware row order (`coverage/kbdgen.md`) | MIT OR Apache-2.0; nothing copied |
+| giellalt/keyboard-sme at commit `c2b103b`, `sme.kbdgen/` (project, targets, layouts) | the shapes of real bundles (`coverage/kbdgen.md` §2, §3) | MIT; nothing copied |
+| divvun/giellakbd-ios at commit `d877da4`, `Keyboard/Models/KeyDefinition.swift` (key type names only) | which special keys an iOS template knows (`coverage/kbdgen.md` §3.2) | MIT OR Apache-2.0; nothing copied |
 
 ### Touch model sources
 
@@ -185,3 +204,8 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 The other touch decisions (D152, D153, D155, D156) were written from this repository, the round plan's survey of
 the platforms (recorded by the work on each platform in its own subsection) and the owner's decisions; their
 platform remarks say what the format decides, not how a platform behaves.
+
+The touch runtime file and the two on-screen targets (`targets/touch-runtime.md`, `targets/androidime.md`,
+`targets/ios.md`; D200 to D206) were written from this repository, the round plan's platform survey and the sources
+in the Android, iOS, Keyman and kbdgen subsections above; Android and iOS facts not found in those sources are
+marked **unmeasured** there.

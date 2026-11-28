@@ -37,8 +37,9 @@ specification's choice, the iOS behaviour behind it not yet measured; §7).
 **Slug** (rule `bundleId`): as in `targets/macos.md` §1 (lower case, every run of characters outside `a`–`z`, `0`–`9`
 replaced by one `-`, leading and trailing `-` removed, `layout` if nothing is left): `fo-t-k0-windows` →
 `org.yakbd.keyboard.fo-t-k0-windows`. A bundle identifier is letters, digits, hyphens and dots **[APL]**. An app
-extension's bundle identifier must begin with its app's identifier and a dot, or the app does not install **[APL]**:
-a file whose `extensionBundleId` does not reports `ios.extensionBundleIdNotPrefixed` (an error).
+extension's bundle identifier must begin with its app's identifier and a dot, or Xcode refuses to embed it
+(**unmeasured**: Apple's App Extension guide does not say so; §7): a file whose `extensionBundleId` does not reports
+`ios.extensionBundleIdNotPrefixed` (an error).
 
 **Who owns a bundle id.** An App ID is registered by an Apple developer team; a team registers the ids of the apps it
 signs. An organisation publishing keyboards sets its own reverse-DNS `bundleId`; the default `org.yakbd.keyboard.`
@@ -52,8 +53,8 @@ orientation (an iPad counts about a fifth narrower than it is, §2.1 there: a se
 `minDeviceWidth` of at most 100).
 
 - **System row** (rule `systemRow`): as `targets/androidime.md` §2.1.
-- **Next-keyboard key** (rule `nextKeyboardKey`). iOS asks a custom keyboard to offer a key that switches to the next
-  keyboard whenever `needsInputModeSwitchKey` is true **[APL]**, and App Review expects one. A layer of a set without
+- **Next-keyboard key** (rule `nextKeyboardKey`). Every custom keyboard must offer a way to switch to the next keyboard, and
+  shows a next-keyboard key when `needsInputModeSwitchKey` is true **[APL]** (Custom Keyboard guide). A layer of a set without
   `systemRow` that has none gets one at the start of its last row; the runtime hides it when the system does not ask
   for it (`targets/touch-runtime.md` §3.2).
 - **A touch layout from the hardware layers** (rule `touchFromHardware`): as `targets/androidime.md` §2.2, with
@@ -111,5 +112,6 @@ Not yet measured, for the simulator cases of the runtime (GitHub's macOS runners
 extension builds without signing and installs in the simulator; the keyboard is enabled headless (the
 `AppleKeyboards` preference of the simulated device) and reached with the globe key; taps on the keys, found by their
 accessibility identifiers (placement ids), type the expected text into a text field of the test app; the
-next-keyboard key follows `needsInputModeSwitchKey`. What waits for an Apple account: installs on devices beyond 7
+next-keyboard key follows `needsInputModeSwitchKey`; Xcode refuses an extension bundle id without the app's id as
+prefix. What waits for an Apple account: installs on devices beyond 7
 days, TestFlight, the App Store.

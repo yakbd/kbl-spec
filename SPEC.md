@@ -1054,6 +1054,29 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `ios.outputUnencodable` | warning | as `androidime.outputUnencodable` |
 | `ios.functionNotSupported` | warning | a key with `function` `escape` and no output: a keyboard extension cannot send Escape; the key does nothing |
 | `ios.extensionBundleIdNotPrefixed` | error | `extensionBundleId` does not begin with `bundleId` and a dot; iOS refuses to install such an app |
+| `kbdgen.malformed` | **fatal** | the input is not a readable bundle: a YAML feature outside the subset of `coverage/kbdgen.md` §4, a missing `project.yaml` or `layouts/`, a layout file that is not a mapping (0.3) |
+| `kbdgen.bundleDataDropped` | accept | bundle-level data with no home, reported in the report of every layout: `project.yaml` `dependencies`, store and signing data of `targets/*.yaml`, kbdgen's own installer data, `resources/` (`coverage/kbdgen.md` §2; never the values) (0.3) |
+| `kbdgen.layoutDataDropped` | accept | layout data with no home: `decimal`, the sections' `config` (speller packages, locale and id overrides) (0.3) |
+| `kbdgen.hardwareSectionsDiffer` | warning | the `windows`, `macOS` and `chromeOS` sections type differently; the file holds the layers of one of them (`coverage/kbdgen.md` §3.1), the differences are in `detail` (0.3) |
+| `kbdgen.layerUnmapped` | warning | a hardware layer with no modifier set of this format: the macOS Command layers (0.3) |
+| `kbdgen.touchSectionDropped` | warning | the layout has `iOS` and `android` sections that type differently; the `iOS` ones are imported (0.3) |
+| `kbdgen.specialKeyUnknown` | warning | a special key `\s{…}` that `coverage/kbdgen.md` §3.2 does not list; left out (0.3) |
+| `kbdgen.layerNotExpressible` | warning | export: a hardware layer whose modifier set, or a touch layer whose id, has no kbdgen layer name (Android keeps `default` and `shift` only), or a position outside kbdgen's ISO order (0.3) |
+| `kbdgen.setNotExpressible` | warning | export: a touch set beyond the device blocks kbdgen has (`primary`, `tablet-600`, `iPad-9in`, `iPad-12in`), or a set with `orientation` (0.3) |
+| `kbdgen.geometryDropped` | warning | export: `rowHeights`, `stretch`, `hint`, Android widths, a set with `systemRow: false` (kbdgen adds its own bottom row) (0.3) |
+| `kbdgen.gestureDropped` | warning | export: `multiTapKeyIds`, flicks, and long-press lists that differ between keys of the same text (kbdgen's `longpress` is one list per text) (0.3) |
+| `kbdgen.deadKeyNotExpressible` | warning | export: a dead key's `noMatch` other than `emitBoth`, its `name` or `display`, or a cycle of chained dead keys (0.3) |
+| `kbdgen.transformNotExpressible` | warning | export: CLDR `transforms` (kbdgen's transforms are dead-key trees only) (0.3) |
+| `keymantouch.malformed` | **fatal** | the input is not a touch layout: invalid JSON, or a file the schema named in `coverage/keymantouch.md` §1 rejects (0.3) |
+| `keymantouch.platformDropped` | warning | the `desktop` platform (0.3) |
+| `keymantouch.presentationDropped` | accept | fonts and font sizes, `displayUnderlying`, `defaultHint` `dot`, key styles (`sp` 1, 2, 8, `dk`), special labels other than those of the functions (0.3) |
+| `keymantouch.modifierOverrideDropped` | warning | a key's `layer` (the modifier state its key event carries for the rules) (0.3) |
+| `keymantouch.keyNotExpressible` | warning | a `K_` key without a character or a function of SPEC §8: `K_ROPT` (hide the keyboard), Control, arrows, … (0.3) |
+| `keymantouch.noOutput` | warning | a key whose output only the `.kmn` rules give (`T_` ids, `K_` ids outside the base and Shift layers), imported without them (0.3) |
+| `keymantouch.setNotExpressible` | warning | export: a second touch set of the same device class, or a set with `orientation` (0.3) |
+| `keymantouch.geometryDropped` | warning | export: `rowHeights` and `stretch` (0.3) |
+| `keymantouch.outputNeedsRules` | warning | export without a `.kmn`: dead keys and markers, which a touch layout cannot type by itself (0.3) |
+| `keymantouch.flickPathDropped` | warning | export: a flick of more than one direction (0.3) |
 
 A tool MUST NOT invent kinds outside this list for its version; a loss that fits none is reported as the closest kind with
 an explanatory `message`, and the gap is a defect of this specification. The kinds of the families `macos` and

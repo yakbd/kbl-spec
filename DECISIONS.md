@@ -1142,3 +1142,25 @@ all cannot be built (`<target>.noTouchLayout`). On iOS a layer without a next-ke
 row gets one at the start of its last row (rule `nextKeyboardKey`), since iOS asks for one; Android has no such rule.
 iOS builds touch sets only (`ios.hardwareDropped` when the file has both). Reason: the owner's rule of knowingly
 simple, reported defaults; every hardware-only layout still gives a working keyboard on both platforms.
+
+**D207 (2026-11-28). kbdgen bundles: one pinned commit, one layout per file, iOS sections first.** `coverage/kbdgen.md`
+follows kbdgen 3.0.0-beta.5 at `7a93e95` (its Rust model is the only definition of the format). A bundle imports as
+one `.kbl.json` per layout file; bundle data with a home (names, ids, versions) is copied into each, data without
+one (signing and store credentials, speller dependencies, resources) is reported in each as
+`kbdgen.bundleDataDropped` and never copied. The hardware layers come from the `windows` section, else `macOS`, else
+`chromeOS` (differences reported); the touch sets from the `iOS` sections when there are any (they carry widths and
+more layers), else from `android`; every imported set has `systemRow: true`, since kbdgen's templates add the bottom
+row; the device blocks get widths in the millimetres of `targets/touch-runtime.md` §2.1 (`tablet-600` 95,
+`iPad-9in` 100, `iPad-12in` 150). Reason: the owner's one-layout rule; kbdgen keeps several copies of the same
+layout per platform, a `.kbl.json` holds one of each, so the importer picks one by a fixed order and reports the
+rest.
+
+**D208 (2026-11-28). Keyman touch layouts are imported with their rules.** A `.keyman-touch-layout` gives the touch
+sets, keys, gestures and labels; what a `K_` or `T_` key types comes from the keyboard's `.kmn` rules
+(`coverage/kmn.md`), so `convert -from kmn` reads both. Alone, a touch layout gives `U_` outputs and the US base and
+Shift characters of `K_` keys, which is what Keyman types when no rule matches, and reports the rest
+(`keymantouch.noOutput`). `phone` and `tablet` become sets labelled with that device class, the tablet one with
+`minDeviceWidth` 90 (SPEC §9.4's threshold); `defaultHint` becomes explicit hints; Keyman's built-in Shift double
+tap becomes the caps-lock multi-tap of D155. Reason: the touch layout is a view of a keyboard whose behaviour lives in
+the rules; importing it alone is still useful for layouts that use `U_` ids, and the report says exactly which keys
+lost their output.

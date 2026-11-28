@@ -38,8 +38,9 @@ as **[AOSP]** (Android's public developer documentation and AOSP source, recorde
 
 **Package slug** (rule `packageName`): `metadata.id` in lower case, every run of characters outside `a`–`z`, `0`–`9`
 replaced by one `_`, leading and trailing `_` removed, `layout` if nothing is left, and `l` put in front when it
-starts with a digit: `fo-t-k0-windows` → `org.yakbd.keyboard.fo_t_k0_windows.ime`. An Android package name is
-segments of letters, digits and `_` that start with a letter, joined by dots **[AOSP]**; a hyphen is not allowed, so
+starts with a digit: `fo-t-k0-windows` → `org.yakbd.keyboard.fo_t_k0_windows.ime`. An Android application id has at
+least two segments, each starting with a letter, of the characters `a`–`z`, `A`–`Z`, `0`–`9` and `_` **[AOSP]**
+(developer.android.com/build/configure-app-module); a hyphen is not allowed, so
 the slug of `targets/macos.md` does not fit. The suffix `.ime` keeps the APK apart from the physical-keyboard APK of
 the same layout (`targets/android.md`), so both install side by side.
 

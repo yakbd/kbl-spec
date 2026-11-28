@@ -464,9 +464,36 @@ const lossKindsKeyman = ["keyman.*", "keymanDefault.*"] as const;
 
 /** 0.3: the conversion formats `kbdgen` (coverage/kbdgen.md), `kmn` (coverage/kmn.md) and `keymantouch`
  * (coverage/keymantouch.md). Each owner appends to its own family. */
-const lossKindsKbdgen = ["kbdgen.*"] as const;
+const lossKindsKbdgen = [
+  "kbdgen.*",
+  "kbdgen.bundleDataDropped",
+  "kbdgen.deadKeyNotExpressible",
+  "kbdgen.geometryDropped",
+  "kbdgen.gestureDropped",
+  "kbdgen.hardwareSectionsDiffer",
+  "kbdgen.layerNotExpressible",
+  "kbdgen.layerUnmapped",
+  "kbdgen.layoutDataDropped",
+  "kbdgen.malformed",
+  "kbdgen.setNotExpressible",
+  "kbdgen.specialKeyUnknown",
+  "kbdgen.touchSectionDropped",
+  "kbdgen.transformNotExpressible",
+] as const;
 const lossKindsKmn = ["kmn.*"] as const;
-const lossKindsKeymantouch = ["keymantouch.*"] as const;
+const lossKindsKeymantouch = [
+  "keymantouch.*",
+  "keymantouch.flickPathDropped",
+  "keymantouch.geometryDropped",
+  "keymantouch.keyNotExpressible",
+  "keymantouch.malformed",
+  "keymantouch.modifierOverrideDropped",
+  "keymantouch.noOutput",
+  "keymantouch.outputNeedsRules",
+  "keymantouch.platformDropped",
+  "keymantouch.presentationDropped",
+  "keymantouch.setNotExpressible",
+] as const;
 
 /** The OnLoss schema of one version: the same shape, a different closed list of kinds. */
 function onLoss(kinds: readonly [string, ...string[]], defaultedKind: string) {

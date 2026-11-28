@@ -38,7 +38,7 @@ numbers refer to `targets/windows-vm-tests.md`, the D numbers to `DECISIONS.md`)
 | `targets/windows-install.md` | normative: fields and rules (`productCode`, `enableForUser`, `enableForSignInAndNewUsers`, `uninstallEntry`), machine kinds and refusals (D46), KLID / Layout Id allocation (D47), languages, enabling, upgrade, uninstall. **Stable for the tool**: everything; the custom-language route is confirmed for enabling (VM-5), settled with its uninstall (VM-5); the sign-in screen and new users (§7.1, D87, D94, D97–D99) verified on Windows 11 (VM-18 to VM-27). Container and signing settled by the owner (D76): unsigned `.exe` only, behaving like `msiexec`; no MSI |
 | `schema/0.2/kbl.schema.json` | preview, released (D108); generated from the same source, holds 0.1 (`SPEC.md` §1.1) |
 | `schema/0.1/kbl.schema.json` | stable (see above); frozen, its hash pinned by `npm test`; closed objects, descriptions everywhere; generated from the zod source `src/schema.ts` (D70), checked by `npm test` |
-| `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes), (f) `macos-option-deadkeys` (0.2: Option layer, per-key Caps Lock, chained dead keys, ISO key, `targets.macos` pins), (g) `xkb-caps-deadkeys` (0.2: Caps Lock that leaves an AltGr letter alone through a yakbd key type, a dead key, `targets.xkb` pins), (h) `touch-qwerty` (0.3: the touch core: phone and tablet sets, row heights, one-shot shift and caps lock, next-keyboard key, hints, `systemRow`); all validate |
+| `examples/` | (a) `minimal-qwerty`, (b) `latin-altgr-deadkeys`, (c) `cldr-pt-abnt2` (from CLDR release-49), (d) `windows-features` (now with `install`), (e) `dll-import-shape` (the shape the DLL importer writes), (f) `macos-option-deadkeys` (0.2: Option layer, per-key Caps Lock, chained dead keys, ISO key, `targets.macos` pins), (g) `xkb-caps-deadkeys` (0.2: Caps Lock that leaves an AltGr letter alone through a yakbd key type, a dead key, `targets.xkb` pins), (h) `touch-qwerty` (0.3: the touch core: phone and tablet sets, row heights, one-shot shift and caps lock, next-keyboard key, hints, `systemRow`), (i) `touch-onscreen-targets` (0.3: phone set with the target's bottom row, tablet set with its own, dead key on touch and hardware, `targets.androidime` and `targets.ios` pins); all validate |
 | `coverage/cldr-keyboard3.md`, `coverage/windows.md` | complete first drafts; `coverage/windows.md` §11 (DLL import conventions, D53–D55) |
 | `DECISIONS.md` D1–D111, D120–D127, D135–D145; `OPEN-QUESTIONS.md` Q1–Q19 | current |
 | CI | `.github/workflows/validate.yml`: push to `main` (paths filter) and manual runs only; Node 22, `npm ci`, `npm test` |
@@ -102,7 +102,8 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
   `physicalKeys`, `returnKeyLabels`, `popupColumns`, `systemRow`; `targets.ios` fields `appName`, `bundleId`,
   `extensionBundleId`, `language`, `bundleVersion`, `returnKeyLabels`, `popupColumns`, `systemRow` (SPEC §16.7,
   §16.8); default rules and loss kinds of `androidime` and `ios` (`targets/androidime.md`, `targets/ios.md`;
-  D200 to D206).
+  D200 to D206); `coverage/kbdgen.md` (kbdgen 3.0.0-beta.5 at `7a93e95`) and `coverage/keymantouch.md` (format 2.1.2)
+  with the `kbdgen.*` and `keymantouch.*` kinds (D207, D208); example `touch-onscreen-targets`.
 
 - 2026-11-28 (branch `spec-0.3`, draft, touch core): keys `hint` and `function` `nextKeyboard`; touch layers `rowHeights`,
   `returnLayerId`; touch sets `orientation`, `deviceClass`, `systemRow` (SPEC §8, §9.4, all 0.3); the touch resolution
