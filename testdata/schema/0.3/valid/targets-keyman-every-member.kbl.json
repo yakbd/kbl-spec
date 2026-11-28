@@ -46,6 +46,7 @@
         "en"
       ],
       "kmcVersion": "18.0.255",
+      "route": "kmn",
       "onLoss": {
         "default": "warning",
         "kinds": {

@@ -206,6 +206,7 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 | keymanapp/help.keyman.com at commit `30cb1e7d056b6b9214d1daa2d79b61ea3496bf71`, folder `developer/language` (guides and the reference page of every statement and system store), read 2026-11-28 (route `kmn` work) | the syntax and meaning of the keyboard language: rule order, stores, `any`/`index`/`context`, deadkeys, groups and `match`/`nomatch`, platform conditions, virtual keys and their US English characters (`coverage/kmn.md`, D250, D251) | MIT; nothing copied, facts in own words |
 | keymanapp/keyboards at commit `46980ce`, the `.kmn` and `.kps` sources (948 and 955 files; statement counts, which constructs are used) | which parts of the language real keyboards use, the package layout of multi-keyboard packages (`coverage/kmn.md` §4) | MIT; nothing copied (fixtures in yakbd-cli keep their LICENSE.md) |
 | measurements with kmc 18.0.255 and KeymanWeb 18.0.255 (`tools/keyman-check` touch venue), 2026-11-28 | what KeymanWeb does with keys without rules, `T_` keys on layers, deadkeys without a match, Backspace after a deadkey (D251, `targets/keyman.md` §9) | this project's own |
+| the published package of sil_euro_latin from keyman.com (download link of the keyboard's page), its file list only (`unzip -l`), 2026-11-28 | that a `.kmp` holds compiled keyboards (`.kmx`, `.js`), fonts, images and `kmp.json`, no `.kmn` (D253) | MIT (the keyboard); nothing kept |
 
 ### kbdgen sources
 

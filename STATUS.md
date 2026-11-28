@@ -100,6 +100,11 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
   `.kmp`, desktop Keyman only, positions outside the form left to the system); kinds `keyman.*` (7) and
   `keymanDefault.*` (8 rules); D190–D194.
 
+- 2026-11-28 (branch `spec-0.3`, draft, Keyman route kmn): `targets.keyman.route` (`ldml` | `kmn`, rule `route`:
+  `kmn` with touch sets), `targets/keyman.md` §9; `coverage/kmn.md` (the `.kmn` language: what maps onto layers, dead
+  keys and transforms is kept, the rest reported); kinds `kmn.*` (19); D250–D253 (package sources import per keyboard,
+  compiled `.kmp` not read).
+
 - 2026-11-28 (branch `spec-0.3`, draft, Android physical keyboards): `targets.android` fields `packageName`, `label`,
   `layoutName`, `keyboardLocale`, `keyboardLayoutType`, `versionCode`, `versionName`, `keys` (`keyCode`, `scanCode`),
   `deadKeys` (`accent`) (SPEC §16.6); default rules and loss kinds `android.*` (22 kinds) and `androidDefault.*`
