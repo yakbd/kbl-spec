@@ -133,7 +133,9 @@ Layouts built from these files have been tested on Windows 10 and Windows 11 vir
 in an emulated guest): they load, type as expected, and install and uninstall cleanly. A physical ARM64 PC has not
 been tested. macOS layout bundles built by `yakbd` have been installed, selected and typed on GitHub's macOS 15 and
 26 runners (Apple silicon); an Intel Mac, a Mac at someone's desk, and the steps in System Settings, have not been
-tested. Details and the changelog are in [`STATUS.md`](STATUS.md).
+tested. The Linux behaviour the XKB target relies on was measured with test layouts in containers (libxkbcommon on
+Debian 13, Ubuntu 26.04, Fedora 45 and Arch Linux; X11, weston, sway, KWin and mutter); a full GNOME Shell session
+and real keyboards have not been tested (`targets/xkb.md` §8). Details and the changelog are in [`STATUS.md`](STATUS.md).
 
 ## Documents
 
