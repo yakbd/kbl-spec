@@ -138,3 +138,13 @@ and the key next to the left Shift as 50 from ISO keyboards, and the key left of
 ISO layouts and their Windows build gains an `IntlBackslash` binding. The other choice is to import 50 as
 `Backquote` always and 10 as `IntlBackslash`, which turns ISO layouts around. *Recommendation*: keep the ISO reading;
 it is right for ISO layouts and harmless for ANSI ones (one extra key). Interim: as written.
+
+**Q19. Caps Lock that leaves a level-3 letter alone, on Linux.** No stock XKB key type lets Caps Lock capitalise
+levels 1 and 2 and leave a level-3 letter alone (Caps Lock with AltGr on þ gives Þ, measured), which is what most
+layouts drawn for Windows say. Rule `keyType` (`targets/xkb.md` §3, D137) then uses the closest stock type and
+reports `xkb.capsLockNotExpressible`; `customTypes: true` makes it exact with yakbd key types, which need
+libxkbcommon 1.13 (Ubuntu 26.04, Fedora 45, Arch) and fall back to another type on Debian 13 (libxkbcommon 1.7) and
+on X11 without a types option. The other choice is `customTypes` `true` by default: exact on current
+distributions, wrong in another way on older ones. *Recommendation*: keep `false` until the verification harness
+has measured yakbd types on every stack (`targets/xkb.md` §8, cases 1 and 2), then decide again. Interim: as
+written.

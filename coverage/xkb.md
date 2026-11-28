@@ -28,6 +28,7 @@ importer reads; the build direction is `targets/xkb.md`. Sources are cited as th
 | `key <NAME> { … }` | a position (§2 of `targets/xkb.md` in reverse: `keyName` or one of the `aliases`) | a name no row has: the position `Xkb` + the name with every character outside `A`–`Z`, `a`–`z`, `0`–`9` replaced by `_`, and a `keys.<p>.keyName` pin (`xkb.keyNameUnknown`) |
 | `[ … ]`, `symbols[GroupN] = [ … ]` | the bindings of the key per state (§3) | group 1 only; `symbols[Group2]` and further `[ … ], [ … ]` lists `xkb.groupDropped` |
 | `type = "…"`, `type[GroupN] = "…"` | which level each state gets (§3); `targets.xkb.keys.<p>.type` when it is a type of `targets/xkb.md` §3 | |
+| `key.type = "…"`, `key.type[GroupN] = "…"` (a default for the keys after it in the section) | the type of each later key without one of its own (§3) | other `key.…` defaults (`key.repeat`, …) `xkb.actionsDropped` |
 | a keysym name (`a`, `udiaeresis`, `oe`), `U` + hex, a hex number `0x…` | a character of a text binding, by xorgproto's `keysymdef.h` and the Unicode keysym range **[LXC]** (`keysym-encoding.md`) | an unknown name is `NoSymbol` (libxkbcommon does the same) |
 | a UTF-8 string (`"æ"`, libxkbcommon 1.9 and later) | the text | |
 | `{ k1, k2 }` (several keysyms on one level) | a text of several characters | |
@@ -44,7 +45,8 @@ importer reads; the build direction is `targets/xkb.md`. Sources are cited as th
 ## 3. Key types and levels
 
 - **The type** of a key is its `type` (an `xkb_types` definition the importer was given, or a stock type of
-  `targets/xkb.md` §3, or `KEYPAD`); without one, the type libxkbcommon gives it **[LXC]**
+  `targets/xkb.md` §3, or `KEYPAD`); without one, the `key.type` default in force at that point of the section
+  (26 of xkeyboard-config's symbols files set one); without that, the type libxkbcommon gives it **[LXC]**
   (`keymap-text-format-v1-v2.md`, "Type"): 1 keysym `ONE_LEVEL`; 2 keysyms `ALPHABETIC` when the first is a
   lower-case and the second an upper-case letter, `KEYPAD` when one is a number-pad keysym, else `TWO_LEVEL`; 3 or 4
   keysyms `FOUR_LEVEL_ALPHABETIC` when both pairs are lower/upper-case letters, `FOUR_LEVEL_SEMIALPHABETIC` when

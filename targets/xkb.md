@@ -120,9 +120,11 @@ Changes_When_Uppercased (Unicode 18.0.0, the version of SPEC §5). A level no st
   `EIGHT_LEVEL` always fit the states without it). The usual case is a level-3 letter that Caps Lock must leave
   alone (þ with AltGr and Caps Lock): `FOUR_LEVEL_SEMIALPHABETIC` preserves Lock there and gives Þ **[LNX]**.
 - `customTypes` `true`: a **yakbd type**, named `YAKBD_` followed by one digit per state, the level of that state
-  (8 digits, or 16 with LevelFive). Levels are numbered in the order of the states that first need them, state 0
-  being level 1; states with equal output share a level. Its modifiers are Shift, Lock and LevelThree (and
-  LevelFive with 16 digits), every one consumed in every state, so the level holds the output exactly. The same
+  (8 digits for the states 0 to 7, or 16 with LevelFive). A state with a modifier the build does not use (LevelThree
+  in a build without it) gets the digit of the same state without that modifier. Levels are numbered in the order
+  of the states that first need them, state 0 being level 1; states with equal output share a level. Its modifiers
+  are Shift, Lock and LevelThree (and LevelFive with 16 digits), every one consumed in every state, so the level
+  holds the output exactly. The same
   name always means the same type, whichever layout writes it. More than 8 levels: `xkb.tooManyLevels`. Every build
   that writes one reports `xkb.customKeyType` (installation, §5).
 
@@ -131,8 +133,10 @@ output reports `xkb.keyTypeNotExact`. A pinned yakbd type is written with the ke
 
 **Number-pad keys.** A `numLock` position whose row has a `keypad` keysym is written with xkeyboard-config's
 `KEYPAD` type: level 1 the navigation keysym, level 2 (Num Lock on) its base binding; `keys.<p>.type` does not apply
-to it. Its other layers are left out, and the `KEYPAD` type also gives level 2 to Shift with Num Lock off
-(`xkb.numLockKeyReduced`, one entry per build listing the positions). A `numLock` position without a `keypad`
+to it. The `KEYPAD` type that `types/complete` brings (`types/numpad`, section `numlock_only_base`, the same in
+release 2.49 and commit `f4d3ed8` **[XKC]**) uses Num Lock alone, so Shift with Num Lock on still types the binding
+where the model gives a navigation key. Its other layers are left out (`xkb.numLockKeyReduced`, one entry per
+build listing the positions). A `numLock` position without a `keypad`
 keysym is built like any other key.
 
 **Keysyms** (rule `characters`). Every level is a list of keysyms: none (`NoSymbol`), one, or several for a text of
@@ -276,9 +280,9 @@ compose/N.XCompose            only with a Compose file (§4)
   whose level is not 1, a `level_name` per level). `rules/evdev.post` holds one rule set that adds the types file
   to every keymap with the layout: `! layout[any] = types` and `  N = +N-types` (with a variant:
   `! layout[any] variant[any] = types` and `  N V = +N-V-types`). libxkbcommon reads the `.post` rules files of
-  every include path since 1.13 **[LXC]** (`doc/rules-format.md`); older versions ignore them, and a key whose type
-  is missing gets the type libxkbcommon would give it by default **[LXC]** (warning XKB-286, seen **[LAB]**)
-  (`xkb.customKeyType`).
+  every include path since 1.13 **[LXC]** (`doc/rules-format.md`); older versions ignore them. A key whose type is
+  missing falls back to another type: libxkbcommon 1.13.2 warns ("XKB-286", "Using the default type") and
+  `xkbcomp` 1.5.0 uses `TWO_LEVEL`, which loses levels 3 and up **[LAB]** (`xkb.customKeyType`).
 
 **Per user, no root** (the release form; Wayland sessions): `~/.config/xkb/` (or `$XDG_CONFIG_HOME/xkb/`) is the
 first path libxkbcommon searches **[LXC]** (`doc/custom-configuration.md`, "XKB data locations"); the layout loads
@@ -294,11 +298,14 @@ list a layout only through `rules/evdev.xml` **[LXC]**. Several layouts share th
 3. put the Compose sequences where every program finds them, given which files win **[LNX]**: libxkbcommon and Qt
    read the first of `$XCOMPOSEFILE`, `~/.config/XCompose`, `~/.XCompose`; GTK 4 reads `~/.config/gtk-4.0/Compose`
    first; a user file replaces the system's file, so it keeps the system sequences only with `include "%L"`.
-   - When none of `~/.config/XCompose`, `~/.XCompose`, `~/.config/gtk-4.0/Compose` exists and `$XCOMPOSEFILE` is
-     unset: copy the build's Compose file to `~/.XCompose`, which both libxkbcommon and GTK then read **[LNX]**.
-   - Otherwise: append the sequences (without the include line) between `# yakbd N begin` and `# yakbd N end` to
-     each of those files that exists, and to `$XCOMPOSEFILE` when it is set, after keeping a copy of the file; never
-     change other lines, and never add `include "%L"` to the user's own file;
+   There are two targets: the file libxkbcommon and Qt use (`$XCOMPOSEFILE` when set, else the first existing of
+   `~/.config/XCompose` and `~/.XCompose`) and the file GTK 4 uses (`~/.config/gtk-4.0/Compose` when it exists,
+   else the same file as libxkbcommon).
+   - A target that has no file: install the build's Compose file as `~/.XCompose` (with its `include "%L"`), which
+     both libxkbcommon and GTK read when it is the only one **[LNX]**.
+   - A target that has a file: append the sequences (without the include line) between `# yakbd N begin` and
+     `# yakbd N end`, after keeping a copy of the file; never change other lines, and never add `include "%L"` to
+     the user's own file. Whether GTK reads `~/.config/XCompose` when it is the only file is **unmeasured** (§8);
 4. on uninstall, remove exactly those files and blocks;
 5. say how to select the layout (below) and that a session restart may be needed for the settings apps to list it.
 
@@ -360,6 +367,6 @@ for a key without a sequence after a dead key (`noMatch`), and for Backspace; (4
 layouts, with yakbd types (`layout[any]`); (5) a variant of a system layout from the user path, listed by the
 settings apps; (6) GNOME Shell with IBus: selection through Settings or `gsettings`, dead keys through IBus's own
 Compose handling; fcitx5; (7) Compose blocks appended to an existing `~/.config/XCompose` and
-`~/.config/gtk-4.0/Compose`; (8) an empty result `""`; (9) every row of rule `characters` against
-`xkb_utf32_to_keysym`. A measured result is recorded here with its run and, where it changes a rule, in
+`~/.config/gtk-4.0/Compose`, and GTK 4 with only `~/.config/XCompose`; (8) an empty result `""`; (9) every row of rule `characters` against
+`xkb_utf32_to_keysym`; (10) the `KEYPAD` type with Shift and Num Lock, and in xkeyboard-config 2.42 (Debian 13). A measured result is recorded here with its run and, where it changes a rule, in
 `DECISIONS.md`.
