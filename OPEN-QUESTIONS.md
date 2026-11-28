@@ -122,3 +122,19 @@ version that holds the file: 0.1 unless the file uses `targets.macos`, `targets.
 0.2 provenance format. The other choice is "always write the newest version the tool implements", which is simpler
 for tools but makes every saved file unreadable by 0.1 tools (the released editor and tool). *Recommendation*: keep
 the lowest-version rule; the check is a short list of members. Interim: as written.
+
+**Q17. Default bundle id of a macOS layout.** Rule `bundleId` (`targets/macos.md` §1, D125) gives every layout without
+a pin the bundle id `org.yakbd.keyboardlayout.<slug of metadata.id>`, so layouts made by anyone carry YAKBD's
+domain, and two authors' layouts with the same `metadata.id` collide on one Mac. The other choice is no default
+(the build fails until the author gives `bundleId`), or a prefix that says "unregistered", such as
+`local.keyboardlayout.`. *Recommendation*: keep `org.yakbd.keyboardlayout.`, since layouts are made with YAKBD and
+the default rules are knowingly simple; the report lists the defaulted id, and an author with a domain pins it.
+Interim: as written.
+
+**Q18. Which position a `.keylayout` importer gives key codes 10 and 50.** macOS delivers the key left of `1` as 10
+and the key next to the left Shift as 50 from ISO keyboards, and the key left of `1` as 50 from ANSI keyboards
+(D121). `coverage/macos.md` §2 imports a file that has outputs on both codes as an ISO layout (10 = `Backquote`,
+50 = `IntlBackslash`). Many layouts drawn on ANSI keyboards also fill code 10 (for ISO users), so they import as
+ISO layouts and their Windows build gains an `IntlBackslash` binding. The other choice is to import 50 as
+`Backquote` always and 10 as `IntlBackslash`, which turns ISO layouts around. *Recommendation*: keep the ISO reading;
+it is right for ISO layouts and harmless for ANSI ones (one extra key). Interim: as written.

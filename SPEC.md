@@ -782,7 +782,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `cldr.customForm` | warning | the form is not one of CLDR's implied forms (CLDR's repository refuses such files) |
 | `cldr.keyIdGenerated` | accept | key ids were invented for bindings that had none |
 | `macos.noHardwareLayers` | error | the file has no hardware layers (a touch-only keyboard): the layout would hold only the standard keys (0.2) |
-| `macos.keyCodeMissing` | error | a position with bindings, or one named by `modifiers.command`, has no key code (no pin, no row of `targets/macos-default-keycode.tsv`) |
+| `macos.keyCodeMissing` | error | a position with bindings has no key code (no pin, no row of `targets/macos-default-keycode.tsv`) |
 | `macos.keyCodeDuplicate` | error | two positions get the same key code (rules `keyCode`, `isoKeys`) |
 | `macos.sideModifierWidened` | warning | a layer for `ctrlL`, `ctrlR`, `altL` or `altR` is built for either side (`anyControl`, `anyOption`); where two layers then serve the same state, the earlier layer wins (`targets/macos.md` §3) |
 | `macos.modifierUnmapped` | error | a layer needs a custom `held` component that is not `modifiers.command`; macOS key maps select by Shift, Option, Control, Command and Caps Lock only |

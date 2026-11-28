@@ -33,7 +33,7 @@ harness). Nothing here is taken from Apple's own layouts.
 | `bundleVersion` | the leading `a`, `a.b` or `a.b.c` digits of `metadata.version`; `1.0` if there are none | `bundleVersion` | 5 |
 | `group` | `126` (Unicode) | `group` | 5 |
 | `keyboardId` | −2 − (FNV-1a 32 of the UTF-8 input-source id, mod 32767): a number from −32768 to −2 | `id` | 5 |
-| `maxout` | the most UTF-16 units of any output the layout writes (at least 1) | `maxout` | 5 |
+| `maxout` | the longest terminator output plus the longest key or `when` output, in UTF-16 units (at least 1) | `maxout` | 5 |
 | `hardwareRanges` | one `<layout first="0" last="255">` | `hardwareRanges` | 3 |
 | `keyCode` | key code per position from `targets/macos-default-keycode.tsv` | `keys.<p>.keyCode` | 2 |
 | `isoKeys` | when a layer binds `IntlBackslash`: `Backquote` on 10 and `IntlBackslash` on 50 (the table's two codes swapped) | `keys.<p>.keyCode` of either | 2 |
@@ -56,8 +56,7 @@ The default table from position names to the target's key codes: `targets/macos-
 the standard output of the keys that have one (rule `standardKeys`, §3).
 
 - **`keyCode`**: a position's key code is `keys.<p>.keyCode`; otherwise the table's code for the position's name;
-  otherwise it has none. A position that has a binding, or that operates `modifiers.command`, and has no key code
-  reports `macos.keyCodeMissing`. Two positions with the same key code report `macos.keyCodeDuplicate`. Positions
+  otherwise it has none. A position that has a binding and no key code reports `macos.keyCodeMissing`. Two positions with the same key code report `macos.keyCodeDuplicate`. Positions
   that operate Shift, Option, Control, Caps Lock or Command need no key element: macOS reads those keys itself.
 - **`isoKeys`**: macOS delivers the key left of `1` and the key right of the left Shift with swapped codes from ISO
   keyboards: the key left of `1` (`Backquote`) as 10, the key next to the left Shift (`IntlBackslash`) as 50, while
@@ -102,8 +101,12 @@ every combination explicitly, so the order of `keyMapSelect` elements (later one
 - **Explicit nothing.** `{"output": ""}` and "nothing" both give no `<key>` element in that key map (TN2056: missing
   entries do nothing); they differ only in how `resolve()` reaches them.
 
-A state is **served** when a modifier set of a hardware layer other than `["other"]` matches it (SPEC §7.3, after
-side widening), or matches it with Caps Lock removed. Unserved states with Command or Control are built by the two
+A state is **served** when `resolve()` (SPEC §9.3) finds a layer for it directly: a modifier set of a hardware
+layer other than `["other"]` matches it (SPEC §7.3, after side widening), or, when `settings.capsLockFallback` is
+`true` and the state has Caps Lock, matches it with Caps Lock removed. A state with Command is served only through a
+set that contains the component `modifiers.command`, so without that component no Command state is served. (In
+example (f) Command + Caps Lock is not served, because the file sets `capsLockFallback` to `false`; rule
+`commandMap` gives it the Caps Lock key map.) Unserved states with Command or Control are built by the two
 rules below instead of `resolve()`, so that a missing layer or an `["other"]` layer does not leave shortcuts and
 control characters without output.
 
@@ -179,7 +182,10 @@ references (TN2056). U+0000 and CodeUnits that are not well-formed UTF-16 cannot
 - **`group`** 126 and a negative **`id`** mark a Unicode layout (TN2056; the system renumbers on a clash). Rule
   `keyboardId` hashes the input-source id with FNV-1a (32-bit, offset basis 2166136261, prime 16777619, over the
   UTF-8 bytes) so that the same file always gets the same id.
-- **`maxout`**: the longest output in UTF-16 units over key outputs, `when` outputs and terminators.
+- **`maxout`** counts what one key press can emit (TN2056): a terminator and then the key's own output
+  (TN2056's dead-key example), so the rule adds the longest terminator output (0 without terminators) to the
+  longest key or `when` output. Whether the system applies `maxout` to the terminator and the output together or
+  to each is **unmeasured** (§8); the rule is safe either way.
 
 **The bundle** (TN2056, "Localized XML Keyboard Bundle"; the `Info.plist` keys **[pub]** Kiimo, **[MAC run
 46105185134]**):
@@ -195,7 +201,8 @@ references (TN2056). U+0000 and CodeUnits that are not well-formed UTF-16 cannot
 `CFBundleShortVersionString` and `CFBundleVersion` = `bundleVersion`, and `KLInfo_<layoutName>`, a dictionary
 with `TISInputSourceID` = `inputSourceId`, `TISIntendedLanguage` = `language`, and `TISIconIsTemplate` =
 `icon.template` when there is an icon. Each `InfoPlist.strings` holds the one line
-`"<layoutName>" = "<localised name>";` (UTF-8, `"` and `\` escaped with `\`) (TN2056). The `.icns` file is
+`"<layoutName>" = "<localised name>";` (TN2056), with `"` and `\` escaped by `\`; the file is written in UTF-8, which
+is this specification's choice (**unmeasured**, §8). The `.icns` file is
 `icon.icns` decoded. Whether a hyphenated tag folder (`pt-BR.lproj`) is used for the name is **unmeasured**.
 
 **Installation** (TN2056 for the folders):
@@ -241,6 +248,7 @@ without hardware layers fails with `macos.noHardwareLayers`.
 The rules marked **unmeasured** above, as cases for the macOS verification harness (`yakbd/yakbd-cli`,
 `tools/macos-check/`): (1) a key with no output pressed while a dead-key state is pending; (2) `<when state="D"
 next="none"/>` with no output; (3) whether right-hand modifier words reach a layout; (4) a localised name from a
-hyphenated `.lproj` folder; (5) adding the layout by hand in System Settings without signing out; (6) the ISO
-swap of codes 10 and 50, which needs real ISO hardware (a runner types by key code and cannot show it). A measured
+hyphenated `.lproj` folder and from a UTF-8 `InfoPlist.strings`; (5) adding the layout by hand in System Settings without signing out; (6) the ISO
+swap of codes 10 and 50, which needs real ISO hardware (a runner types by key code and cannot show it); (7) `maxout` with a dead key
+followed by a multi-unit key (terminator and output in one press). A measured
 result is recorded here with its run and, where it changes a rule, in `DECISIONS.md`.

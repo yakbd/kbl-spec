@@ -70,7 +70,7 @@
     }
   },
   "hardware": {
-    "formId": "iso",
+    "formId": "isoDemo",
     "layers": [
       {
         "id": "base",
@@ -187,7 +187,7 @@
     ]
   },
   "forms": {
-    "iso": {
+    "isoDemo": {
       "rows": [
         [
           "Backquote",
@@ -277,7 +277,7 @@
       ]
     },
     "acuteCircumflex": {
-      "spacing": "῎",
+      "spacing": "^´",
       "noMatch": "emitText",
       "entries": [
         {
