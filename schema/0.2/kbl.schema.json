@@ -2918,6 +2918,7 @@
               "windowsDefault.versionInfo",
               "windowsDefault.vk",
               "macos.*",
+              "macos.deadKeyEndedByEmptyKey",
               "macos.deadKeyNoMatchExpanded",
               "macos.keyCodeDuplicate",
               "macos.keyCodeMissing",

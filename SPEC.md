@@ -807,6 +807,7 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `macos.outputUnencodable` | error | an output a `.keylayout` cannot hold: U+0000, or CodeUnits that are not well-formed UTF-16 (a lone surrogate) |
 | `macos.markerNotCompiled` | warning | a binding emits a marker; the output is built without it |
 | `macos.transformNotCompiled` | warning | a transform, reorder or backspace transform; a macOS build compiles `deadKeys` only |
+| `macos.deadKeyEndedByEmptyKey` | warning | the layout has dead keys and a key code with a key (a row of `targets/macos-default-keycode.tsv` that is not a modifier, or a pinned code) that types nothing in some key map: pressed while a dead key is pending, macOS emits the terminator and ends the dead key, where the model keeps it pending (`targets/macos.md` §4); one entry per build, the dead keys in `detail` |
 | `macos.deadKeyNoMatchExpanded` | accept | `noMatch` other than `emitBoth`, or a dead key pressed while another one is pending, was compiled by giving keys an explicit `when` for the pending state (`targets/macos.md` §4) |
 | `macos.stateNameDuplicate` | error | two dead keys get the same state name (rule `stateName`), or a dead key gets the name `none` of the base state |
 | `macos.malformed` | **fatal** | the input is not a readable `.keylayout`: not well-formed XML, a missing required element or attribute, a reference (`modifiers`, `mapSet`, `action`, `baseMapSet`/`baseIndex`) that resolves to nothing, a loop of `baseMapSet` references (`coverage/macos.md` §2) |

@@ -859,6 +859,14 @@ from a hyphenated `.lproj` folder (`en-US.lproj`) and from a UTF-8 `InfoPlist.st
 dead key is pending makes macOS emit the terminator and return to the base state, where the model (SPEC §14.2) keeps
 the dead key pending; the build does not yet compile around this (`targets/macos.md` §4, §8 item 1).
 
+**D131 (2026-11-28; carries out D130). A key without output that ends a pending dead key is reported.** The build
+still writes nothing for a key code that types nothing in a key map, so on macOS such a key ends a pending dead key
+(the terminator is typed) where the model keeps it pending. The build reports `macos.deadKeyEndedByEmptyKey`, a
+warning, once per build when a dead key is reached and a key code of the position table that is not a modifier, or
+a pinned code, has no output in some key map; the dead keys are in `detail`. The simple rule reports almost every
+layout with dead keys, which is the honest default; a file can accept it or make it an error. Compiling such keys
+as `<when state="D" next="D"/>` (which might keep D pending) waits for a measurement (`targets/macos.md` §8 item 8).
+
 **D135 (2026-11-28; carries out D105 and D109 for Linux). The XKB target: fields and default rules.** `targets.xkb`
 (SPEC §16.5) holds what a symbols file, its registry entry and its Compose file need beyond the general data: the
 names (`symbolsName`, `variant`, `description`, `shortDescription`, `languages`), how characters are written

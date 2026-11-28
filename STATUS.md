@@ -94,6 +94,10 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 ## Changelog
 
+- 2026-11-28 (branch `spec-0.2`, draft, macOS pending dead key): new loss kind `macos.deadKeyEndedByEmptyKey` (warning):
+  a key without output ends a pending dead key on macOS, where the model keeps it pending (D131, `targets/macos.md`
+  §4, §8 items 1 and 8).
+
 - 2026-11-28 (branch `spec-0.2`, draft, XKB fixes after the verification run): a level that types nothing is `VoidSymbol` and every level of the type is written; stock type `CTRL+ALT` (schema `keys.<p>.type`) for F1 to F12 and the number-pad operators (D146); Unicode keysyms written `U` + hex (D147); the GTK Compose target is `~/.XCompose` without `~/.config/gtk-4.0/Compose`, new loss kind `xkb.capsLockStacks` (D148); new loss kind `xkb.systemLayoutShadowed`, real U+FFFD accepted (D149); `xkb.numLockKeyReduced` and `targets/xkb.md` §8 follow the measurements (this commit).
 
 - 2026-11-28 (branch `spec-0.2`, draft, macOS measurements): rule `maxout` is the longest single output (D128); an

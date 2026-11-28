@@ -172,7 +172,10 @@ the key acts as in `none` (TN2056, its dead-key example).
 - **A key with no output while a state is pending** (a key code without a key in that key map, as a position without
   a binding or an explicit nothing gives): macOS emits D's terminator and returns to `none` **[MAC run 46126097229]**,
   while the model leaves D pending (§14.2, "nothing"). The build writes nothing for such a key and so differs from
-  the model there (D130).
+  the model there (D130); it reports this once per build as `macos.deadKeyEndedByEmptyKey` (a warning, D131) when
+  a dead key is reached and some key code of the position table (not a modifier) or a pinned code has no output in
+  some key map. The form `<when state="D" next="D"/>` for such keys, which might keep D pending, is unmeasured
+  (§8 item 8).
 - **Normalisation** (SPEC §5): macOS does not normalise while typing, so a build does what a Windows build does
   (`targets/windows.md` §6): with `normalization` `enabled` every output is NFC-normalised at build time, each changed
   output reports `general.outputNormalized`, and the build reports `general.normalizationNotApplied` once.
@@ -261,7 +264,7 @@ without hardware layers fails with `macos.noHardwareLayers`.
 The cases of the macOS verification harness (`yakbd/yakbd-cli`, `tools/macos-check/`), with their results:
 
 1. A key with no output pressed while a dead-key state is pending: macOS emits the terminator and returns to the
-   base state, unlike the model (§4) **[MAC run 46126097229]**.
+   base state, unlike the model (§4) **[MAC run 46126097229]**; reported as `macos.deadKeyEndedByEmptyKey` (D131).
 2. `<when state="D" next="none"/>` with no output: the layout is rejected (not listed); `output=""` works (§4)
    **[MAC runs 46117765009, 46119172899, 46126097229]**.
 3. Right-hand modifier words: right-hand keys reach the layout as the left-hand state (§3) **[MAC run
@@ -272,5 +275,7 @@ The cases of the macOS verification harness (`yakbd/yakbd-cli`, `tools/macos-che
 6. The ISO swap of codes 10 and 50: **unmeasured**; it needs real ISO hardware (a runner types by key code).
 7. `maxout` with a dead key followed by a multi-unit key: applied to each output, not to the terminator and the
    output together (§5) **[MAC runs 46119172899, 46126097229]**.
+8. A key whose action keeps a pending state, `<when state="D" next="D"/>`, as the way to compile item 1 as the
+   model says: **unmeasured** (the harness has a hand-written case for it; the build does not write it).
 
 A measured result is recorded here with its run and, where it changes a rule, in `DECISIONS.md`.

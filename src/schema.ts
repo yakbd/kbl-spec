@@ -291,6 +291,7 @@ const lossKinds01 = [
 /** 0.2: the macOS target's kinds (targets/macos.md). */
 const lossKindsMacos = [
   "macos.*",
+  "macos.deadKeyEndedByEmptyKey",
   "macos.deadKeyNoMatchExpanded",
   "macos.keyCodeDuplicate",
   "macos.keyCodeMissing",
