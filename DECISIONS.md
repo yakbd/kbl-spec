@@ -1199,3 +1199,43 @@ user who pauses for half a minute types nothing until the field loses and regain
 
 **D184 (2026-11-28). ChromeOS: no importer.** A ChromeOS input method is its own program; there is no data to read back
 into a `.kbl.json` (`coverage/chromeos.md`). Reason: the format converts native data, not code.
+
+**D190 (2026-11-28). Keyman: the keyboard source is the CLDR writer's output, compiled by Keyman's own compiler.** A
+Keyman build writes a CLDR keyboard 3.0 file and a package source, and `kmc` (Keyman's MIT compiler, an outside tool
+that a YAKBD tool runs when it finds it and never bundles) compiles them into one `.kmp` with this one keyboard
+(D150; `targets/keyman.md`). The file is what SPEC §16.3 writes for a Keyman copy of the layout, so the CLDR losses
+are this build's, reported with their `cldr.*` kinds and decided by `targets.keyman.onLoss`. Reason: the CLDR writer
+already holds everything CLDR can say; a second writer would say it twice and drift. Keyman reads CLDR keyboards
+natively, and its own tests of them pass on our output.
+
+**D191 (2026-11-28). Keyman: what the copy changes, and what the package holds.** The Keyman copy has no `<special>`
+element, no `draft` and no `attribution`, a three-part version, a form that holds the bound positions, and no touch
+data; the package source carries the name, version, copyright, authors, description and languages. Each change is
+reported (`general.extensionDropped`, `general.metadataDropped`, `keymanDefault.*`, `keyman.*`). Reason: `kmc` 18
+refuses each of those parts of a CLDR file (measured on every layout of the Keyman check); dropping them and saying
+so keeps the layout buildable without a Keyman-only variant of the CLDR writer.
+
+**D192 (2026-11-28). Keyman: positions outside the form are left to the system.** `kmc` maps only the scan codes of
+the alphanumeric block, the space bar and three ISO/JIS/ABNT2 keys to Keyman keys and refuses any other in a form, so
+Backspace, Tab, Enter, the number pad and the function keys cannot be part of the keyboard. Their bindings are left
+out and Keyman passes those keys to the system. Positions whose bindings all type one control character (what every
+`.klc` import gives Backspace, Tab, Enter and Escape) are reported once, `keyman.controlKeyLeftOut` (accept); every
+other one is `keyman.positionUnreachable` (warning). The rule `form` picks the smallest implied CLDR form holding the
+ISO, JIS and ABNT2 keys a layout binds. Reason: the error the CLDR conversion gives for these positions would stop
+every `.klc` import, though the system does what most of those bindings say; the report still names each position
+whose binding differs.
+
+**D193 (2026-11-28). Keyman: route A reaches desktop Keyman only, and says so on every build.** `kmc` 18 compiles a
+CLDR keyboard into a `.kmx` and `.kvk` and writes no KeymanWeb keyboard, which Keyman for Android, iOS and the web
+load. Every build reports `keyman.desktopOnly` (accept); a file with touch data also gets `keyman.touchNotCompiled`
+(warning). Touch comes from the second source kind, Keyman's keyboard language with a touch layout (format `kmn`),
+which `kmc` compiles to KeymanWeb. Reason: a package that installs on a phone app but has no keyboard there would
+fail silently; an `accept` entry makes the fact visible without stopping desktop builds.
+
+**D194 (2026-11-28). Keyman: ids from the layout, prefixed; the tested `kmc` version is pinned.** The keyboard id is
+`yakbd_` plus a slug of `metadata.id`, the package id the same; both are lower case letters, digits and `_`, not
+starting with a digit, which `kmc` asks of package names and which are file names. `kmcVersion` (default the measured
+18.0.255) names the compiler a layout was tested with; another version builds with a warning
+(`keyman.kmcVersionUntested`), and a `kmc` failure is fatal (`keyman.compilerRejected`). Reason: as for macOS and
+ChromeOS, a prefix keeps a built keyboard clear of the ids of Keyman's own repository; `kmc` changes what it accepts
+between versions, so a build must say when it ran with an untested one.

@@ -482,7 +482,25 @@ const lossKindsChromeos = [
 ] as const;
 
 /** 0.3: the Keyman target (targets/keyman.md). Owner: the Keyman package work. */
-const lossKindsKeyman = ["keyman.*", "keymanDefault.*"] as const;
+const lossKindsKeyman = [
+  "keyman.*",
+  "keyman.compilerRejected",
+  "keyman.controlKeyLeftOut",
+  "keyman.desktopOnly",
+  "keyman.kmcVersionUntested",
+  "keyman.noHardwareLayers",
+  "keyman.positionUnreachable",
+  "keyman.touchNotCompiled",
+  "keymanDefault.*",
+  "keymanDefault.copyright",
+  "keymanDefault.form",
+  "keymanDefault.keyboardId",
+  "keymanDefault.kmcVersion",
+  "keymanDefault.languages",
+  "keymanDefault.name",
+  "keymanDefault.packageId",
+  "keymanDefault.version",
+] as const;
 
 /** 0.3: the conversion formats `kbdgen` (coverage/kbdgen.md), `kmn` (coverage/kmn.md) and `keymantouch`
  * (coverage/keymantouch.md). Each owner appends to its own family. */
@@ -1968,10 +1986,51 @@ const targetsChromeos = (OnLoss: OnLossSchema) =>
     })
     .meta({ description: "ChromeOS input-method build choices (SPEC §16.9, targets/chromeos.md)." });
 
+/** 0.3: a Keyman keyboard or package id, also a file name (kmc: lower case letters, digits and _, no digit first). */
+const KeymanId = z.string().regex(/^[a-z_][a-z0-9_]*$/u);
+
 /** 0.3: Keyman, a keyboard package `.kmp` with this one keyboard (SPEC §16.10). */
 const targetsKeyman = (OnLoss: OnLossSchema) =>
   z
     .strictObject({
+      keyboardId: KeymanId.meta({
+        description:
+          "The Keyman keyboard id: the base name of the keyboard source and of the compiled .kmx, the keyboard ID of the package; lower case letters, digits and _, not starting with a digit (rule keyboardId).",
+      }).optional(),
+      packageId: KeymanId.meta({
+        description: "The base name of the package source (.kps) and of the package (.kmp) (rule packageId).",
+      }).optional(),
+      name: z
+        .string()
+        .regex(/^[^\x00-\x1f\x7f]+$/u)
+        .meta({ description: "The name of the keyboard and of its package (rule name)." })
+        .optional(),
+      version: z
+        .string()
+        .regex(/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u)
+        .meta({
+          description:
+            "The keyboard and package version, major.minor.patch: three integers without leading zeros, as kmc requires (rule version).",
+        })
+        .optional(),
+      copyright: z
+        .string()
+        .regex(/^[^\x00-\x1f\x7f]+$/u)
+        .meta({ description: "The package copyright line (rule copyright)." })
+        .optional(),
+      languages: z
+        .array(TouchLanguage)
+        .min(1)
+        .meta({ description: "The BCP 47 tags the package lists for the keyboard, in order (rule languages)." })
+        .optional(),
+      kmcVersion: z
+        .string()
+        .regex(/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u)
+        .meta({
+          description:
+            "The version of Keyman's compiler kmc the build was tested with; a build with another kmc reports keyman.kmcVersionUntested (rule kmcVersion).",
+        })
+        .optional(),
       onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
     })
     .meta({ description: "Keyman package build choices (SPEC §16.10, targets/keyman.md)." });

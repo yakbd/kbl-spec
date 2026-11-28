@@ -1,0 +1,59 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json",
+  "kbl": "0.3",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "targets": {
+    "keyman": {
+      "keyboardId": "_fo_basic2",
+      "packageId": "fo_basic",
+      "name": "Føroyskt & co",
+      "version": "0.10.0",
+      "copyright": "© 2026 Someone",
+      "languages": [
+        "fo",
+        "fo-Latn-FO",
+        "en"
+      ],
+      "kmcVersion": "18.0.255",
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "keyman.positionUnreachable": "error",
+          "keymanDefault.*": "error",
+          "cldr.positionNotInForm": "accept"
+        }
+      }
+    }
+  }
+}

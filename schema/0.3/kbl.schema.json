@@ -2843,6 +2843,45 @@
         "keyman": {
           "type": "object",
           "properties": {
+            "keyboardId": {
+              "type": "string",
+              "pattern": "^[a-z_][a-z0-9_]*$",
+              "description": "The Keyman keyboard id: the base name of the keyboard source and of the compiled .kmx, the keyboard ID of the package; lower case letters, digits and _, not starting with a digit (rule keyboardId)."
+            },
+            "packageId": {
+              "type": "string",
+              "pattern": "^[a-z_][a-z0-9_]*$",
+              "description": "The base name of the package source (.kps) and of the package (.kmp) (rule packageId)."
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+              "description": "The name of the keyboard and of its package (rule name)."
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+              "description": "The keyboard and package version, major.minor.patch: three integers without leading zeros, as kmc requires (rule version)."
+            },
+            "copyright": {
+              "type": "string",
+              "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+              "description": "The package copyright line (rule copyright)."
+            },
+            "languages": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$"
+              },
+              "description": "The BCP 47 tags the package lists for the keyboard, in order (rule languages)."
+            },
+            "kmcVersion": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+              "description": "The version of Keyman's compiler kmc the build was tested with; a build with another kmc reports keyman.kmcVersionUntested (rule kmcVersion)."
+            },
             "onLoss": {
               "description": "Loss policy for this target.",
               "$ref": "#/$defs/OnLoss"
@@ -3412,7 +3451,22 @@
               "chromeosDefault.systemLayout",
               "chromeosDefault.version",
               "keyman.*",
+              "keyman.compilerRejected",
+              "keyman.controlKeyLeftOut",
+              "keyman.desktopOnly",
+              "keyman.kmcVersionUntested",
+              "keyman.noHardwareLayers",
+              "keyman.positionUnreachable",
+              "keyman.touchNotCompiled",
               "keymanDefault.*",
+              "keymanDefault.copyright",
+              "keymanDefault.form",
+              "keymanDefault.keyboardId",
+              "keymanDefault.kmcVersion",
+              "keymanDefault.languages",
+              "keymanDefault.name",
+              "keymanDefault.packageId",
+              "keymanDefault.version",
               "kbdgen.*",
               "kbdgen.bundleDataDropped",
               "kbdgen.deadKeyNotExpressible",

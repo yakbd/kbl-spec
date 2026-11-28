@@ -194,6 +194,9 @@ these rules; D150, D151) was written from this repository and the owner's decisi
 |---|---|---|
 | keymanapp/keyman `common/schemas/keyman-touch-layout/README.md` and `keyman-touch-layout.spec.json` at commit `1e0a9dd113dd4ee52f09dc583060324a63eb4467`, read 2026-11-28 (on-screen targets work) | every member of a touch layout and its meaning (`coverage/keymantouch.md`) | MIT; nothing copied |
 | keymanapp/keyboards at commit `46980ce`, the `.keyman-touch-layout` files (counts of members, ids and special labels only) | which members and `K_` ids real layouts use (`coverage/keymantouch.md` §3) | MIT; nothing copied |
+| keymanapp/keyman at tag `release@18.0.255` (`1678290c0b3d28ac7612447f171002f96c7eeb0e`), `developer/src/kmc-ldml/src/compiler/ldml-compiler-messages.ts` and `keys.ts`, `common/web/types/src/consts/virtual-key-constants.ts` (the scan-code table), read 2026-11-28 (Keyman target work) | which message codes the LDML compiler gives (KM0000D version, KM00009 scan codes, KM0000A custom forms), which scan codes a form may hold (`targets/keyman.md` §2, D192) | MIT; facts only |
+| the same tag, `developer/src/kmc-package/src/compiler/package-compiler-messages.ts` and the package template of `developer/src/kmc-generate` (an LDML keyboard project), read 2026-11-28 | the package-name convention (KM0400E), the members of a `.kps` and the `source/` and `build/` layout of a project (`targets/keyman.md` §1, §5, D194) | MIT; facts only, the `.kps` written from understanding |
+| measurements of `tools/keyman-check/` in `yakbd/yakbd-cli` (kmc 18.0.255, Keyman Core 18.0.255, ibus-keyman 18.0.235), 2026-11-28 | what `kmc` refuses in a CLDR file, what Keyman for Linux types (`targets/keyman.md` §3, §8) | this project's own |
 
 ### kbdgen sources
 

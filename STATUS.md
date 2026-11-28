@@ -95,6 +95,11 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 ## Changelog
 
+- 2026-11-28 (branch `spec-0.3`, draft, Keyman): `targets.keyman` gets `keyboardId`, `packageId`, `name`, `version`,
+  `copyright`, `languages`, `kmcVersion` (SPEC §16.10); `targets/keyman.md` (CLDR source compiled by `kmc` into one
+  `.kmp`, desktop Keyman only, positions outside the form left to the system); kinds `keyman.*` (7) and
+  `keymanDefault.*` (8 rules); D190–D194.
+
 - 2026-11-28 (branch `spec-0.3`, draft, on-screen targets): the touch runtime file `targets/touch-runtime.md`
   (`touchRuntime` 1; schemas `schema/touch-runtime/1/touch-runtime.schema.json` and
   `schema/touch-runtime/runtime-manifest.schema.json` from `src/touch-runtime.ts`; cases `testdata/touch-runtime/`);

@@ -809,12 +809,18 @@ names, and every use is reported as `chromeosDefault.<rule>`.
 
 ### 16.10 `targets.keyman` (0.3)
 
-Keyman: a keyboard package (`.kmp`) holding this one keyboard, compiled by Keyman's own compiler from a source the build writes (`targets/keyman.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
-names, and every use is reported as `keymanDefault.<rule>`. Its fields are written by the work on this target; until
-then the object holds only `onLoss`.
+Keyman: a keyboard package (`.kmp`) holding this one keyboard, compiled by Keyman's own compiler `kmc` from a source the build writes (`targets/keyman.md`). The source is a CLDR keyboard 3.0 file built from the hardware layers, which Keyman for Windows, macOS and Linux install; Keyman for Android, iOS and the web need a source of another kind (`targets/keyman.md` §0). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `keymanDefault.<rule>`.
 
 | property | type | meaning (default rule in `targets/keyman.md`) |
 |---|---|---|
+| `keyboardId` | string `^[a-z_][a-z0-9_]*$` | the Keyman keyboard id: the base name of the keyboard source and of the compiled keyboard, and the keyboard's `ID` in the package (rule `keyboardId`) |
+| `packageId` | string `^[a-z_][a-z0-9_]*$` | the base name of the package source `.kps` and of the package `.kmp` (rule `packageId`) |
+| `name` | string, no control character | the name of the keyboard and of its package (rule `name`) |
+| `version` | `major.minor.patch`, three integers without leading zeros | the keyboard's and the package's version (rule `version`) |
+| `copyright` | string, no control character | the package's copyright line (rule `copyright`) |
+| `languages` | array of BCP 47 tags, at least one | the languages the package lists for the keyboard, in order (rule `languages`) |
+| `kmcVersion` | `major.minor.patch` | the version of `kmc` the layout was tested with; a build with another one says so (rule `kmcVersion`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.11 Conversion formats
@@ -1072,6 +1078,13 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `chromeos.markerNotCompiled` | warning | a binding emits a marker; the output is built without it (0.3) |
 | `chromeos.transformNotCompiled` | warning | a transform that cannot be expanded into literal rules (`targets/touch-runtime.md` §5) or that has a marker; left out (0.3) |
 | `chromeos.reorderNotCompiled` | warning | a `reorders` group; left out (0.3) |
+| `keyman.noHardwareLayers` | error | the file has no hardware layers: the Keyman package of this version types a physical keyboard (0.3) |
+| `keyman.desktopOnly` | accept | every build: the package holds a keyboard compiled from a CLDR keyboard source, which Keyman for Windows, macOS and Linux run and Keyman for Android, iOS and the web cannot load (`targets/keyman.md` §0) (0.3) |
+| `keyman.touchNotCompiled` | warning | the file has touch layer sets or flicks; they are not part of the package (0.3) |
+| `keyman.positionUnreachable` | warning | a position with bindings that is not in the form of the build (`targets/keyman.md` §2: the number pad, the function keys, Backspace, Enter, …); its bindings are left out and Keyman leaves the key to the system; one entry per position (0.3) |
+| `keyman.controlKeyLeftOut` | accept | as `keyman.positionUnreachable`, for bindings that type one control character (U+0000–U+001F, U+007F), which the system does itself on its own keys (Backspace, Tab, Enter, Escape); one entry per build listing the positions (0.3) |
+| `keyman.compilerRejected` | **fatal** | `kmc` ran and failed; its error messages are in `detail` (0.3) |
+| `keyman.kmcVersionUntested` | warning | `kmc` ran and its version is not `kmcVersion` (rule `kmcVersion`) (0.3) |
 | `kbdgen.malformed` | **fatal** | the input is not a readable bundle: a YAML feature outside the subset of `coverage/kbdgen.md` §4, a missing `project.yaml` or `layouts/`, a layout file that is not a mapping (0.3) |
 | `kbdgen.bundleDataDropped` | accept | bundle-level data with no home, reported in the report of every layout: `project.yaml` `dependencies`, store and signing data of `targets/*.yaml`, kbdgen's own installer data, `resources/` (`coverage/kbdgen.md` §2; never the values) (0.3) |
 | `kbdgen.layoutDataDropped` | accept | layout data with no home: `decimal`, the sections' `config` (speller packages, locale and id overrides) (0.3) |
