@@ -29,9 +29,10 @@ specification, not someone else's code.
 
 Windows is the first target, and its section can hold every choice a Windows layout DLL or a `.klc` file can
 express. That matters most for MSKLC users: MSKLC is no longer developed, runs only on Windows, and its `.klc` files
-cannot express everything a layout DLL can do. Sections for the official formats of other operating systems (macOS,
-Linux XKB and others) are planned next, and later third-party formats such as Keyman ([`DECISIONS.md`](DECISIONS.md)
-D107). D105 checks on paper that macOS and XKB sections fit this format without a breaking change.
+cannot express everything a layout DLL can do. Version 0.2 (a draft) adds the next two targets: macOS
+(`targets.macos`, a `.keylayout` file in a layout bundle) and Linux (`targets.xkb`, an XKB symbols file and a
+Compose file, for Wayland and X11). The official formats of other operating systems come after them, then
+third-party formats such as Keyman ([`DECISIONS.md`](DECISIONS.md) D107).
 
 Some other choices:
 
@@ -40,8 +41,9 @@ Some other choices:
   The file can say, per kind, whether such a loss is an error, a warning or acceptable (its `onLoss` member).
 - **Files are self-contained.** The layout data never refers to another file. When a CLDR keyboard uses CLDR's
   shared key data, the tool's CLDR importer copies that data into the `.kbl.json` file.
-- **Defaults can be written into the file.** The tool's `pin` command writes the result of every Windows default
-  rule into the file. The file then states every choice itself and is a starting point for editing them.
+- **Defaults can be written into the file.** The tool's `pin` command writes the result of every default rule of
+  a target (Windows, macOS or XKB) into the file. The file then states every choice itself and is a starting
+  point for editing them.
 
 ## A small example
 
@@ -114,18 +116,24 @@ The schema checks the structure of a file. Some rules relate parts of a file to 
 that names a dead key needs that dead key to be defined in the same file. They are listed in
 [`SPEC.md`](SPEC.md) §19 ("Validation rules beyond the schema") and checked by `yakbd validate`.
 
-To convert layouts (`.klc`, CLDR XML, `.kbl.json`) and to compile them into Windows layout DLLs and installers, use
-the `yakbd` tool, repository [`yakbd/yakbd-cli`](https://github.com/yakbd/yakbd-cli). Its
-README explains how to build it and its commands, for example `yakbd compile layout.kbl.json`.
+To convert layouts (`.klc`, CLDR XML, `.keylayout`, XKB symbols, `.kbl.json`) and to build them (Windows layout DLLs
+and installers, macOS layout bundles, Linux XKB layouts), use the `yakbd` tool, repository
+[`yakbd/yakbd-cli`](https://github.com/yakbd/yakbd-cli). Its README explains how to build it and its commands, for example `yakbd compile layout.kbl.json`.
 
 ## Status
 
-This is the **0.1 preview** of the format. It is complete enough to implement and to write layouts in, but not
-frozen: [`COMPATIBILITY.md`](COMPATIBILITY.md) says what stays stable in 0.x, how changes are announced, and when
-1.0 comes. Windows is the only build target so far. The official formats of other operating systems are planned
-next, then third-party formats such as Keyman (D107); each new target comes with a new minor version. Layouts built from these files have been tested on Windows 10 and Windows 11 virtual machines (x64, x86, and
-ARM64 in an emulated guest): they load, type as expected, and install and uninstall cleanly. A physical ARM64 PC has
-not been tested. Details and the changelog are in [`STATUS.md`](STATUS.md).
+The released format is the **0.1 preview**: complete enough to implement and to write layouts in, but not frozen.
+[`COMPATIBILITY.md`](COMPATIBILITY.md) says what stays stable in 0.x, how changes are announced, and when 1.0 comes.
+**0.2**, a draft, adds the macOS and Linux (XKB) targets and holds 0.1 unchanged: a 0.1 file means the same in 0.2,
+and tools write 0.2 only for a file that uses something new (`SPEC.md` §1.1). Its schema is
+[`schema/0.2/kbl.schema.json`](schema/0.2/kbl.schema.json); until 0.2 is tagged it may still change, and that
+address is not published. Each later target comes with a new minor version (D107).
+
+Layouts built from these files have been tested on Windows 10 and Windows 11 virtual machines (x64, x86, and ARM64
+in an emulated guest): they load, type as expected, and install and uninstall cleanly. A physical ARM64 PC has not
+been tested. macOS layout bundles built by `yakbd` have been installed, selected and typed on GitHub's macOS 15 and
+26 runners (Apple silicon); an Intel Mac, a Mac at someone's desk, and the steps in System Settings, have not been
+tested. Details and the changelog are in [`STATUS.md`](STATUS.md).
 
 ## Documents
 
@@ -134,8 +142,12 @@ not been tested. Details and the changelog are in [`STATUS.md`](STATUS.md).
 | [`SPEC.md`](SPEC.md) | the format: every field, what it means, the list of loss kinds, the validation rules |
 | [`targets/windows.md`](targets/windows.md) | how a file becomes a Windows layout DLL: the default rules and pinning |
 | [`targets/windows-install.md`](targets/windows-install.md) | how a layout is installed, enabled, upgraded and removed on Windows |
+| [`targets/macos.md`](targets/macos.md) | (0.2) how a file becomes a macOS layout bundle: the default rules, installation, pinning |
+| [`targets/xkb.md`](targets/xkb.md) | (0.2) how a file becomes a Linux XKB layout and Compose file: the default rules, installation, pinning |
 | [`coverage/cldr-keyboard3.md`](coverage/cldr-keyboard3.md) | every part of CLDR Keyboard 3.0 and where it goes in `.kbl.json` |
 | [`coverage/windows.md`](coverage/windows.md) | everything a Windows layout DLL and a `.klc` file can express, and where it goes |
+| [`coverage/macos.md`](coverage/macos.md) | (0.2) every part of a `.keylayout` file and its bundle, and where it goes |
+| [`coverage/xkb.md`](coverage/xkb.md) | (0.2) every part of an XKB symbols file and its Compose file, and where it goes |
 | [`DECISIONS.md`](DECISIONS.md) | the design decisions, numbered, each with its reason |
 | [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md) | questions put to the project's owner, with their answers |
 | [`COMPATIBILITY.md`](COMPATIBILITY.md) | what 0.x promises and how changes are announced |
