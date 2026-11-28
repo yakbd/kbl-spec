@@ -1,13 +1,26 @@
-// Writes schema/<version>/kbl.schema.json for every version from the zod source src/schema.ts (`npm run gen`).
+// Writes schema/<version>/kbl.schema.json for every version from the zod source src/schema.ts, and the touch runtime
+// schemas from src/touch-runtime.ts (`npm run gen`).
 // With --check it writes nothing and fails when a committed file differs from what the source generates (CI).
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import * as z from "zod";
 import { schemaPath, schemas, versions, type Version } from "../src/schema.ts";
+import {
+  manifestPath,
+  RuntimeManifest,
+  touchRuntimePath,
+  touchRuntimeSchemas,
+  touchRuntimeVersions,
+} from "../src/touch-runtime.ts";
 
 /** The JSON Schema text of one version: draft 2020-12, root keywords first, `$defs` last. */
 export function generate(v: Version): string {
-  const generated = z.toJSONSchema(schemas[v], {
+  return generateFrom(schemas[v]);
+}
+
+/** The JSON Schema text of a zod schema, in the same form. */
+export function generateFrom(schema: z.ZodType): string {
+  const generated = z.toJSONSchema(schema, {
     target: "draft-2020-12",
     unrepresentable: "throw",
     cycles: "throw",
@@ -24,16 +37,20 @@ export function generate(v: Version): string {
 
 const check = process.argv.includes("--check");
 let stale = false;
-for (const v of versions) {
-  const path = schemaPath(v);
-  const text = generate(v);
+const outputs: [string, () => string][] = [
+  ...versions.map((v): [string, () => string] => [schemaPath(v), () => generate(v)]),
+  ...touchRuntimeVersions.map((n): [string, () => string] => [touchRuntimePath(n), () => generateFrom(touchRuntimeSchemas[n])]),
+  [manifestPath, () => generateFrom(RuntimeManifest)],
+];
+for (const [path, make] of outputs) {
+  const text = make();
   if (check) {
     let committed = "";
     try {
       committed = readFileSync(path, "utf8");
     } catch {}
     if (committed !== text) {
-      console.error(`${path} is not what src/schema.ts generates; run \`npm run gen\` and commit the result`);
+      console.error(`${path} is not what src/ generates; run \`npm run gen\` and commit the result`);
       stale = true;
     } else {
       console.log(`${path} is fresh`);

@@ -1,0 +1,8 @@
+{
+  "touchRuntime": [
+    1
+  ],
+  "target": "androidime",
+  "version": "0.1.0",
+  "layoutPath": "assets/yakbd/layout.json"
+}

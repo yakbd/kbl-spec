@@ -1,0 +1,602 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yakbd.github.io/kbl-spec/schema/touch-runtime/1/touch-runtime.schema.json",
+  "title": "YAKBD touch runtime file, version 1 (draft)",
+  "description": "What yakbd compile -target androidime|ios embeds for the on-screen keyboard runtime. Normative text: targets/touch-runtime.md.",
+  "type": "object",
+  "properties": {
+    "touchRuntime": {
+      "type": "number",
+      "const": 1,
+      "description": "Touch runtime file version."
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "androidime",
+        "ios"
+      ],
+      "description": "The build target: androidime or ios."
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "metadata.id of the layout."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The keyboard's name as the app shows it (the target's appName)."
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1,
+          "description": "BCP 47 tag of the keyboard's language (the target's language)."
+        },
+        "version": {
+          "type": "string",
+          "description": "metadata.version, if any."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "language"
+      ],
+      "additionalProperties": false,
+      "description": "The layout this file was compiled from."
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "returnKeyLabels": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-zA-Z]{1,32}$",
+            "description": "A return-key action of the target."
+          },
+          "additionalProperties": {
+            "type": "string",
+            "description": "Text: a JSON string of Unicode scalar values; markers are the noncharacters U+FDD0-U+FDEF (targets/touch-runtime.md §5)."
+          },
+          "description": "Label of the Return key per action of the field (the target's returnKeyLabels)."
+        },
+        "popupColumns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Long-press popup: choices per row."
+        }
+      },
+      "required": [
+        "returnKeyLabels",
+        "popupColumns"
+      ],
+      "additionalProperties": false,
+      "description": "Presentation choices."
+    },
+    "keys": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/RuntimeId"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/RuntimeKey"
+      },
+      "description": "Every key that a placement, long press, multi-tap or flick names."
+    },
+    "sets": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RuntimeSet"
+      },
+      "description": "Touch layer sets, in the file's order."
+    },
+    "deadKeys": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/RuntimeId"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "spacing": {
+            "type": "string",
+            "description": "What the dead key stands for when it does not combine."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "description": "The input that combines.",
+                  "$ref": "#/$defs/DeadIn"
+                },
+                "result": {
+                  "description": "What it gives.",
+                  "$ref": "#/$defs/DeadIn"
+                }
+              },
+              "required": [
+                "base",
+                "result"
+              ],
+              "additionalProperties": false,
+              "description": "One entry."
+            },
+            "description": "Composition table, first match wins."
+          },
+          "noMatch": {
+            "type": "string",
+            "enum": [
+              "emitBoth",
+              "emitText",
+              "emitSpacing",
+              "emitNothing"
+            ],
+            "description": "What happens when the next input has no entry (SPEC §14.2)."
+          }
+        },
+        "required": [
+          "spacing",
+          "entries",
+          "noMatch"
+        ],
+        "additionalProperties": false,
+        "description": "One dead key (SPEC §10)."
+      },
+      "description": "Dead keys."
+    },
+    "transforms": {
+      "type": "object",
+      "properties": {
+        "simple": {
+          "type": "array",
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Rule"
+            },
+            "description": "One group: the first matching rule applies."
+          },
+          "description": "Run after every input that emitted text."
+        },
+        "backspace": {
+          "type": "array",
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Rule"
+            },
+            "description": "One group: the first matching rule applies."
+          },
+          "description": "Run on the backspace action."
+        }
+      },
+      "required": [
+        "simple",
+        "backspace"
+      ],
+      "additionalProperties": false,
+      "description": "Literal transform groups (targets/touch-runtime.md §5)."
+    },
+    "hardware": {
+      "type": "object",
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HardwareState"
+          },
+          "description": "The states with at least one key; mods sets distinct."
+        }
+      },
+      "required": [
+        "states"
+      ],
+      "additionalProperties": false,
+      "description": "androidime only: the physical-key map (targets/touch-runtime.md §6)."
+    }
+  },
+  "required": [
+    "touchRuntime",
+    "target",
+    "layout",
+    "ui",
+    "keys",
+    "sets",
+    "deadKeys",
+    "transforms"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "RuntimeId": {
+      "type": "string",
+      "pattern": "^[^\\s,]{1,72}$",
+      "description": "A KeyId, LayerId or DeadKeyId of the runtime file (targets/touch-runtime.md §3)."
+    },
+    "RuntimeKey": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "The key cap text; absent: the runtime's own symbol for `function`, else nothing."
+        },
+        "hint": {
+          "type": "string",
+          "description": "Small secondary label (SPEC §8 hint)."
+        },
+        "function": {
+          "type": "string",
+          "enum": [
+            "backspace",
+            "enter",
+            "tab",
+            "escape",
+            "shift",
+            "capsLock",
+            "space",
+            "nextKeyboard"
+          ],
+          "description": "The key's identity, for its symbol and for hiding next-keyboard keys (SPEC §8)."
+        },
+        "input": {
+          "description": "What pressing the key feeds in; absent: only the layer switch.",
+          "$ref": "#/$defs/Input"
+        },
+        "layer": {
+          "description": "Switch to this layer of the current set after the input.",
+          "$ref": "#/$defs/RuntimeId"
+        },
+        "longPress": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "description": "A key of `keys`.",
+            "$ref": "#/$defs/RuntimeId"
+          },
+          "description": "Long-press choices, in order."
+        },
+        "longPressDefault": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Index into `longPress` of the preselected choice; absent: none."
+        },
+        "multiTap": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "description": "A key of `keys`.",
+            "$ref": "#/$defs/RuntimeId"
+          },
+          "description": "Keys pressed by the 2nd, 3rd, ... quick tap."
+        },
+        "flicks": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "n",
+                  "ne",
+                  "e",
+                  "se",
+                  "s",
+                  "sw",
+                  "w",
+                  "nw"
+                ],
+                "description": "A flick direction."
+              },
+              "key": {
+                "description": "The key a flick in that direction presses.",
+                "$ref": "#/$defs/RuntimeId"
+              }
+            },
+            "required": [
+              "direction",
+              "key"
+            ],
+            "additionalProperties": false,
+            "description": "One flick."
+          },
+          "description": "One-direction flicks."
+        }
+      },
+      "additionalProperties": false,
+      "description": "A resolved key (targets/touch-runtime.md §3)."
+    },
+    "Input": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Text to emit; empty: an explicit nothing (swallow the event)."
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false,
+          "description": "Emit text."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "deadKey": {
+              "description": "The dead key pressed.",
+              "$ref": "#/$defs/RuntimeId"
+            }
+          },
+          "required": [
+            "deadKey"
+          ],
+          "additionalProperties": false,
+          "description": "A dead key."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "backspace",
+                "enter",
+                "escape",
+                "nextKeyboard"
+              ],
+              "description": "backspace action, the field's Return action, Escape, or switch to the next keyboard."
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "additionalProperties": false,
+          "description": "An action without text."
+        }
+      ],
+      "description": "What a key press feeds into the dead-key machine (targets/touch-runtime.md §4)."
+    },
+    "RuntimeSet": {
+      "type": "object",
+      "properties": {
+        "minDeviceWidth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999,
+          "description": "Minimum surface width in millimetres from which the set applies; 0: none given."
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "portrait",
+            "landscape",
+            "any"
+          ],
+          "description": "The orientation the set is for; any: both."
+        },
+        "layers": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RuntimeLayer"
+          },
+          "description": "The layers of the set."
+        }
+      },
+      "required": [
+        "minDeviceWidth",
+        "orientation",
+        "layers"
+      ],
+      "additionalProperties": false,
+      "description": "One touch layer set (targets/touch-runtime.md §2)."
+    },
+    "RuntimeLayer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Layer id; one layer of each set is `base`.",
+          "$ref": "#/$defs/RuntimeId"
+        },
+        "returnLayer": {
+          "description": "After a key without `layer` is pressed, switch to this layer (SPEC §9.4 returnLayerId).",
+          "$ref": "#/$defs/RuntimeId"
+        },
+        "rows": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Row"
+          },
+          "description": "Rows, top to bottom."
+        }
+      },
+      "required": [
+        "id",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "description": "One layer."
+    },
+    "Row": {
+      "type": "object",
+      "properties": {
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Top edge, as a fraction of the keyboard height."
+        },
+        "h": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Height, as a fraction of the keyboard height."
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Placement"
+          },
+          "description": "The keys of the row, left to right; gaps are not placed."
+        }
+      },
+      "required": [
+        "y",
+        "h",
+        "keys"
+      ],
+      "additionalProperties": false,
+      "description": "One row of a layer."
+    },
+    "Placement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s,]{1,72}(#[0-9]{1,3})?$",
+          "description": "Placement id: the KeyId, or KeyId#n for its n-th place in the layer (n >= 2)."
+        },
+        "key": {
+          "description": "The key of `keys` placed here.",
+          "$ref": "#/$defs/RuntimeId"
+        },
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Left edge, as a fraction of the keyboard width."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Width, as a fraction of the keyboard width."
+        }
+      },
+      "required": [
+        "id",
+        "key",
+        "x",
+        "w"
+      ],
+      "additionalProperties": false,
+      "description": "One key in a row."
+    },
+    "DeadIn": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Text; U+0008 alone is the backspace action."
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false,
+          "description": "Text."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "deadKey": {
+              "description": "A dead key.",
+              "$ref": "#/$defs/RuntimeId"
+            }
+          },
+          "required": [
+            "deadKey"
+          ],
+          "additionalProperties": false,
+          "description": "A dead key."
+        }
+      ],
+      "description": "A dead-key entry's base or result (SPEC §10)."
+    },
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Literal text (with markers) matched at the end of the context."
+        },
+        "to": {
+          "type": "string",
+          "description": "Replacement text (with markers)."
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false,
+      "description": "One literal transform rule."
+    },
+    "HardwareState": {
+      "type": "object",
+      "properties": {
+        "mods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "shift",
+              "caps",
+              "ctrl",
+              "altL",
+              "altR"
+            ],
+            "description": "A modifier that is on."
+          },
+          "uniqueItems": true,
+          "description": "Exactly the modifiers on in this state."
+        },
+        "keys": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^KEYCODE_[A-Z0-9_]+$",
+            "description": "An Android KeyEvent key code name."
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Input"
+          },
+          "description": "What each key code does in this state; a code not listed is passed to the application."
+        },
+        "numLock": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^KEYCODE_[A-Z0-9_]+$",
+            "description": "A number-pad key code name."
+          },
+          "description": "Key codes listed in `keys` that apply only with Num Lock on (SPEC §14.1)."
+        }
+      },
+      "required": [
+        "mods",
+        "keys"
+      ],
+      "additionalProperties": false,
+      "description": "One modifier state of the physical-key map."
+    }
+  }
+}

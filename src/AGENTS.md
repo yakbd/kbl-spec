@@ -26,6 +26,10 @@
 - `z.compile()` is not used: the checker is no hot path. Where the zod skill's performance rules suggest otherwise,
   this file wins.
 
+`touch-runtime.ts` is the source of the touch runtime file's schema (`targets/touch-runtime.md`), with the same
+conventions; its cases are `testdata/touch-runtime/` (checker step 9). Any change to it is a new `touchRuntime`
+version once 0.3 is tagged (D200).
+
 After an edit: `npm run gen`, then `npm test`, then commit `src/schema.ts` and the generated `schema/*/kbl.schema.json`
 together.
 

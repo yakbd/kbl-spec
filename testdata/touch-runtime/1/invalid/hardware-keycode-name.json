@@ -1,0 +1,62 @@
+{
+  "touchRuntime": 1,
+  "target": "androidime",
+  "layout": {
+    "id": "und",
+    "name": "x",
+    "language": "und"
+  },
+  "ui": {
+    "returnKeyLabels": {},
+    "popupColumns": 1
+  },
+  "keys": {
+    "a": {
+      "input": {
+        "text": "a"
+      }
+    }
+  },
+  "sets": [
+    {
+      "minDeviceWidth": 0,
+      "orientation": "any",
+      "layers": [
+        {
+          "id": "base",
+          "rows": [
+            {
+              "y": 0,
+              "h": 1,
+              "keys": [
+                {
+                  "id": "a",
+                  "key": "a",
+                  "x": 0,
+                  "w": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "deadKeys": {},
+  "transforms": {
+    "simple": [],
+    "backspace": []
+  },
+  "hardware": {
+    "states": [
+      {
+        "mods": [],
+        "keys": {
+          "29": {
+            "text": "a"
+          }
+        }
+      }
+    ]
+  }
+}

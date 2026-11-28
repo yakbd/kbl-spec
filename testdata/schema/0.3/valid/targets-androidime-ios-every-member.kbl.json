@@ -1,0 +1,97 @@
+{
+  "$schema": "https://yakbd.github.io/kbl-spec/schema/0.3/kbl.schema.json",
+  "kbl": "0.3",
+  "metadata": {
+    "id": "en-t-k0-case",
+    "name": "Schema test case"
+  },
+  "positions": {
+    "KeyA": {
+      "scanCode": "1E"
+    },
+    "KeyB": {
+      "scanCode": "30"
+    }
+  },
+  "keys": {
+    "a": {
+      "output": "a"
+    }
+  },
+  "hardware": {
+    "layers": [
+      {
+        "modifiers": [
+          []
+        ],
+        "bindings": {
+          "KeyA": {
+            "key": "a"
+          },
+          "KeyB": "b"
+        }
+      }
+    ]
+  },
+  "targets": {
+    "androidime": {
+      "packageName": "org.example.keyboard.fo_case.ime",
+      "appName": "Føroyskt",
+      "language": "fo-FO",
+      "versionCode": 2100000000,
+      "versionName": "1.2.3-beta",
+      "physicalKeys": false,
+      "returnKeyLabels": {
+        "default": "↵",
+        "go": "Far",
+        "search": "Leita",
+        "send": "Send",
+        "next": "Næsta",
+        "done": "Liðugt",
+        "previous": "Undan"
+      },
+      "popupColumns": 16,
+      "systemRow": [
+        "layerSwitch",
+        "nextKeyboard",
+        {
+          "keyId": "a"
+        },
+        "space",
+        "enter"
+      ],
+      "onLoss": {
+        "kinds": {
+          "androidime.transformNotCompiled": "error",
+          "androidimeDefault.*": "warning"
+        }
+      }
+    },
+    "ios": {
+      "appName": "Føroyskt",
+      "bundleId": "org.example.keyboard.fo-case",
+      "extensionBundleId": "org.example.keyboard.fo-case.extension",
+      "language": "fo",
+      "bundleVersion": "1.2.3",
+      "returnKeyLabels": {
+        "default": "↵",
+        "emergencyCall": "SOS",
+        "continue": "Áfram",
+        "google": "Google",
+        "yahoo": "Yahoo",
+        "join": "Join",
+        "route": "Route"
+      },
+      "popupColumns": 1,
+      "systemRow": [
+        "space"
+      ],
+      "onLoss": {
+        "default": "warning",
+        "kinds": {
+          "iosDefault.nextKeyboardKey": "error"
+        }
+      }
+    }
+  }
+}

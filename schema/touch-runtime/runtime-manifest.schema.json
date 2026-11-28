@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yakbd.github.io/kbl-spec/schema/touch-runtime/runtime-manifest.schema.json",
+  "title": "YAKBD on-screen keyboard runtime manifest",
+  "description": "assets/yakbd/runtime.json in a runtime APK, yakbd-runtime.json in a runtime source folder (targets/touch-runtime.md §7).",
+  "type": "object",
+  "properties": {
+    "touchRuntime": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "A touch runtime file version."
+      },
+      "uniqueItems": true,
+      "description": "The touch runtime file versions this runtime reads."
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "androidime",
+        "ios"
+      ],
+      "description": "The build target: androidime or ios."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The runtime's own version."
+    },
+    "layoutPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the compiler puts the touch runtime file, relative to the APK root or the source folder."
+    }
+  },
+  "required": [
+    "touchRuntime",
+    "target",
+    "version",
+    "layoutPath"
+  ],
+  "additionalProperties": false
+}

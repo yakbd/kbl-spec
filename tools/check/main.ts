@@ -18,7 +18,11 @@
 //  7. every testdata/schema/V/valid/*.kbl.json is accepted and every testdata/schema/V/invalid/*.kbl.json is
 //     rejected, by the zod schema and by the JSON Schema of V alike;
 //  8. each version holds the older ones: every example and valid case of a version, with `kbl` and `$schema`
-//     changed to a later version, is accepted by both schemas of that version.
+//     changed to a later version, is accepted by both schemas of that version;
+//  9. the touch runtime schemas of src/touch-runtime.ts (targets/touch-runtime.md) compile, have their $id and
+//     descriptions; every testdata/touch-runtime/<N>/valid/*.json is accepted (and passes the reference rules of
+//     targets/touch-runtime.md §8) and every invalid/*.json rejected by zod and the JSON Schema alike; the same for
+//     the runtime manifest under testdata/touch-runtime/manifest/.
 //
 // Check 6 also covers the 0.3 touch rules of §19 item 5 (returnLayerId in its set, one rowHeights entry per row).
 // The SPEC §19 rules are checked here, not in the schema: they relate parts of a file to each other.
@@ -27,6 +31,15 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import * as z from "zod";
 import { lossKindsCore03, schemaId, schemaPath, schemas, versions, type Version } from "../../src/schema.ts";
+import {
+  manifestId,
+  manifestPath,
+  RuntimeManifest,
+  touchRuntimeId,
+  touchRuntimePath,
+  touchRuntimeSchemas,
+  touchRuntimeVersions,
+} from "../../src/touch-runtime.ts";
 
 /** SHA-256 of the frozen schema files as published. Change one only for a recorded bug fix of that version, or a new
  * loss kind COMPATIBILITY.md allows within it. */
@@ -618,8 +631,99 @@ for (const [i, v] of versions.entries()) {
   }
 }
 
+// 9. touch runtime schemas and cases
+/** The reference rules of targets/touch-runtime.md §8 for one runtime file. */
+function runtimeRefs(doc: Obj, name: string) {
+  const keys = obj(doc.keys);
+  const dead = obj(doc.deadKeys);
+  const keyRef = (id: Json, where: string) => {
+    if (!has(keys, str(id))) errf(`${name}: ${where} names key ${JSON.stringify(id)} not in keys`);
+  };
+  const input = (v: Json | undefined, where: string) => {
+    const d = obj(v).deadKey;
+    if (d !== undefined && !has(dead, str(d))) errf(`${name}: ${where} names dead key ${JSON.stringify(d)}`);
+  };
+  for (const [id, k] of Object.entries(keys)) {
+    const key = obj(k);
+    input(key.input, `keys.${id}.input`);
+    for (const r of arr(key.longPress)) keyRef(r, `keys.${id}.longPress`);
+    for (const r of arr(key.multiTap)) keyRef(r, `keys.${id}.multiTap`);
+    for (const f of arr(key.flicks)) keyRef(obj(f).key, `keys.${id}.flicks`);
+    if (has(key, "longPressDefault") && !(Number(key.longPressDefault) < arr(key.longPress).length))
+      errf(`${name}: keys.${id}.longPressDefault is not an index of longPress`);
+  }
+  for (const [id, d] of Object.entries(dead))
+    for (const e of arr(obj(d).entries)) {
+      input(obj(e).base, `deadKeys.${id} base`);
+      input(obj(e).result, `deadKeys.${id} result`);
+    }
+  arr(doc.sets).forEach((s, i) => {
+    const layers = arr(obj(s).layers).map((l) => str(obj(l).id));
+    if (!layers.includes("base")) errf(`${name}: sets/${i} has no layer base`);
+    if (new Set(layers).size !== layers.length) errf(`${name}: sets/${i} repeats a layer id`);
+    const inSet = new Set(layers);
+    for (const l of arr(obj(s).layers)) {
+      const rl = obj(l).returnLayer;
+      if (rl !== undefined && !inSet.has(str(rl))) errf(`${name}: sets/${i} returnLayer ${str(rl)} not in the set`);
+      const ids = new Set<string>();
+      for (const row of arr(obj(l).rows))
+        for (const p of arr(obj(row).keys)) {
+          const pl = obj(p);
+          keyRef(pl.key, `sets/${i} layer ${str(obj(l).id)}`);
+          if (ids.has(str(pl.id))) errf(`${name}: sets/${i} layer ${str(obj(l).id)} repeats placement id ${str(pl.id)}`);
+          ids.add(str(pl.id));
+          const layer = obj(keys[str(pl.key)]).layer;
+          if (layer !== undefined && !inSet.has(str(layer)))
+            errf(`${name}: sets/${i} places key ${str(pl.key)} whose layer ${str(layer)} is not in the set`);
+        }
+    }
+  });
+  if (doc.target === "ios" && doc.hardware !== undefined) errf(`${name}: hardware in an ios file`);
+  const modSets = arr(obj(doc.hardware).states).map((st) => JSON.stringify(arr(obj(st).mods).map(str).sort()));
+  if (new Set(modSets).size !== modSets.length) errf(`${name}: two hardware states with the same mods`);
+}
+let nRuntime = 0;
+const runtimeSets: { dir: string; path: string; id: string; zod: z.ZodType; refsOf?: (d: Obj, n: string) => void }[] = [
+  ...touchRuntimeVersions.map((n) => ({
+    dir: `testdata/touch-runtime/${n}`,
+    path: touchRuntimePath(n),
+    id: touchRuntimeId(n),
+    zod: touchRuntimeSchemas[n] as z.ZodType,
+    refsOf: runtimeRefs,
+  })),
+  { dir: "testdata/touch-runtime/manifest", path: manifestPath, id: manifestId, zod: RuntimeManifest },
+];
+for (const r of runtimeSets) {
+  const schema = obj(decode(read(r.path), r.path));
+  if (schema.$id !== r.id) errf(`${r.path}: $id is ${JSON.stringify(schema.$id)}, want ${r.id}`);
+  let validate: Validator;
+  try {
+    validate = ajv.compile(schema);
+  } catch (e) {
+    console.error(`${r.path}:`, (e as Error).message);
+    process.exit(1);
+  }
+  checkDescriptions(schema, `${r.path}#`);
+  for (const name of sorted(obj(schema.$defs)))
+    if (!has(obj(obj(schema.$defs)[name]), "description")) errf(`${r.path}: $defs/${name} without description`);
+  const cases = { valid: glob(`${r.dir}/valid`, ".json"), invalid: glob(`${r.dir}/invalid`, ".json") };
+  if (cases.valid.length === 0 || cases.invalid.length === 0) errf(`no test cases in ${r.dir}`);
+  for (const [kind, files] of Object.entries(cases))
+    for (const path of files) {
+      nRuntime++;
+      const doc = decode(read(path), path);
+      if (doc === undefined) continue;
+      const want = kind === "valid";
+      const json = validate(doc) === true;
+      const zod = r.zod.safeParse(doc).success;
+      if (json !== want) errf(`${path}: the JSON Schema ${json ? "accepts" : "rejects"} it${json ? "" : ": " + ajv.errorsText(validate.errors)}`);
+      if (zod !== want) errf(`${path}: the zod schema ${zod ? "accepts" : "rejects"} it`);
+      if (want && r.refsOf) r.refsOf(obj(doc), path);
+    }
+}
+
 for (const e of errs) console.log("ERROR", e);
 console.log(
-  `${versions.length} schema versions, ${examples.length} example(s), ${nValid} valid and ${nInvalid} invalid schema case(s), ${errs.length} error(s)`,
+  `${versions.length} schema versions, ${examples.length} example(s), ${nValid} valid and ${nInvalid} invalid schema case(s), ${nRuntime} touch runtime case(s), ${errs.length} error(s)`,
 );
 if (errs.length > 0) process.exit(1);

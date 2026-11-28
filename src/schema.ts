@@ -405,10 +405,56 @@ export const lossKindsCore03 = [
 const lossKindsAndroid = ["android.*", "androidDefault.*"] as const;
 
 /** 0.3: the Android on-screen keyboard target (targets/androidime.md). Owner: the touch-target work. */
-const lossKindsAndroidime = ["androidime.*", "androidimeDefault.*"] as const;
+const lossKindsAndroidime = [
+  "androidime.*",
+  "androidime.flickPathDropped",
+  "androidime.keyCodeMissing",
+  "androidime.layerNotDerived",
+  "androidime.modifierUnmapped",
+  "androidime.noTouchLayout",
+  "androidime.outputUnencodable",
+  "androidime.settingNotCompiled",
+  "androidime.sideModifierWidened",
+  "androidime.tooManyMarkers",
+  "androidime.transformNotCompiled",
+  "androidimeDefault.*",
+  "androidimeDefault.appName",
+  "androidimeDefault.keyCode",
+  "androidimeDefault.language",
+  "androidimeDefault.packageName",
+  "androidimeDefault.physicalKeys",
+  "androidimeDefault.popupColumns",
+  "androidimeDefault.returnKeyLabels",
+  "androidimeDefault.systemRow",
+  "androidimeDefault.touchFromHardware",
+  "androidimeDefault.versionCode",
+  "androidimeDefault.versionName",
+] as const;
 
 /** 0.3: the iOS on-screen keyboard target (targets/ios.md). Owner: the touch-target work. */
-const lossKindsIos = ["ios.*", "iosDefault.*"] as const;
+const lossKindsIos = [
+  "ios.*",
+  "ios.extensionBundleIdNotPrefixed",
+  "ios.flickPathDropped",
+  "ios.functionNotSupported",
+  "ios.hardwareDropped",
+  "ios.layerNotDerived",
+  "ios.noTouchLayout",
+  "ios.outputUnencodable",
+  "ios.tooManyMarkers",
+  "ios.transformNotCompiled",
+  "iosDefault.*",
+  "iosDefault.appName",
+  "iosDefault.bundleId",
+  "iosDefault.bundleVersion",
+  "iosDefault.extensionBundleId",
+  "iosDefault.language",
+  "iosDefault.nextKeyboardKey",
+  "iosDefault.popupColumns",
+  "iosDefault.returnKeyLabels",
+  "iosDefault.systemRow",
+  "iosDefault.touchFromHardware",
+] as const;
 
 /** 0.3: the ChromeOS input-method target (targets/chromeos.md). Owner: the ChromeOS work. */
 const lossKindsChromeos = ["chromeos.*", "chromeosDefault.*"] as const;
@@ -1700,18 +1746,112 @@ const targetsAndroid = (OnLoss: OnLossSchema) =>
     })
     .meta({ description: "Android physical-keyboard build choices (SPEC §16.6, targets/android.md)." });
 
+// The two on-screen keyboard targets share the shape of their presentation fields (targets/touch-runtime.md).
+
+/** 0.3: a BCP 47 language tag of an on-screen keyboard (Android subtype locale, iOS PrimaryLanguage). */
+const TouchLanguage = z.string().regex(/^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/u);
+
+/** 0.3: the bottom row a touch target adds to a set with systemRow (targets/androidime.md §2, targets/ios.md §2). */
+const SystemRow = z
+  .array(
+    z
+      .xor([
+        z
+          .enum(["layerSwitch", "nextKeyboard", "space", "enter"])
+          .meta({ description: "A key the target makes: layer switch (123/ABC), next keyboard, space or enter." }),
+        z
+          .strictObject({ keyId: Id.meta({ description: "A key of `keys` (or an implied key)." }) })
+          .meta({ description: "A key of the file." }),
+      ])
+      .meta({ description: "One key of the system row." }),
+  )
+  .min(1);
+
+/** 0.3: the long-press popup's choices per row. */
+const PopupColumns = z.int().min(1).max(16);
+
+/** 0.3: Return-key labels per field action of one target. */
+const returnKeyLabels = (actions: readonly [string, ...string[]], what: string) =>
+  z
+    .partialRecord(z.enum(actions).meta({ description: `${what} of the text field.` }), Text)
+    .meta({ description: "The Return key's label per action of the text field (rule returnKeyLabels)." });
+
 /** 0.3: an Android on-screen keyboard, one input-method APK for this layout (SPEC §16.7). */
 const targetsAndroidime = (OnLoss: OnLossSchema) =>
   z
     .strictObject({
+      packageName: z
+        .string()
+        .regex(/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/u)
+        .max(255)
+        .meta({ description: "The APK's package name, the application id a builder registers (rule packageName)." })
+        .optional(),
+      appName: Text.meta({
+        description: "The app label and the input method's name in the system settings (rule appName).",
+      }).optional(),
+      language: TouchLanguage.meta({
+        description: "The language of the input method's one subtype, a BCP 47 tag (rule language).",
+      }).optional(),
+      versionCode: z
+        .int()
+        .min(1)
+        .max(2100000000)
+        .meta({ description: "android:versionCode; a newer build of the same package needs a higher one (rule versionCode)." })
+        .optional(),
+      versionName: z
+        .string()
+        .regex(/^[^\x00-\x1f\x7f]{1,64}$/u)
+        .meta({ description: "android:versionName, shown to users (rule versionName)." })
+        .optional(),
+      physicalKeys: z
+        .boolean()
+        .meta({
+          description:
+            "true: a physical keyboard typing while this input method is active types the hardware layers (rule physicalKeys).",
+        })
+        .optional(),
+      returnKeyLabels: returnKeyLabels(
+        ["default", "go", "search", "send", "next", "done", "previous"],
+        "An Android editor action (EditorInfo IME_ACTION_*; default: none or unspecified)",
+      ).optional(),
+      popupColumns: PopupColumns.meta({ description: "Long-press popup: choices per row (rule popupColumns)." }).optional(),
+      systemRow: SystemRow.meta({
+        description: "The keys of the bottom row added to a touch set with systemRow, left to right (rule systemRow).",
+      }).optional(),
       onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
     })
     .meta({ description: "Android on-screen keyboard build choices (SPEC §16.7, targets/androidime.md)." });
+
+/** 0.3: an iOS bundle identifier. */
+const IosBundleId = z.string().regex(/^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/u).max(155);
 
 /** 0.3: an iOS on-screen keyboard, one app with one keyboard extension for this layout (SPEC §16.8). */
 const targetsIos = (OnLoss: OnLossSchema) =>
   z
     .strictObject({
+      appName: Text.meta({
+        description: "CFBundleDisplayName of the app and of the keyboard extension, the keyboard's name in Settings (rule appName).",
+      }).optional(),
+      bundleId: IosBundleId.meta({ description: "The app's CFBundleIdentifier (rule bundleId)." }).optional(),
+      extensionBundleId: IosBundleId.meta({
+        description: "The keyboard extension's CFBundleIdentifier; begins with bundleId and a dot (rule extensionBundleId).",
+      }).optional(),
+      language: TouchLanguage.meta({
+        description: "PrimaryLanguage of the keyboard extension, a BCP 47 tag (rule language).",
+      }).optional(),
+      bundleVersion: z
+        .string()
+        .regex(/^[0-9]{1,9}(\.[0-9]{1,9}){0,2}$/u)
+        .meta({ description: "CFBundleShortVersionString and CFBundleVersion of app and extension (rule bundleVersion)." })
+        .optional(),
+      returnKeyLabels: returnKeyLabels(
+        ["default", "go", "google", "join", "next", "route", "search", "send", "yahoo", "done", "emergencyCall", "continue"],
+        "An iOS return key type (UIReturnKeyType)",
+      ).optional(),
+      popupColumns: PopupColumns.meta({ description: "Long-press popup: choices per row (rule popupColumns)." }).optional(),
+      systemRow: SystemRow.meta({
+        description: "The keys of the bottom row added to a touch set with systemRow, left to right (rule systemRow).",
+      }).optional(),
       onLoss: OnLoss.meta({ description: "Loss policy for this target." }).optional(),
     })
     .meta({ description: "iOS keyboard build choices (SPEC §16.8, targets/ios.md)." });

@@ -4,6 +4,9 @@
   gen`); `--check` only compares and is part of `npm test`. Keep its output byte-stable: root keywords first,
   `$defs` last, two-space JSON, final newline. `schema/0.1/` and `schema/0.2/kbl.schema.json` must not change
   (D108, D150): the checker pins their SHA-256 (`frozen` in `check/main.ts`).
+- It also writes the touch runtime schemas of `src/touch-runtime.ts` (`schema/touch-runtime/<N>/touch-runtime.schema.json`,
+  `schema/touch-runtime/runtime-manifest.schema.json`; `targets/touch-runtime.md`). They are not `.kbl.json` schemas:
+  the Pages workflow's `latest` ignores them (it takes `schema/<major>.<minor>/` folders only).
 - `check/main.ts` is the repository checker (`npm run check`). Its header lists the eight checks; keep that list
   true when you add one. It runs from the repository root and reads files by relative path.
 - Targets are one list at the top of `check/main.ts` (`targets`: name, rule-index files, position table); a new

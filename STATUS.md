@@ -95,6 +95,15 @@ is in the default build set since VM-6 passed (D44, D66); D65 settled by VM-8 (D
 
 ## Changelog
 
+- 2026-11-28 (branch `spec-0.3`, draft, on-screen targets): the touch runtime file `targets/touch-runtime.md`
+  (`touchRuntime` 1; schemas `schema/touch-runtime/1/touch-runtime.schema.json` and
+  `schema/touch-runtime/runtime-manifest.schema.json` from `src/touch-runtime.ts`; cases `testdata/touch-runtime/`);
+  `targets.androidime` fields `packageName`, `appName`, `language`, `versionCode`, `versionName`,
+  `physicalKeys`, `returnKeyLabels`, `popupColumns`, `systemRow`; `targets.ios` fields `appName`, `bundleId`,
+  `extensionBundleId`, `language`, `bundleVersion`, `returnKeyLabels`, `popupColumns`, `systemRow` (SPEC §16.7,
+  §16.8); default rules and loss kinds of `androidime` and `ios` (`targets/androidime.md`, `targets/ios.md`;
+  D200 to D206).
+
 - 2026-11-28 (branch `spec-0.3`, draft, touch core): keys `hint` and `function` `nextKeyboard`; touch layers `rowHeights`,
   `returnLayerId`; touch sets `orientation`, `deviceClass`, `systemRow` (SPEC §8, §9.4, all 0.3); the touch resolution
   of SPEC §14.4 written out (set choice by CLDR's width rule plus orientation, layout, press, long press,

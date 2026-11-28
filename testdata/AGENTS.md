@@ -13,3 +13,5 @@
 - `third_party/cldr-release-49/` holds unmodified CLDR files under the Unicode License v3 (its `LICENSE` and
   `README.md`). Never edit them. New third-party files go in a folder of their own with their licence text and
   an entry in `NOTICE`.
+- `touch-runtime/<N>/{valid,invalid}/*.json` and `touch-runtime/manifest/{valid,invalid}/*.json`: cases of the touch
+  runtime schemas (`src/touch-runtime.ts`); valid runtime files must also meet `targets/touch-runtime.md` §8.

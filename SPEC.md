@@ -758,22 +758,37 @@ then the object holds only `onLoss`.
 
 ### 16.7 `targets.androidime` (0.3)
 
-An Android on-screen keyboard: one input-method APK for this one layout, built from the touch layers (§9.4) and, for a physical keyboard used with it, the hardware layers (`targets/androidime.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
-names, and every use is reported as `androidimeDefault.<rule>`. Its fields are written by the work on this target; until
-then the object holds only `onLoss`. It has no position table (§16).
+An Android on-screen keyboard: one input-method APK for this one layout, built from the touch layers (§9.4) and, for a physical keyboard used with it, the hardware layers (`targets/androidime.md`). The build compiles the layout into a touch runtime file (`targets/touch-runtime.md`) and puts it into a prebuilt runtime APK. As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `androidimeDefault.<rule>`. It has no position table (§16).
 
 | property | type | meaning (default rule in `targets/androidime.md`) |
 |---|---|---|
+| `packageName` | Android package name: two or more segments `[A-Za-z][A-Za-z0-9_]*` joined by `.`, at most 255 characters | the APK's package name, which identifies the app on a device and is what a builder registers for developer verification (rule `packageName`) |
+| `appName` | Text | the app's label and the input method's name in the system settings (rule `appName`) |
+| `language` | BCP 47 tag | the language of the input method's one subtype (rule `language`) |
+| `versionCode` | integer 1–2100000000 | `android:versionCode`; an update of an installed build needs a higher one (rule `versionCode`) |
+| `versionName` | string, 1–64 characters, no control character | `android:versionName` (rule `versionName`) |
+| `physicalKeys` | boolean | `true`: while this input method is active, a physical keyboard types the hardware layers (`targets/androidime.md` §3; rule `physicalKeys`) |
+| `returnKeyLabels` | object action → Text, actions `default`, `go`, `search`, `send`, `next`, `done`, `previous` | the Return key's label for each action a text field asks for (rule `returnKeyLabels`) |
+| `popupColumns` | integer 1–16 | long-press choices per row of the popup (rule `popupColumns`) |
+| `systemRow` | array, each `layerSwitch`, `nextKeyboard`, `space`, `enter` or `{ "keyId": KeyId }` | the keys of the bottom row the target adds to a touch set with `systemRow` (§9.4), left to right (rule `systemRow`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.8 `targets.ios` (0.3)
 
-An iOS on-screen keyboard: one app with one keyboard extension for this one layout, built from the touch layers (§9.4; `targets/ios.md`). As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
-names, and every use is reported as `iosDefault.<rule>`. Its fields are written by the work on this target; until
-then the object holds only `onLoss`. It has no position table (§16).
+An iOS on-screen keyboard: one app with one keyboard extension for this one layout, built from the touch layers (§9.4; `targets/ios.md`). The build compiles the layout into a touch runtime file (`targets/touch-runtime.md`) and writes an Xcode project around the runtime's sources; the builder signs it with their own Apple team, which is a choice of the build, not of the file. As for Windows (§16.1), the default rules are few and mechanical, every one can be overridden by the field it
+names, and every use is reported as `iosDefault.<rule>`. It has no position table (§16).
 
 | property | type | meaning (default rule in `targets/ios.md`) |
 |---|---|---|
+| `appName` | Text | `CFBundleDisplayName` of the app and of the keyboard extension: the keyboard's name in Settings and in the keyboard list (rule `appName`) |
+| `bundleId` | bundle identifier: two or more segments `[A-Za-z0-9-]+` joined by `.`, at most 155 characters | the app's `CFBundleIdentifier` (rule `bundleId`) |
+| `extensionBundleId` | the same | the keyboard extension's `CFBundleIdentifier`; it MUST begin with `bundleId` followed by `.` (`ios.extensionBundleIdNotPrefixed`; rule `extensionBundleId`) |
+| `language` | BCP 47 tag | `PrimaryLanguage` of the keyboard extension (rule `language`) |
+| `bundleVersion` | `a`, `a.b` or `a.b.c` (digits) | `CFBundleShortVersionString` and `CFBundleVersion` of app and extension (rule `bundleVersion`) |
+| `returnKeyLabels` | object action → Text, actions `default`, `go`, `google`, `join`, `next`, `route`, `search`, `send`, `yahoo`, `done`, `emergencyCall`, `continue` | the Return key's label for each return key type a text field asks for (rule `returnKeyLabels`) |
+| `popupColumns` | integer 1–16 | long-press choices per row of the popup (rule `popupColumns`) |
+| `systemRow` | as `targets.androidime.systemRow` | the keys of the bottom row the target adds to a touch set with `systemRow` (rule `systemRow`) |
 | `onLoss` | OnLoss | loss policy for this target (§17.2) |
 
 ### 16.9 `targets.chromeos` (0.3)
@@ -1020,6 +1035,25 @@ Kinds marked **fatal** are always `error`, whatever the file says.
 | `xkb.actionsDropped` | warning | explicit actions, `virtualMods`, `repeat`, key behaviours (locks, overlays, radio groups) and `modifier_map` entries other than those of the level shifts have no home |
 | `xkb.composeSequenceDropped` | warning | an imported Compose sequence that does not start with a dead keysym of the layout, contains `Multi_key` or a keysym no key types, or has no text result |
 | `xkb.deadKeyNoCompose` | warning | the symbols file has dead keysyms and no Compose file was given; the dead keys are imported without entries |
+| `androidime.noTouchLayout` | error | the file has no touch layer set and no hardware layers to derive one from (rule `touchFromHardware`); there is nothing to build |
+| `androidime.layerNotDerived` | warning | rule `touchFromHardware` built the touch layout from the hardware layers without modifiers and with Shift only; each other hardware layer (AltGr, Caps Lock, …) is not on the touch keyboard (it still types in physical-key mode) |
+| `androidime.transformNotCompiled` | warning | a transform whose `from` cannot be expanded into at most 1024 literal texts, whose `to` uses what a literal rule cannot say, or a `reorders` group (`targets/touch-runtime.md` §5); left out |
+| `androidime.tooManyMarkers` | warning | the file uses more than 32 markers; outputs and transforms with the others are built without them |
+| `androidime.flickPathDropped` | warning | a flick segment with more than one direction; the runtime knows one-direction flicks only |
+| `androidime.outputUnencodable` | warning | an output that is not text: CodeUnits that are not well-formed UTF-16, or U+0000; left out |
+| `androidime.keyCodeMissing` | warning | physical-key mode: a position with bindings has no Android key code (no pin in `targets.android.keys`, no row of the table of `android`); it is left to the system |
+| `androidime.modifierUnmapped` | warning | physical-key mode: a hardware layer needs a custom component (§7.2); Android key events give Shift, Caps Lock, Control and left and right Alt only, so the layer is not compiled |
+| `androidime.sideModifierWidened` | warning | physical-key mode: a layer for `ctrlL` or `ctrlR` is built for either Control |
+| `androidime.settingNotCompiled` | warning | physical-key mode: `capsLockOffBy` `shift` or `bidiMarksOnShiftBackspace`; Android keeps its own Caps Lock and Backspace |
+| `ios.noTouchLayout` | error | as `androidime.noTouchLayout` |
+| `ios.layerNotDerived` | warning | as `androidime.layerNotDerived` (iOS has no physical-key mode, so those layers are lost) |
+| `ios.hardwareDropped` | accept | the file has touch layer sets and hardware layers; an iOS keyboard extension cannot serve a physical keyboard, so the hardware layers are not part of the build |
+| `ios.transformNotCompiled` | warning | as `androidime.transformNotCompiled` |
+| `ios.tooManyMarkers` | warning | as `androidime.tooManyMarkers` |
+| `ios.flickPathDropped` | warning | as `androidime.flickPathDropped` |
+| `ios.outputUnencodable` | warning | as `androidime.outputUnencodable` |
+| `ios.functionNotSupported` | warning | a key with `function` `escape` and no output: a keyboard extension cannot send Escape; the key does nothing |
+| `ios.extensionBundleIdNotPrefixed` | error | `extensionBundleId` does not begin with `bundleId` and a dot; iOS refuses to install such an app |
 
 A tool MUST NOT invent kinds outside this list for its version; a loss that fits none is reported as the closest kind with
 an explanatory `message`, and the gap is a defect of this specification. The kinds of the families `macos` and

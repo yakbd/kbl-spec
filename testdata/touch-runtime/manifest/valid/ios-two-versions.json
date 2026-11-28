@@ -1,0 +1,9 @@
+{
+  "touchRuntime": [
+    1,
+    2
+  ],
+  "target": "ios",
+  "version": "0.1.0",
+  "layoutPath": "Keyboard/layout.json"
+}

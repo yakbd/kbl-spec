@@ -2577,6 +2577,96 @@
         "androidime": {
           "type": "object",
           "properties": {
+            "packageName": {
+              "type": "string",
+              "maxLength": 255,
+              "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$",
+              "description": "The APK's package name, the application id a builder registers (rule packageName)."
+            },
+            "appName": {
+              "description": "The app label and the input method's name in the system settings (rule appName).",
+              "$ref": "#/$defs/Text"
+            },
+            "language": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
+              "description": "The language of the input method's one subtype, a BCP 47 tag (rule language)."
+            },
+            "versionCode": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2100000000,
+              "description": "android:versionCode; a newer build of the same package needs a higher one (rule versionCode)."
+            },
+            "versionName": {
+              "type": "string",
+              "pattern": "^[^\\x00-\\x1f\\x7f]{1,64}$",
+              "description": "android:versionName, shown to users (rule versionName)."
+            },
+            "physicalKeys": {
+              "type": "boolean",
+              "description": "true: a physical keyboard typing while this input method is active types the hardware layers (rule physicalKeys)."
+            },
+            "returnKeyLabels": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "enum": [
+                  "default",
+                  "go",
+                  "search",
+                  "send",
+                  "next",
+                  "done",
+                  "previous"
+                ],
+                "description": "An Android editor action (EditorInfo IME_ACTION_*; default: none or unspecified) of the text field."
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Text"
+              },
+              "description": "The Return key's label per action of the text field (rule returnKeyLabels)."
+            },
+            "popupColumns": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "Long-press popup: choices per row (rule popupColumns)."
+            },
+            "systemRow": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "layerSwitch",
+                      "nextKeyboard",
+                      "space",
+                      "enter"
+                    ],
+                    "description": "A key the target makes: layer switch (123/ABC), next keyboard, space or enter."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "keyId": {
+                        "description": "A key of `keys` (or an implied key).",
+                        "$ref": "#/$defs/Id"
+                      }
+                    },
+                    "required": [
+                      "keyId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A key of the file."
+                  }
+                ],
+                "description": "One key of the system row."
+              },
+              "description": "The keys of the bottom row added to a touch set with systemRow, left to right (rule systemRow)."
+            },
             "onLoss": {
               "description": "Loss policy for this target.",
               "$ref": "#/$defs/OnLoss"
@@ -2588,6 +2678,97 @@
         "ios": {
           "type": "object",
           "properties": {
+            "appName": {
+              "description": "CFBundleDisplayName of the app and of the keyboard extension, the keyboard's name in Settings (rule appName).",
+              "$ref": "#/$defs/Text"
+            },
+            "bundleId": {
+              "type": "string",
+              "maxLength": 155,
+              "pattern": "^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$",
+              "description": "The app's CFBundleIdentifier (rule bundleId)."
+            },
+            "extensionBundleId": {
+              "type": "string",
+              "maxLength": 155,
+              "pattern": "^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$",
+              "description": "The keyboard extension's CFBundleIdentifier; begins with bundleId and a dot (rule extensionBundleId)."
+            },
+            "language": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
+              "description": "PrimaryLanguage of the keyboard extension, a BCP 47 tag (rule language)."
+            },
+            "bundleVersion": {
+              "type": "string",
+              "pattern": "^[0-9]{1,9}(\\.[0-9]{1,9}){0,2}$",
+              "description": "CFBundleShortVersionString and CFBundleVersion of app and extension (rule bundleVersion)."
+            },
+            "returnKeyLabels": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "enum": [
+                  "default",
+                  "go",
+                  "google",
+                  "join",
+                  "next",
+                  "route",
+                  "search",
+                  "send",
+                  "yahoo",
+                  "done",
+                  "emergencyCall",
+                  "continue"
+                ],
+                "description": "An iOS return key type (UIReturnKeyType) of the text field."
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Text"
+              },
+              "description": "The Return key's label per action of the text field (rule returnKeyLabels)."
+            },
+            "popupColumns": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "Long-press popup: choices per row (rule popupColumns)."
+            },
+            "systemRow": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "layerSwitch",
+                      "nextKeyboard",
+                      "space",
+                      "enter"
+                    ],
+                    "description": "A key the target makes: layer switch (123/ABC), next keyboard, space or enter."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "keyId": {
+                        "description": "A key of `keys` (or an implied key).",
+                        "$ref": "#/$defs/Id"
+                      }
+                    },
+                    "required": [
+                      "keyId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A key of the file."
+                  }
+                ],
+                "description": "One key of the system row."
+              },
+              "description": "The keys of the bottom row added to a touch set with systemRow, left to right (rule systemRow)."
+            },
             "onLoss": {
               "description": "Loss policy for this target.",
               "$ref": "#/$defs/OnLoss"
@@ -3114,9 +3295,49 @@
               "android.*",
               "androidDefault.*",
               "androidime.*",
+              "androidime.flickPathDropped",
+              "androidime.keyCodeMissing",
+              "androidime.layerNotDerived",
+              "androidime.modifierUnmapped",
+              "androidime.noTouchLayout",
+              "androidime.outputUnencodable",
+              "androidime.settingNotCompiled",
+              "androidime.sideModifierWidened",
+              "androidime.tooManyMarkers",
+              "androidime.transformNotCompiled",
               "androidimeDefault.*",
+              "androidimeDefault.appName",
+              "androidimeDefault.keyCode",
+              "androidimeDefault.language",
+              "androidimeDefault.packageName",
+              "androidimeDefault.physicalKeys",
+              "androidimeDefault.popupColumns",
+              "androidimeDefault.returnKeyLabels",
+              "androidimeDefault.systemRow",
+              "androidimeDefault.touchFromHardware",
+              "androidimeDefault.versionCode",
+              "androidimeDefault.versionName",
               "ios.*",
+              "ios.extensionBundleIdNotPrefixed",
+              "ios.flickPathDropped",
+              "ios.functionNotSupported",
+              "ios.hardwareDropped",
+              "ios.layerNotDerived",
+              "ios.noTouchLayout",
+              "ios.outputUnencodable",
+              "ios.tooManyMarkers",
+              "ios.transformNotCompiled",
               "iosDefault.*",
+              "iosDefault.appName",
+              "iosDefault.bundleId",
+              "iosDefault.bundleVersion",
+              "iosDefault.extensionBundleId",
+              "iosDefault.language",
+              "iosDefault.nextKeyboardKey",
+              "iosDefault.popupColumns",
+              "iosDefault.returnKeyLabels",
+              "iosDefault.systemRow",
+              "iosDefault.touchFromHardware",
               "chromeos.*",
               "chromeosDefault.*",
               "keyman.*",

@@ -1075,3 +1075,70 @@ platform's own; the default `false` means the rows are the whole layout, as in C
 added row holds, and what a target does when the file has no next-keyboard key that the platform requires, is the
 target's (its document, reported as its default). Reason: kbdgen bundles and iOS templates leave that row to the app,
 CLDR files include it; the flag lets both import without inventing keys.
+
+**D200 (2026-11-28). The on-screen targets compile to a touch runtime file; the compiler resolves, the runtime
+runs.** `compile -target androidime|ios` writes one JSON file (`targets/touch-runtime.md`, schema
+`schema/touch-runtime/1/touch-runtime.schema.json`) and embeds it in an app built around a prebuilt YAKBD runtime;
+the runtimes never read `.kbl.json`. The file has its own integer version `touchRuntime` (1), independent of `kbl`;
+any change of shape or meaning is a new version, a runtime declares the versions it reads in a manifest
+(`assets/yakbd/runtime.json` in an APK, `yakbd-runtime.json` in a source folder), and the compiler refuses a runtime
+that does not list the version it writes. Version 1 stays a draft until 0.3 is tagged. Reason: one resolver (the Go
+tool) instead of three (Go, Kotlin, Swift) that would drift; the file is an internal contract, never carried by
+users, so it needs no compatibility promise beyond "the pinned runtime reads it". The other choice, runtimes reading
+`.kbl.json` directly, would put a full resolver for defaults, implied keys, variables and SPEC §9.3 into each
+runtime.
+
+**D201 (2026-11-28). Geometry, labels and ids are resolved at build time.** The runtime file gives each placed key
+its left edge and width as fractions of the keyboard width and each row its top and height as fractions of the
+keyboard height, computed with SPEC §9.4's widest-row and stretch rule after the system row is added; a final label
+per key (displays, dead-key display, output, layer id); and a placement id (KeyId, `KeyId#n` for repeats in one
+layer) that the iOS runtime uses as accessibility identifier and the Android runtime in its key-rectangle report.
+Keys the compiler makes have ids beginning with `@`. The one geometry step left to a runtime is hiding a
+next-keyboard key the platform does not want (its width goes to the row's space key). The set is chosen at run
+time (the screen is known only then), by SPEC §14.4 with the width in millimetres reckoned as dp or points × 25.4 /
+160 on both platforms (iOS reports no physical size; iPads count about a fifth narrower). Reason: Kotlin and Swift
+place keys alike and test harnesses know where every key is.
+
+**D202 (2026-11-28). Transforms become literal suffix rules; markers are noncharacters; no normalisation at run
+time.** The compiler expands each CLDR transform whose pattern uses only literals, variables, finite classes, one
+capture group around a class, `$1` and `$[1:set]` into at most 1024 literal rules; quantifiers, alternation,
+negated classes, anchors and `reorders` are left out (`<target>.transformNotCompiled`). Markers are written as the
+noncharacters U+FDD0–U+FDEF (at most 32, `<target>.tooManyMarkers`) and live only in the runtime's own context,
+seeded from the text before the insertion point and reset when the text or selection changes without it. Outputs are
+NFC-normalised at build time, as on Windows (D73). Reason: a runtime then needs suffix comparison only, no pattern
+engine; the common CLDR uses (dead-key-like transforms over a vowel set, markers as pending accents) still compile;
+what does not is reported.
+
+**D203 (2026-11-28). Android's physical-key mode is a table per modifier state.** For the five modifiers Android key
+events tell apart for this purpose (Shift, Caps Lock, Control, left Alt, right Alt) the compiler resolves SPEC §9.3
+for all 32 states and writes, per state that has keys, key code name → input; the runtime looks up the exact state
+and passes everything else to the application. In a state with Control or left Alt the `["other"]` layer does not
+apply, so shortcuts reach applications. Key codes come from the `android` target's table and pins (D151). Custom
+modifiers are not compiled (`androidime.modifierUnmapped`). Reason: no resolution logic in the runtime; the table is
+small.
+
+**D204 (2026-11-28). Names and ids of the on-screen builds come from the layout file, with simple defaults.**
+`targets.androidime`: `packageName` (default `org.yakbd.keyboard.<slug with _>.ime`; Android package segments allow
+no hyphen), `appName`, `language`, `versionCode`, `versionName`; `targets.ios`: `appName`, `bundleId` (default
+`org.yakbd.keyboard.<slug>`), `extensionBundleId` (default `<bundleId>.extension`; it must begin with `bundleId.`,
+`ios.extensionBundleIdNotPrefixed`), `language`, `bundleVersion`. The Apple team id and the Android signing key are
+the builder's and are options of the build, never fields of the file. Reason: one layout file gives one keyboard per
+platform (D150); names that identify an app belong to the layout's publisher, who registers them (developer
+verification, App IDs); the defaults are for one's own builds and are reported.
+
+**D205 (2026-11-28). Presentation fields are few and shared: Return-key labels, popup columns, the system row.**
+`returnKeyLabels` (per field action of the platform: Android's editor actions, iOS's return key types; default
+English words and ⏎), `popupColumns` (default 8) and `systemRow` (the keys of the bottom row added to a set with
+`systemRow`: `layerSwitch`, `nextKeyboard`, `space`, `enter` or a key of the file; default those four). There are no
+theme, font, sound or haptic fields: the runtimes follow the system's appearance. Reason: these are the per-target
+choices both platforms need to build a usable keyboard (cut to what a build
+cannot do without); everything else is the runtime's.
+
+**D206 (2026-11-28). A file without touch sets gets a crude one (`touchFromHardware`); iOS inserts a next-keyboard
+key.** Both on-screen targets derive one set (system row, base and one-shot shift layers, four rows of positions
+from the digit row to the bottom letter row, Shift and Backspace in the last row) from the hardware layers without
+modifiers and with Shift; other hardware layers are reported (`<target>.layerNotDerived`); a file with no layers at
+all cannot be built (`<target>.noTouchLayout`). On iOS a layer without a next-keyboard key and without the system
+row gets one at the start of its last row (rule `nextKeyboardKey`), since iOS asks for one; Android has no such rule.
+iOS builds touch sets only (`ios.hardwareDropped` when the file has both). Reason: the owner's rule of knowingly
+simple, reported defaults; every hardware-only layout still gives a working keyboard on both platforms.
